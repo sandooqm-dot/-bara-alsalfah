@@ -44,32 +44,32 @@
 
     .catTitle{font-weight:900;font-size:30px;margin-bottom:8px}
 
-    /* ✅ صندوق ثابت للصورة (ما يغيّر حجم المربع) */
+    /* صندوق ثابت للصورة (لا يغيّر حجم المربع) */
     .imgBox{
       width:180px;
       height:110px;
       display:flex;
       align-items:center;
       justify-content:center;
-      overflow:hidden; /* يحافظ على الشكل داخل المربع */
+      overflow:hidden;
     }
 
-    /* ✅ الصورة تكبر/تصغر بـ scale حسب كل كتاغوري */
+    /* ✅ كبرنا كل الصور أكثر */
     .imgBox img{
       width:100%;
       height:100%;
       object-fit:contain;
-      transform:scale(var(--imgScale, 1.15));
+      transform:scale(var(--imgScale, 1.35)); /* كان 1.15 */
       transform-origin:center;
     }
 
-    /* ✅ ضبط المقاسات لتطابق الصورة المرجعية بصرياً */
-    .cat[data-id="eat"]  { --imgScale:1.18; }
-    .cat[data-id="zoo"]  { --imgScale:1.55; }  /* كان صغير بسبب الفراغات */
-    .cat[data-id="play"] { --imgScale:1.22; }
-    .cat[data-id="car"]  { --imgScale:1.65; }  /* كان صغير بسبب الفراغات */
-    .cat[data-id="frot"] { --imgScale:1.22; }
-    .cat[data-id="cola"] { --imgScale:1.28; }
+    /* ✅ رفعنا كل كتاغوري أكثر */
+    .cat[data-id="eat"]  { --imgScale:1.40; }
+    .cat[data-id="zoo"]  { --imgScale:1.85; }
+    .cat[data-id="play"] { --imgScale:1.45; }
+    .cat[data-id="car"]  { --imgScale:2.00; }
+    .cat[data-id="frot"] { --imgScale:1.45; }
+    .cat[data-id="cola"] { --imgScale:1.55; }
 
     .startWrap{display:flex;justify-content:center;margin-top:18px}
     .btnStart{
