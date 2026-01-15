@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>لعبة برا السالفة</title>
 
-  <!-- خط مجاني قريب من شكل Tufuli -->
+  <!-- خط مجاني قريب من الشكل -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@700;800&display=swap" rel="stylesheet">
@@ -17,7 +17,6 @@
       --panel:#6e7b46;
       --black:#111;
       --yellow:#ffd21a;
-      --blue:#bfe4ff;
       --shadow: 0 10px 0 rgba(0,0,0,.18);
     }
     *{box-sizing:border-box}
@@ -37,14 +36,13 @@
       color:var(--olive);
       font-weight:900;
       font-size:44px;
-      letter-spacing:.2px;
-      padding:0 86px; /* يمنع تداخل مع اللوجو */
+      padding:0 86px;
     }
 
     .panel{
       background:var(--panel);
       border-radius:28px;
-      padding:22px 16px 22px;
+      padding:22px 16px 24px;
       margin:0 6px 18px;
     }
 
@@ -57,16 +55,28 @@
       font-size:34px;
       cursor:pointer;
       box-shadow:var(--shadow);
-      transition:transform .08s ease, opacity .12s ease, filter .12s ease;
+      transition:transform .08s ease, filter .12s ease, background .12s ease;
       background:var(--bg);
       margin:18px 0;
     }
     .btn:active{transform:translateY(2px)}
-    .btnSecondary{background:var(--bg)}
-    .btnOn{filter:saturate(1.1) brightness(1.02); outline:0}
-    .btnHint{color:rgba(0,0,0,.55);font-weight:900;text-align:center;margin-top:10px;font-size:18px}
 
-    .homeSpace{height:36px}
+    .btnSelected{
+      background:#d8f0ff;
+      filter:saturate(1.05) brightness(1.02);
+    }
+
+    .btnStart{
+      background:var(--yellow);
+      font-size:40px;
+      margin-top:8px;
+    }
+
+    .btnDisabled{
+      opacity:.55;
+      cursor:not-allowed;
+      filter:grayscale(.15);
+    }
   </style>
 </head>
 <body>
@@ -79,57 +89,59 @@
       </div>
 
       <div class="panel">
-        <button id="oneBtn" class="btn btnSecondary" type="button">جهاز واحد</button>
+        <!-- أزرار اختيار النمط فقط -->
+        <button id="oneBtn" class="btn" type="button">جهاز واحد</button>
+        <button id="multiBtn" class="btn" type="button">اجهزة متعددة</button>
 
-        <!-- حسب قواعدك: زر أجهزة متعددة يغيّر لونه فقط (ما ينقل) -->
-        <button id="multiBtn" class="btn btnSecondary" type="button">اجهزة متعددة</button>
-        <div class="btnHint">لتفعيل نمط اجهزة متعددة اضغط عليه ثم اضغط ابدأ اللعب</div>
+        <!-- زر ابدأ اللعب (هو اللي ينقل حسب النمط) -->
+        <button id="startBtn" class="btn btnStart" type="button">ابدأ اللعب</button>
 
-        <button id="howBtn" class="btn btnSecondary" type="button">تعليمات اللعبة</button>
+        <!-- تعليمات اللعبة -->
+        <button id="howBtn" class="btn" type="button">تعليمات اللعبة</button>
       </div>
-
-      <div class="homeSpace"></div>
     </div>
   </div>
 
   <script>
     const oneBtn = document.getElementById('oneBtn');
     const multiBtn = document.getElementById('multiBtn');
+    const startBtn = document.getElementById('startBtn');
     const howBtn = document.getElementById('howBtn');
 
+    // افتراضي: جهاز واحد
     let mode = localStorage.getItem('bara_mode_select') || 'one';
 
     function paint(){
       if(mode === 'multi'){
-        multiBtn.classList.add('btnOn');
-        oneBtn.classList.remove('btnOn');
-        multiBtn.style.background = '#d8f0ff';
-        oneBtn.style.background = 'var(--bg)';
+        multiBtn.classList.add('btnSelected');
+        oneBtn.classList.remove('btnSelected');
       }else{
-        oneBtn.classList.add('btnOn');
-        multiBtn.classList.remove('btnOn');
-        oneBtn.style.background = '#d8f0ff';
-        multiBtn.style.background = 'var(--bg)';
+        oneBtn.classList.add('btnSelected');
+        multiBtn.classList.remove('btnSelected');
       }
     }
 
-    // اختيار جهاز واحد: ينقل مباشرة
     oneBtn.addEventListener('click', ()=>{
       mode = 'one';
       localStorage.setItem('bara_mode_select', mode);
       paint();
-      // يروح لصفحة ادخال اللاعبين (جهاز واحد)
-      location.href = 'single.html';
     });
 
-    // اختيار أجهزة متعددة: يغير اللون فقط (بدون انتقال)
     multiBtn.addEventListener('click', ()=>{
       mode = 'multi';
       localStorage.setItem('bara_mode_select', mode);
       paint();
     });
 
-    // تعليمات: نفس نظامك (صفحة/نافذة)
+    // زر ابدأ اللعب هو اللي يفتح الصفحة حسب النمط
+    startBtn.addEventListener('click', ()=>{
+      if(mode === 'multi'){
+        location.href = 'players.html';
+      }else{
+        location.href = 'single.html';
+      }
+    });
+
     howBtn.addEventListener('click', ()=>{
       location.href = 'how.html';
     });
