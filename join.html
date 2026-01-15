@@ -1,1 +1,96 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>الانضمام للعبة</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{--bg:#e9e4d6;--olive:#3f4a1f;--panel:#6e7b46;--black:#111;--yellow:#ffd21a}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);font-family:"Baloo Bhaijaan 2",Arial,sans-serif;color:#111}
+    .wrap{min-height:100svh;display:flex;justify-content:center;padding:18px 14px 30px}
+    .card{width:min(560px,100%);position:relative}
+    .logo{position:absolute;left:8px;top:10px;width:92px;height:92px;object-fit:contain;pointer-events:none}
+    h1{margin:40px 0 10px;text-align:center;color:var(--olive);font-weight:900;font-size:44px}
+
+    .panel{background:var(--panel);border-radius:28px;padding:18px 18px;margin:0 8px 16px}
+    .box{
+      background:var(--bg);
+      border-radius:26px;
+      border:8px solid var(--black);
+      padding:18px 14px 18px;
+      box-shadow:0 10px 0 rgba(0,0,0,.18);
+    }
+    .inp{
+      width:100%;
+      background:#fff;
+      border-radius:999px;
+      border:4px solid var(--olive);
+      padding:14px 16px;
+      font-size:28px;
+      font-weight:900;
+      outline:none;
+      text-align:center;
+      margin-bottom:14px;
+    }
+    .btn{
+      width:100%;
+      background:var(--yellow);
+      border:5px solid var(--black);
+      border-radius:999px;
+      padding:16px 16px;
+      font-weight:900;font-size:38px;
+      box-shadow:0 10px 0 rgba(0,0,0,.18);
+      cursor:pointer;
+    }
+    .btn:active{transform:translateY(2px)}
+    .note{margin-top:12px;text-align:center;color:#fff;font-weight:900;font-size:20px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <img class="logo" src="logo.PNG" alt="logo">
+      <h1>الانضمام للعبة</h1>
+
+      <div class="panel">
+        <div class="box">
+          <input id="name" class="inp" placeholder="اسم اللاعب" maxlength="18">
+          <input id="room" class="inp" placeholder="رمز الغرفة" inputmode="numeric" maxlength="6">
+          <button id="joinBtn" class="btn" type="button">انضم</button>
+          <div id="msg" class="note"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const params = new URLSearchParams(location.search);
+  const roomFromUrl = params.get('room') || '';
+  document.getElementById('room').value = roomFromUrl;
+
+  document.getElementById('joinBtn').onclick = () => {
+    const name = document.getElementById('name').value.trim();
+    const room = document.getElementById('room').value.trim();
+    const msg = document.getElementById('msg');
+
+    if(!name || room.length !== 6){
+      msg.textContent = "اكتب اسمك ورمز صحيح";
+      return;
+    }
+
+    // تخزين مبدئي (على نفس الجهاز)
+    const list = JSON.parse(localStorage.getItem('bara_players_multi') || "[]");
+    if(!list.includes(name)) list.push(name);
+    localStorage.setItem('bara_players_multi', JSON.stringify(list));
+
+    msg.textContent = "تم الانضمام… انتظر المقدم";
+  };
+</script>
+</body>
+</html>
