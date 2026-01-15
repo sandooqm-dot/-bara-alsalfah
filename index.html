@@ -1,1 +1,225 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>لعبة برا السالفة</title>
 
+  <!-- خط مشابه (مستدير وواضح) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#e9e4d6;
+      --olive:#3f4a1f;
+      --panel:#6e7b46;
+      --btn:#e9e4d6;
+      --yellow:#ffd21a;
+      --black:#111;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);font-family:"Baloo Bhaijaan 2", Arial, sans-serif;color:#111}
+    .wrap{min-height:100svh;display:flex;justify-content:center;padding:18px 14px 30px}
+    .card{width:min(520px,100%);position:relative}
+    .logo{position:absolute;left:8px;top:10px;width:92px;height:92px;object-fit:contain;pointer-events:none}
+    h1{margin:86px 0 18px;text-align:center;color:var(--olive);font-weight:800;font-size:48px}
+    .panel{background:var(--panel);border-radius:28px;padding:22px 18px;margin:0 8px 16px}
+    .stack{display:flex;flex-direction:column;gap:22px}
+    .btn{
+      width:100%;background:var(--btn);
+      border:5px solid var(--black);
+      border-radius:999px;
+      padding:16px 16px;
+      font-weight:800;font-size:34px;
+      box-shadow:0 8px 0 rgba(0,0,0,.18);
+      cursor:pointer;
+      transition:transform .08s ease, background .12s ease;
+    }
+    .btn:active{transform:translateY(2px)}
+    .btn.mode.active{
+      background:#d7ebc8;
+      box-shadow:0 8px 0 rgba(0,0,0,.18), 0 0 0 7px rgba(255,210,26,.60) inset;
+    }
+    .startWrap{display:flex;justify-content:center;padding:0 8px}
+    .btnStart{
+      width:min(420px,100%);background:var(--yellow);
+      border:5px solid var(--black);
+      border-radius:999px;
+      padding:16px 16px;
+      font-weight:900;font-size:40px;
+      box-shadow:0 10px 0 rgba(0,0,0,.18);
+      cursor:pointer;
+      transition:transform .08s ease, opacity .12s ease;
+    }
+    .btnStart:active{transform:translateY(2px)}
+    .btnStart:disabled{opacity:.55;cursor:not-allowed}
+
+    /* زر المنزل (كل الصفحات) */
+    .homeBtn{
+      position:fixed;left:16px;bottom:16px;
+      width:64px;height:64px;border-radius:999px;
+      border:4px solid var(--black);
+      background:#bfe1ff;
+      box-shadow:0 8px 0 rgba(0,0,0,.18);
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;
+      z-index:20;
+    }
+    .homeBtn:active{transform:translateY(2px)}
+    .homeIcon{width:34px;height:34px}
+
+    /* نافذة التعليمات (منبثقة أصغر) */
+    .overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.35);
+      display:none;justify-content:center;align-items:center;
+      padding:16px;z-index:50;
+    }
+    .overlay.show{display:flex}
+    .modal{
+      width:min(560px,100%);
+      background:var(--bg);
+      border-radius:26px;
+      border:4px solid rgba(0,0,0,.10);
+      box-shadow:0 18px 40px rgba(0,0,0,.25);
+      overflow:hidden;
+    }
+    .modalTop{
+      padding:16px 16px 0;
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    .modalTitle{
+      font-size:34;font-weight:900;color:var(--olive);
+      font-size:34px;
+      background:#dfd2b1;
+      border-radius:18px;
+      padding:10px 18px;
+      display:inline-block;
+      margin:0 auto;
+    }
+    .modalBody{padding:14px 18px 18px}
+    .howPanel{
+      background:var(--panel);
+      border-radius:22px;
+      padding:18px 16px;
+      color:#fff;
+      font-weight:700;
+      line-height:1.9;
+      font-size:20px;
+    }
+    .backWrap{display:flex;justify-content:center;padding:14px 0 18px}
+    .btnBack{
+      width:min(420px,100%);background:var(--yellow);
+      border:5px solid var(--black);
+      border-radius:999px;
+      padding:16px 16px;
+      font-weight:900;font-size:40px;
+      box-shadow:0 10px 0 rgba(0,0,0,.18);
+      cursor:pointer;
+    }
+    .btnBack:active{transform:translateY(2px)}
+
+    @media (max-width:420px){
+      h1{font-size:42px}
+      .btn{font-size:30px}
+      .btnStart{font-size:38px}
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <div class="card">
+      <img class="logo" src="logo.PNG" alt="logo">
+      <h1>لعبة برا السالفة</h1>
+
+      <div class="panel">
+        <div class="stack">
+          <button id="oneBtn" class="btn mode" type="button">جهاز واحد</button>
+          <button id="multiBtn" class="btn mode" type="button">اجهزة متعددة</button>
+          <button id="howBtn" class="btn" type="button">تعليمات اللعبة</button>
+        </div>
+      </div>
+
+      <div class="startWrap">
+        <button id="startBtn" class="btnStart" type="button" disabled>ابدأ اللعب</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- زر المنزل (هنا ما يسوي شيء لأننا في الرئيسية) -->
+  <button class="homeBtn" type="button" onclick="location.href='index.html'" aria-label="الصفحة الرئيسية">
+    <svg class="homeIcon" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 10.5 12 3l9 7.5"></path>
+      <path d="M5 10v10h14V10"></path>
+      <path d="M9 20v-6h6v6"></path>
+    </svg>
+  </button>
+
+  <!-- نافذة التعليمات المنبثقة -->
+  <div id="overlay" class="overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modalTop">
+        <div style="width:42px"></div>
+        <div class="modalTitle">التعليمات</div>
+        <div style="width:42px"></div>
+      </div>
+
+      <div class="modalBody">
+        <div class="howPanel">
+          <div><b>طريقة اللعب:</b></div>
+          <div>اللعبة تعتمد على “سالفة/موضوع” مخفي.</div>
+          <div>في كل جولة: لاعب واحد يعرف السالفة، والباقين برا السالفة.</div>
+          <div>تبدأ الأدوار: كل لاعب يسأل سؤال سريع أو يجاوب حسب دوره.</div>
+          <div>اللي يعرف السالفة يجاوب بذكاء بدون ما يفضح الموضوع، واللي برا السالفة يحاول يندمج من الإجابات.</div>
+          <br>
+          <div><b>بعد انتهاء الأدوار يبدأ التصويت:</b></div>
+          <div>إذا اكتشفوا الصحيح → يفوز اللي برا السالفة.</div>
+          <div>إذا ما اكتشفوه أو اتهموا شخص غلط → يفوز اللي داخل السالفة.</div>
+          <br>
+          <div><b>طرق اللعب:</b></div>
+          <div>1) جهاز واحد: تلعبون على جوال واحد وينتقل الدور بينكم.</div>
+          <div>2) اجهزة متعددة (أونلاين): كل لاعب يلعب من جواله وكل شيء يتحدث عند الجميع.</div>
+        </div>
+
+        <div class="backWrap">
+          <button id="backBtn" class="btnBack" type="button">رجوع</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const oneBtn = document.getElementById('oneBtn');
+  const multiBtn = document.getElementById('multiBtn');
+  const startBtn = document.getElementById('startBtn');
+
+  const howBtn = document.getElementById('howBtn');
+  const overlay = document.getElementById('overlay');
+  const backBtn = document.getElementById('backBtn');
+
+  let mode = localStorage.getItem('bara_mode') || "";
+
+  function renderMode(){
+    oneBtn.classList.toggle('active', mode === 'one');
+    multiBtn.classList.toggle('active', mode === 'multi');
+    startBtn.disabled = !mode;
+  }
+
+  oneBtn.onclick = () => { mode='one'; localStorage.setItem('bara_mode', mode); renderMode(); };
+  multiBtn.onclick = () => { mode='multi'; localStorage.setItem('bara_mode', mode); renderMode(); };
+
+  startBtn.onclick = () => {
+    if(mode==='one') location.href='one.html';
+    if(mode==='multi') location.href='players.html';
+  };
+
+  howBtn.onclick = () => { overlay.classList.add('show'); overlay.setAttribute('aria-hidden','false'); };
+  backBtn.onclick = () => { overlay.classList.remove('show'); overlay.setAttribute('aria-hidden','true'); };
+  overlay.onclick = (e) => { if(e.target===overlay) backBtn.click(); };
+
+  renderMode();
+</script>
+</body>
+</html>
