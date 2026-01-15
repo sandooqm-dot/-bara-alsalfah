@@ -24,8 +24,8 @@
     *{box-sizing:border-box}
     body{
       margin:0;
-      /* ✅ الخلفية خارج الإطار = لون الإطار الزيتوني */
-      background:var(--olive);
+      /* ✅ الخلفية خارج الإطار = نفس لون داخل الصفحة */
+      background:var(--bg);
       font-family:"Baloo Bhaijaan 2", Arial, sans-serif;
       color:var(--black);
     }
@@ -43,11 +43,9 @@
       border:6px solid var(--olive);
       padding:18px 14px 22px;
       position:relative;
-      /* ✅ داخل الإطار يبقى البيج */
       background:var(--bg);
     }
 
-    /* logo bigger 15% */
     .logo{
       position:absolute;
       left:14px;
@@ -67,7 +65,6 @@
       font-weight:900;
     }
 
-    /* الصندوق الأخضر */
     .panel{
       margin:0 auto;
       width:92%;
@@ -94,23 +91,15 @@
     }
     .btn:active{transform:translateY(2px)}
 
-    /* ✅ أزرار اختيار النمط */
-    .mode-btn{
-      position:relative;
-      overflow:hidden;
-    }
-    /* ✅ كل النصوص أسود */
+    .mode-btn{position:relative; overflow:hidden;}
     .mode-btn .label{ color:#000; font-weight:900; }
     .how-btn .label{ color:#000; font-weight:900; }
+    .mode-btn.selected{ background:var(--selected); }
 
-    .mode-btn.selected{
-      background:var(--selected);
-    }
-
-    /* ✅ زر ابدأ اللعب خارج الصندوق: أضيق + نازل شوي */
+    /* ✅ زر ابدأ اللعب خارج الصندوق: أصغر من الأطراف */
     .start-wrap{
-      width:86%;              /* تصغير الأطراف يمين/يسار */
-      margin:24px auto 0;     /* نزله للأسفل شوي */
+      width:78%;              /* كان 86% */
+      margin:24px auto 0;
     }
     .btn-yellow{
       width:100%;
@@ -133,7 +122,6 @@
     }
     .btn-yellow:active{transform:translateY(2px)}
 
-    /* نافذة التعليمات */
     .overlay{
       position:fixed; inset:0;
       background:rgba(0,0,0,.35);
@@ -221,7 +209,6 @@
     </div>
   </div>
 
-  <!-- تعليمات (منبثق) -->
   <div id="howOverlay" class="overlay" role="dialog" aria-modal="true">
     <div class="modal" onclick="event.stopPropagation()">
       <div style="text-align:center">
@@ -255,7 +242,7 @@
     const modeMulti  = document.getElementById('modeMulti');
     const startBtn   = document.getElementById('startBtn');
 
-    let selectedMode = localStorage.getItem('bara_mode') || ''; // 'single' | 'multi'
+    let selectedMode = localStorage.getItem('bara_mode') || '';
     applyModeUI();
 
     function applyModeUI(){
@@ -279,10 +266,9 @@
     startBtn.addEventListener('click', ()=>{
       if(!selectedMode) return;
       if(selectedMode === 'single') location.href = 'single.html';
-      else location.href = 'players.html'; // ✅ بدل multi.html لأن multi.html غير موجود عندك
+      else location.href = 'players.html';
     });
 
-    // تعليمات (منبثق)
     const howBtn = document.getElementById('howBtn');
     const howOverlay = document.getElementById('howOverlay');
     const howBack = document.getElementById('howBack');
