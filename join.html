@@ -10,7 +10,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@700;800&display=swap" rel="stylesheet">
 
   <style>
-    :root{--bg:#e9e4d6;--olive:#4e5a2a;--panel:#6e7b46;--black:#111;--yellow:#ffd21a;--btnShadow:rgba(0,0,0,.22)}
+    :root{
+      --bg:#e9e4d6;
+      --olive:#4e5a2a;
+      --panel:#6e7b46;
+      --black:#111;
+      --yellow:#ffd21a;
+      --btnShadow:rgba(0,0,0,.22);
+      --purple:#6f3cff;
+      --purpleShadow:rgba(0,0,0,.18);
+    }
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);font-family:"Baloo Bhaijaan 2",Arial,sans-serif;color:var(--black)}
     .page{min-height:100svh;display:flex;justify-content:center;align-items:center;padding:18px}
@@ -19,6 +28,7 @@
       border:6px solid var(--olive);
       border-radius:26px;
       padding:18px 16px;
+      position:relative;
     }
     h1{text-align:center;color:var(--olive);font-size:44px;margin:6px 0 10px;font-weight:900}
     .panel{background:var(--panel);border-radius:22px;padding:18px;border:0;box-shadow:0 10px 0 rgba(0,0,0,.12)}
@@ -49,18 +59,53 @@
     }
     button:active{transform:translateY(2px)}
     .msg{color:#fff;text-align:center;font-weight:900;margin-top:10px;display:none}
+
+    /* ✅ زر الشراء البنفسجي (مكان الدائرة الحمراء بالصورة) */
+    .buyWrap{
+      margin-top:16px;
+      display:flex;
+      justify-content:center;
+    }
+    .buyBtn{
+      width:92%;
+      background:var(--purple);
+      color:#fff;
+      border:6px solid var(--black);
+      border-radius:999px;
+      font-size:34px;
+      font-weight:900;
+      padding:16px 14px;
+      box-shadow:0 12px 0 var(--purpleShadow);
+      cursor:pointer;
+      text-decoration:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transition:transform .05s ease, filter .15s ease;
+      user-select:none;
+    }
+    .buyBtn:active{transform:translateY(2px)}
   </style>
 </head>
 <body>
   <div class="page">
     <div class="card">
       <h1>انضم للغرفة</h1>
+
       <div class="panel">
         <div class="label">اكتب اسمك ثم انضم</div>
         <input id="name" placeholder="اسم اللاعب" />
         <button id="joinBtn">انضمام</button>
         <div id="ok" class="msg">تم الانضمام ✅ ارجع للمضيف</div>
       </div>
+
+      <!-- ✅ زر شراء اللعبة (يفتح في صفحة/تبويب جديد) -->
+      <div class="buyWrap">
+        <a class="buyBtn" href="https://sandooq-m.com/" target="_blank" rel="noopener noreferrer">
+          لشراء اللعبة اضغط هنا
+        </a>
+      </div>
+
     </div>
   </div>
 
@@ -81,10 +126,7 @@
       localStorage.setItem(key, JSON.stringify(players));
 
       ok.style.display='block';
-      setTimeout(()=> ok.style.display='none', 600);
-
-      // ✅ بعد الانضمام: روح لصفحة الانتظار
-      location.href = `waiting.html?room=${encodeURIComponent(room)}&name=${encodeURIComponent(n)}`;
+      setTimeout(()=> ok.style.display='none', 1600);
     });
   </script>
 </body>
