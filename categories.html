@@ -42,11 +42,19 @@
     }
     .catTitle{font-weight:900;font-size:30px;margin-bottom:8px}
 
-    /* ✅ تكبير الصور فقط (بدون تغيير المربعات) */
-    .cat img{width:140px;height:100px;object-fit:contain}
+    /* ✅ حجم الصور الطبيعي (باقي الكتاغوريات) */
+    .cat img{
+      width:140px;
+      height:95px;
+      object-fit:contain;
+    }
 
-    /* ✅ zoo و car أكبر شوي من الباقي */
-    .cat img.big{width:170px;height:120px;object-fit:contain}
+    /* ✅ تكبير واضح لـ zoo و car عشان يتناسقون مع البقية */
+    .cat img.big{
+      width:190px;
+      height:125px;
+      object-fit:contain;
+    }
 
     .startWrap{display:flex;justify-content:center;margin-top:18px}
     .btnStart{
@@ -58,7 +66,7 @@
       box-shadow:0 10px 0 rgba(0,0,0,.18);
       cursor:pointer;
       opacity:.55;
-      color:#000; /* ✅ نص زر ابدأ اللعب أسود */
+      color:#000;
     }
     .btnStart.enabled{opacity:1}
     .btnStart:active{transform:translateY(2px)}
@@ -122,7 +130,6 @@
       const el = document.createElement('div');
       el.className = 'cat' + (selected===c.id ? ' active':'');
 
-      // ✅ zoo و car: صورة أكبر فقط
       const imgClass = (c.id === 'zoo' || c.id === 'car') ? 'big' : '';
 
       el.innerHTML = `<div class="catTitle">${c.name}</div><img class="${imgClass}" src="${c.img}" alt="${c.name}">`;
