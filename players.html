@@ -3,312 +3,420 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>العب من اجهزة متعددة</title>
+  <title>اللعب من اجهزة متعددة</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@700;800&display=swap" rel="stylesheet">
 
   <style>
-    :root{--bg:#e9e4d6;--olive:#3f4a1f;--panel:#6e7b46;--black:#111;--yellow:#ffd21a;--blue:#bfe1ff}
+    :root{
+      --bg:#e9e4d6;
+      --olive:#3f4a1f;
+      --panel:#6e7b46;
+      --btn:#e9e4d6;
+      --yellow:#ffd21a;
+      --black:#111;
+      --blue:#bfe4ff;
+      --shadow: 0 10px 0 rgba(0,0,0,.18);
+    }
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);font-family:"Baloo Bhaijaan 2",Arial,sans-serif;color:#111}
-    .wrap{min-height:100svh;display:flex;justify-content:center;padding:18px 14px 30px}
+    .wrap{min-height:100svh;display:flex;justify-content:center;padding:18px 14px 22px}
     .card{width:min(560px,100%);position:relative}
-    .logo{position:absolute;left:8px;top:10px;width:92px;height:92px;object-fit:contain;pointer-events:none}
-    h1{margin:40px 0 10px;text-align:center;color:var(--olive);font-weight:900;font-size:44px}
 
-    .panel{background:var(--panel);border-radius:28px;padding:18px 18px;margin:0 8px 16px}
-    .titleInside{color:#fff;font-weight:900;font-size:34px;text-align:center;margin:0 0 12px}
-
-    .bigArea{
-      height:56vh;
-      min-height:360px;
-      background:var(--panel);
-      border-radius:26px;
-      padding:12px;
-      display:flex;
-      align-items:flex-start;
-      justify-content:center;
+    .top{position:relative;padding:8px 6px 0;min-height:96px}
+    .logo{
+      position:absolute;left:6px;top:6px;
+      width:78px;height:78px;object-fit:contain;pointer-events:none;user-select:none;
     }
-    .listBox{
-      width:100%;
-      height:100%;
-      background:transparent;
-      border-radius:22px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:rgba(255,255,255,.75);
-      font-weight:900;
-      font-size:24px;
+    h1{
+      margin:78px 0 16px;
       text-align:center;
+      color:var(--olive);
+      font-weight:900;
+      font-size:44px;
+      letter-spacing:.2px;
+      padding:0 86px; /* يمنع تداخل مع اللوجو */
     }
 
-    .btnRow{display:flex;flex-direction:column;gap:14px;margin-top:14px}
-    .btnBig{
+    .panel{
+      background:var(--panel);
+      border-radius:28px;
+      padding:18px 16px 16px;
+      margin:0 6px 18px;
+      min-height:62svh;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    .panelTitle{
+      color:#fff;
+      font-weight:900;
+      text-align:center;
+      font-size:34px;
+      margin-top:2px;
+    }
+
+    .listBox{
+      flex:1;
+      background:rgba(0,0,0,.08);
+      border-radius:22px;
+      padding:14px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      justify-content:flex-start;
+      align-items:stretch;
+    }
+
+    .nameItem{
+      background:var(--bg);
+      border:5px solid var(--black);
+      border-radius:999px;
+      padding:12px 14px;
+      font-weight:900;
+      font-size:28px;
+      text-align:center;
+      box-shadow:0 8px 0 rgba(0,0,0,.18);
+    }
+
+    .emptyHint{
+      text-align:center;color:rgba(255,255,255,.75);font-weight:900;font-size:22px;margin-top:auto;margin-bottom:auto;
+    }
+
+    .btn{
       width:100%;
       border:5px solid var(--black);
       border-radius:999px;
-      padding:16px 16px;
+      padding:16px 14px;
       font-weight:900;
-      font-size:38px;
-      box-shadow:0 10px 0 rgba(0,0,0,.18);
+      font-size:34px;
       cursor:pointer;
-      background:#fff;
+      box-shadow:var(--shadow);
+      transition:transform .08s ease, opacity .12s ease;
     }
-    .btnBig:active{transform:translateY(2px)}
+    .btn:active{transform:translateY(2px)}
     .btnShare{background:var(--blue)}
     .btnStart{background:var(--yellow)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
 
-    /* زر المنزل */
+    /* Home */
     .homeBtn{
-      position:fixed;left:16px;bottom:16px;
-      width:64px;height:64px;border-radius:999px;
-      border:4px solid var(--black);
-      background:#bfe1ff;
-      box-shadow:0 8px 0 rgba(0,0,0,.18);
-      display:flex;align-items:center;justify-content:center;
-      cursor:pointer;z-index:20;
+      position:fixed;
+      left:14px;
+      bottom:14px;
+      width:64px;height:64px;
+      border-radius:18px;
+      border:5px solid var(--black);
+      background:var(--blue);
+      box-shadow:0 10px 0 rgba(0,0,0,.18);
+      display:grid;place-items:center;
+      z-index:40;
+      cursor:pointer;
     }
     .homeBtn:active{transform:translateY(2px)}
-    .homeIcon{width:34px;height:34px}
+    .homeBtn svg{width:34px;height:34px}
 
-    /* نافذة مشاركة اللاعبين */
-    .overlay{
-      position:fixed;inset:0;background:rgba(0,0,0,.35);
-      display:none;justify-content:center;align-items:center;
-      padding:16px;z-index:50;
-    }
+    /* Share modal */
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;justify-content:center;align-items:center;padding:16px;z-index:50}
     .overlay.show{display:flex}
     .modal{
-      width:min(560px,100%);
+      width:min(640px,100%);
       background:#fff;
       border-radius:22px;
-      border:4px solid rgba(0,0,0,.10);
       box-shadow:0 18px 40px rgba(0,0,0,.25);
       overflow:hidden;
+      border:3px solid rgba(0,0,0,.08);
     }
-    .modalHead{
-      padding:14px 16px 0;
-      display:flex;align-items:center;justify-content:center;
-      position:relative;
-    }
+    .modalHeader{padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+    .modalTitle{font-weight:900;font-size:26px}
     .closeX{
-      position:absolute;left:14px;top:14px;
-      width:36px;height:36px;border-radius:10px;
-      border:0;background:transparent;
-      color:#2d7bdc;
-      font-size:30px;font-weight:900;
-      cursor:pointer;
+      width:40px;height:40px;border-radius:12px;
+      border:3px solid rgba(0,0,0,.18);
+      background:#fff;color:#d40000;
+      font-size:24px;font-weight:900;cursor:pointer;
     }
-    .modalTitle{font-weight:900;font-size:28px}
-    .tabs{display:flex;gap:12px;justify-content:center;padding:10px 14px 6px}
-    .tab{
-      border:0;border-radius:14px;
-      padding:10px 16px;
-      font-weight:900;
-      font-size:22px;
-      box-shadow:0 6px 0 rgba(0,0,0,.18);
-      cursor:pointer;
-      background:#eee;
-    }
-    .tab.link{background:#ffd21a}
-    .tab.code{background:#35a853;color:#fff}
-    .tab.qr{background:#f0a12d;color:#fff}
-    .content{padding:10px 16px 16px}
-    .box{
-      background:#f5f5f5;
-      border:3px solid rgba(0,0,0,.10);
-      border-radius:18px;
-      padding:14px 14px;
-      text-align:center;
-      font-weight:900;
-      font-size:22px;
-      word-break:break-word;
-    }
-    .roomLabel{font-size:20px;color:#555;font-weight:900;margin-top:10px}
-    .roomCode{font-size:44px;letter-spacing:2px}
-    .copyBtn{
-      margin-top:12px;
-      width:100%;
-      border:4px solid #111;
-      border-radius:18px;
-      padding:12px 12px;
-      font-weight:900;
-      font-size:22px;
-      background:#fff;
+    .tabs{display:flex;gap:10px;justify-content:center;padding:0 16px 10px}
+    .tabBtn{
+      border:0;cursor:pointer;
+      padding:10px 16px;border-radius:14px;
+      font-weight:900;font-size:20px;
       box-shadow:0 8px 0 rgba(0,0,0,.18);
-      cursor:pointer;
+      border:3px solid rgba(0,0,0,.18);
+      background:#f0f0f0;
     }
-    .copyBtn:active{transform:translateY(2px)}
-    .qrWrap{display:flex;justify-content:center;margin-top:10px}
-    canvas{max-width:240px;max-height:240px}
+    .tabBtn.active{filter:saturate(1.2);transform:translateY(1px)}
+    .tabLink{background:var(--yellow)}
+    .tabCode{background:#4caf50;color:#fff}
+    .tabQR{background:#f0a92a;color:#fff}
+
+    .modalBody{padding:12px 16px 18px}
+    .box{
+      background:#f7f7f7;border:3px solid rgba(0,0,0,.12);
+      border-radius:18px;padding:14px;
+      text-align:center;
+    }
+    .bigText{font-weight:900;font-size:18px;margin-bottom:10px}
+    .url{
+      direction:ltr;
+      font-weight:900;
+      font-size:14px;
+      background:#fff;
+      border:2px dashed rgba(0,0,0,.18);
+      border-radius:14px;
+      padding:10px 12px;
+      word-break:break-all;
+      user-select:text;
+      margin:8px 0 12px;
+    }
+    .copyBtn{
+      width:min(320px,100%);
+      background:var(--blue);
+      border:4px solid var(--black);
+      border-radius:999px;
+      padding:12px 12px;
+      font-weight:900;font-size:22px;
+      cursor:pointer;
+      box-shadow:0 8px 0 rgba(0,0,0,.18);
+    }
+    .qrImg{width:240px;height:240px;object-fit:contain;margin:10px auto 0;display:block;background:#fff;border-radius:18px;border:2px solid rgba(0,0,0,.12);padding:10px}
+    .roomCode{
+      font-weight:900;font-size:46px;letter-spacing:2px;
+      background:#fff;border-radius:18px;border:2px solid rgba(0,0,0,.12);
+      padding:12px 12px;margin-top:10px;
+    }
+
+    /* Toast */
+    .toast{
+      position:fixed;left:50%;bottom:92px;transform:translateX(-50%);
+      background:#111;color:#fff;
+      padding:10px 14px;border-radius:14px;
+      font-weight:900;font-size:18px;
+      opacity:0;pointer-events:none;
+      transition:opacity .18s ease, transform .18s ease;
+      z-index:60;
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
   </style>
 </head>
 <body>
 
   <div class="wrap">
     <div class="card">
-      <img class="logo" src="logo.PNG" alt="logo">
-      <h1>العب من اجهزة متعددة</h1>
+      <div class="top">
+        <img class="logo" src="logo.PNG" alt="logo">
+        <h1>اللعب من اجهزة متعددة</h1>
+      </div>
 
       <div class="panel">
-        <div class="titleInside">اسماء اللاعبين</div>
+        <div class="panelTitle">اسماء اللاعبين</div>
 
-        <div class="bigArea">
-          <div id="playersBox" class="listBox">بانتظار اللاعبين…</div>
+        <div id="listBox" class="listBox">
+          <div id="emptyHint" class="emptyHint">بانتظار اللاعبين...</div>
         </div>
 
-        <div class="btnRow">
-          <button id="shareBtn" class="btnBig btnShare" type="button">مشاركة اللاعبين</button>
-          <button id="startBtn" class="btnBig btnStart" type="button">ابدأ اللعب</button>
-        </div>
+        <button id="shareBtn" class="btn btnShare" type="button">مشاركة اللاعبين</button>
+        <button id="startBtn" class="btn btnStart" type="button" disabled>ابدأ اللعب</button>
       </div>
     </div>
   </div>
 
-  <button class="homeBtn" type="button" onclick="location.href='index.html'" aria-label="الصفحة الرئيسية">
-    <svg class="homeIcon" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M3 10.5 12 3l9 7.5"></path>
+  <!-- Home -->
+  <button class="homeBtn" type="button" onclick="location.href='index.html'" aria-label="الرئيسية">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 10.5L12 3l9 7.5"></path>
       <path d="M5 10v10h14V10"></path>
-      <path d="M9 20v-6h6v6"></path>
+      <path d="M9 20v-7h6v7"></path>
     </svg>
   </button>
 
-  <!-- نافذة مشاركة اللاعبين -->
+  <!-- Share Modal -->
   <div id="overlay" class="overlay" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true">
-      <div class="modalHead">
-        <button id="closeBtn" class="closeX" type="button">×</button>
+      <div class="modalHeader">
         <div class="modalTitle">مشاركة اللعبة</div>
+        <button id="closeBtn" class="closeX" type="button">×</button>
       </div>
 
       <div class="tabs">
-        <button class="tab link" type="button" data-tab="link">رابط</button>
-        <button class="tab code" type="button" data-tab="code">رمز</button>
-        <button class="tab qr" type="button" data-tab="qr">باركود</button>
+        <button id="tabLink" class="tabBtn tabLink active" type="button">رابط</button>
+        <button id="tabCode" class="tabBtn tabCode" type="button">رمز</button>
+        <button id="tabQR" class="tabBtn tabQR" type="button">باركود</button>
       </div>
 
-      <div class="content">
-        <div id="contentBox"></div>
+      <div class="modalBody">
+        <div id="boxLink" class="box">
+          <div class="bigText">رابط اللعبة</div>
+          <div id="joinUrl" class="url">...</div>
+          <button id="copyLinkBtn" class="copyBtn" type="button">انسخ الرابط</button>
+        </div>
+
+        <div id="boxCode" class="box" style="display:none">
+          <div class="bigText">رمز الغرفة</div>
+          <div id="roomCode" class="roomCode">000000</div>
+          <button id="copyCodeBtn" class="copyBtn" type="button">انسخ الرمز</button>
+        </div>
+
+        <div id="boxQR" class="box" style="display:none">
+          <div class="bigText">باركود QR</div>
+          <img id="qrImg" class="qrImg" alt="QR">
+          <div style="margin-top:10px;font-weight:900;color:#333;direction:ltr;font-size:12px" id="qrUrlSmall"></div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- مكتبة QR -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <div id="toast" class="toast">تم النسخ ✅</div>
 
-<script>
-  localStorage.setItem('bara_mode','multi');
+  <script>
+    // ---------- ROOM + PLAYERS STORAGE ----------
+    const listBox = document.getElementById('listBox');
+    const emptyHint = document.getElementById('emptyHint');
+    const startBtn = document.getElementById('startBtn');
 
-  // رمز غرفة (6 أرقام)
-  function genRoom(){
-    return String(Math.floor(100000 + Math.random()*900000));
-  }
-  let room = localStorage.getItem('bara_room');
-  if(!room){
-    room = genRoom();
-    localStorage.setItem('bara_room', room);
-  }
-
-  const playersBox = document.getElementById('playersBox');
-
-  // (مبدئي) قراءة أسماء اللاعبين من التخزين — للواجهة فقط
-  function readPlayers(){
-    try{
-      const arr = JSON.parse(localStorage.getItem('bara_players_multi') || "[]");
-      return Array.isArray(arr) ? arr : [];
-    }catch(e){ return []; }
-  }
-  function renderPlayers(){
-    const players = readPlayers();
-    if(players.length === 0){
-      playersBox.textContent = "بانتظار اللاعبين…";
-      return;
+    // Room code ثابت للمقدم داخل جهازه
+    let room = new URLSearchParams(location.search).get('room');
+    if(!room){
+      room = String(Math.floor(100000 + Math.random()*900000));
+      location.replace('players.html?room=' + room);
     }
-    playersBox.innerHTML = players.map(p => `<div style="color:#fff;font-size:28px;margin:8px 0;font-weight:900">${p}</div>`).join("");
-  }
-  renderPlayers();
 
-  // مشاركة
-  const shareBtn = document.getElementById('shareBtn');
-  const startBtn = document.getElementById('startBtn');
-  const overlay = document.getElementById('overlay');
-  const closeBtn = document.getElementById('closeBtn');
-  const contentBox = document.getElementById('contentBox');
+    const KEY = 'bara_room_' + room + '_players';
 
-  const joinUrl = () => {
-    const base = location.origin + location.pathname.replace(/\/[^\/]*$/, '/');
-    return base + "join.html?room=" + encodeURIComponent(room);
-  };
+    function getPlayers(){
+      try{
+        return JSON.parse(localStorage.getItem(KEY) || '[]');
+      }catch(e){ return []; }
+    }
+    function setPlayers(arr){
+      localStorage.setItem(KEY, JSON.stringify(arr));
+      render();
+    }
 
-  function showLink(){
-    const url = joinUrl();
-    contentBox.innerHTML = `
-      <div class="box">
-        <div style="font-weight:900;margin-bottom:10px">رابط اللعبة</div>
-        <div style="font-size:18px;font-weight:800">${url}</div>
-        <button class="copyBtn" type="button" id="copyLink">نسخ الرابط</button>
-      </div>
-    `;
-    document.getElementById('copyLink').onclick = async () => {
-      try{ await navigator.clipboard.writeText(url); }catch(e){}
-    };
-  }
+    function render(){
+      const players = getPlayers().filter(x => (x||'').trim().length>0);
+      listBox.innerHTML = '';
+      if(players.length === 0){
+        listBox.appendChild(emptyHint);
+        emptyHint.style.display = 'block';
+      }else{
+        emptyHint.style.display = 'none';
+        players.forEach(name=>{
+          const div = document.createElement('div');
+          div.className = 'nameItem';
+          div.textContent = name;
+          listBox.appendChild(div);
+        });
+      }
+      // تفعيل البدء فقط إذا 3 لاعبين على الأقل
+      startBtn.disabled = players.length < 3;
+    }
 
-  function showCode(){
-    contentBox.innerHTML = `
-      <div class="box">
-        <div class="roomLabel">رمز الغرفة</div>
-        <div class="roomCode">${room}</div>
-        <button class="copyBtn" type="button" id="copyCode">نسخ الرمز</button>
-      </div>
-    `;
-    document.getElementById('copyCode').onclick = async () => {
-      try{ await navigator.clipboard.writeText(room); }catch(e){}
-    };
-  }
+    // تحديث إذا لاعب دخل من صفحة join (نفس المتصفح أو تبويب آخر)
+    window.addEventListener('storage', (e)=>{
+      if(e.key === KEY) render();
+    });
 
-  function showQR(){
-    const url = joinUrl();
-    contentBox.innerHTML = `
-      <div class="box">
-        <div style="font-weight:900;margin-bottom:10px">باركود QR</div>
-        <div class="qrWrap"><canvas id="qrc"></canvas></div>
-        <div style="margin-top:10px;font-size:16px;color:#666;font-weight:900">${url}</div>
-      </div>
-    `;
-    const canvas = document.getElementById('qrc');
-    QRCode.toCanvas(canvas, url, { width: 240, margin: 1 }, function(){});
-  }
+    // ---------- START ----------
+    startBtn.addEventListener('click', ()=>{
+      // حفظ آخر غرفة/نمط
+      localStorage.setItem('bara_mode', 'multi');
+      localStorage.setItem('bara_room', room);
+      location.href = 'categories.html?room=' + room + '&mode=multi';
+    });
 
-  function openModal(){
-    overlay.classList.add('show');
-    overlay.setAttribute('aria-hidden','false');
-    showCode(); // افتراضي
-  }
-  function closeModal(){
-    overlay.classList.remove('show');
-    overlay.setAttribute('aria-hidden','true');
-  }
+    // ---------- SHARE MODAL ----------
+    const overlay = document.getElementById('overlay');
+    const shareBtn = document.getElementById('shareBtn');
+    const closeBtn = document.getElementById('closeBtn');
 
-  shareBtn.onclick = openModal;
-  closeBtn.onclick = closeModal;
-  overlay.onclick = (e) => { if(e.target===overlay) closeModal(); };
+    const tabLink = document.getElementById('tabLink');
+    const tabCode = document.getElementById('tabCode');
+    const tabQR   = document.getElementById('tabQR');
 
-  document.querySelectorAll('.tab').forEach(btn=>{
-    btn.onclick = () => {
-      const t = btn.dataset.tab;
-      if(t==='link') showLink();
-      if(t==='code') showCode();
-      if(t==='qr') showQR();
-    };
-  });
+    const boxLink = document.getElementById('boxLink');
+    const boxCode = document.getElementById('boxCode');
+    const boxQR   = document.getElementById('boxQR');
 
-  startBtn.onclick = () => {
-    location.href = 'categories.html';
-  };
-</script>
+    const joinUrlEl = document.getElementById('joinUrl');
+    const roomCodeEl = document.getElementById('roomCode');
+    const qrImg = document.getElementById('qrImg');
+    const qrUrlSmall = document.getElementById('qrUrlSmall');
+
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    const copyCodeBtn = document.getElementById('copyCodeBtn');
+
+    const toast = document.getElementById('toast');
+    let toastTimer = null;
+    function showToast(msg){
+      toast.textContent = msg || 'تم النسخ ✅';
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=>toast.classList.remove('show'), 1400);
+    }
+
+    function joinUrl(){
+      const base = location.origin + location.pathname.replace(/\/[^\/]*$/, '/');
+      return base + 'join.html?room=' + room;
+    }
+
+    function setTab(which){
+      tabLink.classList.toggle('active', which==='link');
+      tabCode.classList.toggle('active', which==='code');
+      tabQR.classList.toggle('active', which==='qr');
+      boxLink.style.display = (which==='link') ? 'block' : 'none';
+      boxCode.style.display = (which==='code') ? 'block' : 'none';
+      boxQR.style.display   = (which==='qr')   ? 'block' : 'none';
+    }
+
+    function openModal(){
+      const url = joinUrl();
+      joinUrlEl.textContent = url;
+      roomCodeEl.textContent = room;
+
+      // QR (صورة حقيقية)
+      const qrURL = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' + encodeURIComponent(url);
+      qrImg.src = qrURL;
+      qrUrlSmall.textContent = url;
+
+      overlay.classList.add('show');
+      overlay.setAttribute('aria-hidden','false');
+      setTab('link');
+    }
+    function closeModal(){
+      overlay.classList.remove('show');
+      overlay.setAttribute('aria-hidden','true');
+    }
+
+    shareBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeModal(); });
+
+    tabLink.addEventListener('click', ()=>setTab('link'));
+    tabCode.addEventListener('click', ()=>setTab('code'));
+    tabQR.addEventListener('click', ()=>setTab('qr'));
+
+    async function copyText(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        showToast('تم النسخ ✅');
+      }catch(e){
+        // fallback
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('تم النسخ ✅');
+      }
+    }
+
+    copyLinkBtn.addEventListener('click', ()=>copyText(joinUrl()));
+    copyCodeBtn.addEventListener('click', ()=>copyText(room));
+
+    // أول تشغيل
+    render();
+  </script>
 </body>
 </html>
