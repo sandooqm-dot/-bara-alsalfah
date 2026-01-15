@@ -10,115 +10,79 @@
   <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@700;800&display=swap" rel="stylesheet">
 
   <style>
-    :root{--bg:#e9e4d6;--olive:#3f4a1f;--panel:#6e7b46;--black:#111;--yellow:#ffd21a;--blue:#bfe4ff}
+    :root{--bg:#e9e4d6;--olive:#4e5a2a;--panel:#6e7b46;--black:#111;--yellow:#ffd21a;--btnShadow:rgba(0,0,0,.22)}
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);font-family:"Baloo Bhaijaan 2",Arial,sans-serif;color:#111}
-    .wrap{min-height:100svh;display:flex;justify-content:center;padding:18px 14px 22px}
-    .card{width:min(560px,100%);position:relative}
-    .top{position:relative;padding:8px 6px 0;min-height:96px}
-    .logo{position:absolute;left:6px;top:6px;width:78px;height:78px;object-fit:contain;pointer-events:none}
-    h1{margin:78px 0 16px;text-align:center;color:var(--olive);font-weight:900;font-size:44px;padding:0 86px}
-    .panel{
-      background:var(--panel);border-radius:28px;padding:18px 16px 16px;margin:0 6px 18px;
-      min-height:62svh;display:flex;flex-direction:column;gap:14px
+    body{margin:0;background:var(--bg);font-family:"Baloo Bhaijaan 2",Arial,sans-serif;color:var(--black)}
+    .page{min-height:100svh;display:flex;justify-content:center;align-items:center;padding:18px}
+    .card{
+      width:min(520px,100%);
+      border:6px solid var(--olive);
+      border-radius:26px;
+      padding:18px 16px;
     }
-    .panelTitle{color:#fff;font-weight:900;text-align:center;font-size:34px;margin-top:2px}
-    .input{
+    h1{text-align:center;color:var(--olive);font-size:44px;margin:6px 0 10px;font-weight:900}
+    .panel{background:var(--panel);border-radius:22px;padding:18px;border:0;box-shadow:0 10px 0 rgba(0,0,0,.12)}
+    .label{color:#fff;text-align:center;font-size:26px;font-weight:900;margin-bottom:10px}
+    input{
       width:100%;
-      background:var(--bg);
-      border:5px solid var(--black);
+      background:#fff;
       border-radius:999px;
-      padding:14px 14px;
-      font-weight:900;
+      border:5px solid rgba(0,0,0,.35);
+      padding:14px 16px;
       font-size:28px;
+      font-weight:900;
       text-align:center;
       outline:none;
-      box-shadow:0 8px 0 rgba(0,0,0,.18);
     }
-    .btn{
+    button{
       width:100%;
       background:var(--yellow);
-      border:5px solid var(--black);
+      color:#000;
+      border:6px solid var(--black);
       border-radius:999px;
-      padding:16px 14px;
+      font-size:40px;
       font-weight:900;
-      font-size:34px;
+      padding:14px 14px;
+      box-shadow:0 12px 0 var(--btnShadow);
       cursor:pointer;
-      box-shadow:0 10px 0 rgba(0,0,0,.18);
+      margin-top:14px;
     }
-    .btn:active{transform:translateY(2px)}
-    .hint{color:rgba(255,255,255,.8);font-weight:900;text-align:center;font-size:20px}
-    .homeBtn{
-      position:fixed;left:14px;bottom:14px;width:64px;height:64px;border-radius:18px;
-      border:5px solid var(--black);background:var(--blue);box-shadow:0 10px 0 rgba(0,0,0,.18);
-      display:grid;place-items:center;z-index:40;cursor:pointer;
-    }
-    .homeBtn svg{width:34px;height:34px}
+    button:active{transform:translateY(2px)}
+    .msg{color:#fff;text-align:center;font-weight:900;margin-top:10px;display:none}
   </style>
 </head>
 <body>
-
-  <div class="wrap">
+  <div class="page">
     <div class="card">
-      <div class="top">
-        <img class="logo" src="logo.PNG" alt="logo">
-        <h1>الانضمام للغرفة</h1>
-      </div>
-
+      <h1>انضم للغرفة</h1>
       <div class="panel">
-        <div class="panelTitle">اكتب اسمك</div>
-        <input id="nameInput" class="input" placeholder="اسم اللاعب" autocomplete="off" />
-        <div class="hint" id="roomHint"></div>
-        <button id="joinBtn" class="btn" type="button">انضم</button>
+        <div class="label">اكتب اسمك ثم انضم</div>
+        <input id="name" placeholder="اسم اللاعب" />
+        <button id="joinBtn">انضمام</button>
+        <div id="ok" class="msg">تم الانضمام ✅ ارجع للمضيف</div>
       </div>
     </div>
   </div>
 
-  <button class="homeBtn" type="button" onclick="location.href='index.html'" aria-label="الرئيسية">
-    <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M3 10.5L12 3l9 7.5"></path>
-      <path d="M5 10v10h14V10"></path>
-      <path d="M9 20v-7h6v7"></path>
-    </svg>
-  </button>
-
   <script>
     const params = new URLSearchParams(location.search);
     const room = params.get('room') || '';
-    document.getElementById('roomHint').textContent = room ? ('رمز الغرفة: ' + room) : 'لا يوجد رمز غرفة';
+    const name = document.getElementById('name');
+    const ok = document.getElementById('ok');
 
-    const KEY = 'bara_room_' + room + '_players';
+    document.getElementById('joinBtn').addEventListener('click', ()=>{
+      const n = (name.value||'').trim();
+      if(!room || !n) return;
 
-    function getPlayers(){
-      try{ return JSON.parse(localStorage.getItem(KEY) || '[]'); }catch(e){ return []; }
-    }
-    function setPlayers(arr){
-      localStorage.setItem(KEY, JSON.stringify(arr));
-    }
+      const key = `bara_room_${room}_players`;
+      let players = [];
+      try{ players = JSON.parse(localStorage.getItem(key)||'[]'); }catch(e){}
+      if(!players.includes(n)) players.push(n);
+      localStorage.setItem(key, JSON.stringify(players));
 
-    const nameInput = document.getElementById('nameInput');
-    const joinBtn = document.getElementById('joinBtn');
-
-    function join(){
-      const name = (nameInput.value || '').trim();
-      if(!room) return alert('رمز الغرفة غير موجود');
-      if(name.length < 2) return alert('اكتب اسم صحيح');
-
-      const list = getPlayers();
-      // منع تكرار نفس الاسم
-      if(list.some(x => (x||'').trim() === name)) {
-        alert('الاسم مستخدم، اختر اسم آخر');
-        return;
-      }
-      list.push(name);
-      setPlayers(list);
-
-      // بعد الانضمام: ينتقل لصفحة انتظار/عرض بسيط
-      location.href = 'waiting.html?room=' + room + '&name=' + encodeURIComponent(name);
-    }
-
-    joinBtn.addEventListener('click', join);
-    nameInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') join(); });
+      ok.style.display='block';
+      setTimeout(()=> ok.style.display='none', 1600);
+    });
   </script>
 </body>
 </html>
