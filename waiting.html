@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>انتظار</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{--bg:#e9e4d6;--olive:#3f4a1f;--panel:#6e7b46;--black:#111;--blue:#bfe4ff}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);font-family:"Baloo Bhaijaan 2",Arial,sans-serif;color:#111}
+    .wrap{min-height:100svh;display:flex;justify-content:center;padding:18px 14px 22px}
+    .card{width:min(560px,100%);position:relative}
+    .top{position:relative;padding:8px 6px 0;min-height:96px}
+    .logo{position:absolute;left:6px;top:6px;width:78px;height:78px;object-fit:contain;pointer-events:none}
+    h1{margin:78px 0 16px;text-align:center;color:var(--olive);font-weight:900;font-size:44px;padding:0 86px}
+    .panel{
+      background:var(--panel);border-radius:28px;padding:22px 16px;margin:0 6px;
+      min-height:62svh;display:flex;flex-direction:column;gap:14px;justify-content:center;align-items:center
+    }
+    .txt{color:#fff;font-weight:900;font-size:28px;text-align:center}
+    .sub{color:rgba(255,255,255,.8);font-weight:900;font-size:22px;text-align:center}
+    .homeBtn{
+      position:fixed;left:14px;bottom:14px;width:64px;height:64px;border-radius:18px;
+      border:5px solid var(--black);background:var(--blue);box-shadow:0 10px 0 rgba(0,0,0,.18);
+      display:grid;place-items:center;z-index:40;cursor:pointer;
+    }
+    .homeBtn svg{width:34px;height:34px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <img class="logo" src="logo.PNG" alt="logo">
+        <h1>بانتظار البدء</h1>
+      </div>
+
+      <div class="panel">
+        <div class="txt" id="nameTxt">تم الانضمام</div>
+        <div class="sub" id="roomTxt"></div>
+        <div class="sub">إذا بدأ المقدم اللعب، سيكمل الجميع</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="homeBtn" type="button" onclick="location.href='index.html'" aria-label="الرئيسية">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 10.5L12 3l9 7.5"></path>
+      <path d="M5 10v10h14V10"></path>
+      <path d="M9 20v-7h6v7"></path>
+    </svg>
+  </button>
+
+  <script>
+    const p = new URLSearchParams(location.search);
+    const room = p.get('room') || '';
+    const name = p.get('name') || '';
+    document.getElementById('nameTxt').textContent = name ? ('تم انضمامك: ' + name) : 'تم الانضمام';
+    document.getElementById('roomTxt').textContent = room ? ('رمز الغرفة: ' + room) : '';
+  </script>
+</body>
+</html>
