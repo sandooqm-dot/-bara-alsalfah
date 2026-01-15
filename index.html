@@ -12,257 +12,291 @@
   <style>
     :root{
       --bg:#e9e4d6;
-      --olive:#3f4a1f;
+      --olive:#4e5a2a;
       --panel:#6e7b46;
-      --cream:#ebe6d9;
+      --card:#efe9dd;
       --black:#111;
+      --blueText:#1f7ad9;
       --yellow:#ffd21a;
-      --selectFill:#d8f0ff;     /* لون تمييز النمط */
-      --shadow: 0 12px 0 rgba(0,0,0,.22);
+      --btnShadow:rgba(0,0,0,.22);
+      --selected:#d8f0ff;
     }
+
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);font-family:"Baloo Bhaijaan 2",Arial,sans-serif;color:#111}
+    body{
+      margin:0;
+      background:var(--bg);
+      font-family:"Baloo Bhaijaan 2", Arial, sans-serif;
+      color:var(--black);
+    }
 
-    .wrap{min-height:100svh;display:flex;justify-content:center;padding:18px 14px 22px}
-    .card{width:min(560px,100%);position:relative}
+    .page{
+      min-height:100svh;
+      display:flex;
+      justify-content:center;
+      padding:18px 16px 28px;
+    }
 
-    .top{position:relative;padding:8px 6px 0;min-height:96px}
+    .frame{
+      width:min(560px,100%);
+      border-radius:26px;
+      border:6px solid var(--olive);
+      padding:18px 14px 22px;
+      position:relative;
+      background:transparent;
+    }
+
+    /* logo bigger 15% */
     .logo{
-      position:absolute;left:6px;top:6px;
-      width:78px;height:78px;object-fit:contain;
-      pointer-events:none;user-select:none;
+      position:absolute;
+      left:14px;
+      top:10px;
+      width:92px; /* كان 80 تقريبًا */
+      height:auto;
+      pointer-events:none;
+      user-select:none;
     }
+
     h1{
-      margin:78px 0 16px;
+      margin:56px 0 18px;
       text-align:center;
+      font-size:46px;
       color:var(--olive);
+      letter-spacing:.5px;
       font-weight:900;
-      font-size:44px;
-      padding:0 86px;
     }
 
+    /* الصندوق الأخضر */
     .panel{
+      margin:0 auto;
+      width:92%; /* تضييق من اليمين واليسار */
       background:var(--panel);
-      border-radius:28px;
-      padding:26px 18px 26px;
-      margin:0 6px 14px;
+      border-radius:26px;
+      padding:22px 16px;
+      box-shadow:0 10px 0 rgba(0,0,0,.12);
     }
 
-    /* أزرار داخل الصندوق */
     .btn{
       width:100%;
-      border:6px solid var(--black);
-      border-radius:999px;
-      height:88px;
-      padding:0 16px;
+      border:none;
+      background:var(--card);
+      color:var(--black);
+      font-size:40px;
       font-weight:900;
-      font-size:36px;
+      padding:18px 12px;
+      border-radius:999px;
       cursor:pointer;
-      box-shadow:var(--shadow);
-      background:var(--cream);
-      margin:18px 0;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:#000; /* ✅ النص أسود */
-      transition:transform .08s ease, filter .12s ease, background .12s ease, box-shadow .12s ease;
+      border:6px solid var(--black);
+      box-shadow:0 10px 0 var(--btnShadow);
+      transition:transform .05s ease, background .15s ease;
+      margin:14px 0;
     }
     .btn:active{transform:translateY(2px)}
 
-    /* ✅ دلالة اختيار النمط */
-    .btnSelected{
-      background:var(--selectFill);
-      box-shadow: var(--shadow), 0 0 0 6px rgba(255,255,255,.35) inset;
+    /* أزرار اختيار النمط */
+    .mode-btn{
+      position:relative;
+      overflow:hidden;
     }
+    .mode-btn .label{
+      color:var(--blueText);
+      font-weight:900;
+    }
+    .mode-btn.selected{
+      background:var(--selected);
+    }
+    .mode-btn.selected .label{
+      color:#000;
+    }
+
+    /* زر التعليمات داخل نفس الصندوق */
+    .how-btn .label{ color:var(--blueText); }
 
     /* زر ابدأ اللعب خارج الصندوق */
-    .startWrap{
-      display:flex;
-      justify-content:center;
-      margin:8px 6px 0;
+    .start-wrap{
+      width:92%;
+      margin:16px auto 0;
     }
-    .btnStart{
-      width:min(440px,100%);
+    .btn-yellow{
+      width:100%;
+      background:var(--yellow);
+      color:#000; /* نص أسود */
       border:6px solid var(--black);
       border-radius:999px;
-      height:86px;
-      background:var(--yellow);
+      font-size:44px;
       font-weight:900;
-      font-size:42px;
-      color:#000; /* ✅ النص أسود */
+      padding:18px 14px;
+      box-shadow:0 12px 0 var(--btnShadow);
       cursor:pointer;
-      box-shadow:var(--shadow);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      transition:transform .08s ease;
+      opacity:.55;
+      pointer-events:none;
     }
-    .btnStart:active{transform:translateY(2px)}
+    .btn-yellow.enabled{
+      opacity:1;
+      pointer-events:auto;
+    }
+    .btn-yellow:active{transform:translateY(2px)}
 
-    /* ===== نافذة التعليمات (Popup) ===== */
+    /* نافذة التعليمات */
     .overlay{
-      position:fixed;inset:0;
+      position:fixed; inset:0;
       background:rgba(0,0,0,.35);
       display:none;
       align-items:center;
       justify-content:center;
       padding:18px;
-      z-index:9999;
+      z-index:50;
     }
     .overlay.show{display:flex}
     .modal{
-      width:min(520px,100%);
-      background:#fff;
-      border-radius:18px;
-      border:4px solid rgba(0,0,0,.2);
-      box-shadow:0 18px 40px rgba(0,0,0,.25);
-      overflow:hidden;
+      width:min(560px,100%);
+      background:var(--panel);
+      border-radius:26px;
+      border:6px solid var(--olive);
+      padding:18px;
+      box-shadow:0 12px 0 rgba(0,0,0,.18);
+      position:relative;
     }
-    .modalHead{
-      padding:14px 16px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
+    .modal .title{
+      background:#e7d9b5;
+      color:var(--olive);
+      border-radius:22px;
+      padding:10px 14px;
+      font-size:44px;
       font-weight:900;
-      font-size:26px;
-      color:#111;
-      background:#f6f6f6;
-      border-bottom:2px solid rgba(0,0,0,.08);
+      display:inline-block;
+      margin:4px auto 14px;
     }
-    .closeX{
-      width:42px;height:42px;
-      border-radius:10px;
-      border:none;
-      background:transparent;
-      font-size:34px;
-      line-height:1;
-      cursor:pointer;
-      color:#d11;
-      font-weight:900;
-    }
-    .modalBody{
-      padding:18px 18px 22px;
-      color:#111;
+    .modal .body{
+      background:var(--panel);
+      border-radius:20px;
+      color:#fff;
       font-size:20px;
       line-height:1.9;
+      padding:14px 14px 8px;
     }
-    .modalBtn{
-      margin:14px auto 0;
-      width:min(360px,100%);
-      height:78px;
-      border-radius:999px;
-      border:6px solid var(--black);
+    .modal .back{
+      margin-top:16px;
       background:var(--yellow);
-      box-shadow:var(--shadow);
-      font-weight:900;
-      font-size:38px;
-      cursor:pointer;
       color:#000;
-      display:flex;
-      align-items:center;
-      justify-content:center;
+      border:6px solid var(--black);
+      border-radius:999px;
+      font-size:44px;
+      font-weight:900;
+      padding:14px 14px;
+      width:100%;
+      cursor:pointer;
+      box-shadow:0 12px 0 var(--btnShadow);
     }
-    .modalBtn:active{transform:translateY(2px)}
+
+    @media (max-width:430px){
+      h1{font-size:40px}
+      .btn{font-size:36px}
+      .btn-yellow{font-size:40px}
+      .logo{width:84px}
+    }
   </style>
 </head>
-
 <body>
-  <div class="wrap">
-    <div class="card">
-      <div class="top">
-        <img class="logo" src="logo.PNG" alt="logo">
-        <h1>لعبة برا السالفة</h1>
-      </div>
+
+  <div class="page">
+    <div class="frame">
+      <img class="logo" src="logo.PNG" alt="logo">
+      <h1>لعبة برا السالفة</h1>
 
       <div class="panel">
-        <button id="oneBtn" class="btn" type="button">جهاز واحد</button>
-        <button id="multiBtn" class="btn" type="button">اجهزة متعددة</button>
-        <button id="howBtn" class="btn" type="button">تعليمات اللعبة</button>
+        <button id="modeSingle" class="btn mode-btn" type="button">
+          <span class="label">جهاز واحد</span>
+        </button>
+
+        <button id="modeMulti" class="btn mode-btn" type="button">
+          <span class="label">أجهزة متعددة</span>
+        </button>
+
+        <button id="howBtn" class="btn how-btn" type="button">
+          <span class="label">تعليمات اللعبة</span>
+        </button>
       </div>
 
-      <!-- ✅ زر ابدأ اللعب خارج الصندوق -->
-      <div class="startWrap">
-        <button id="startBtn" class="btnStart" type="button">ابدأ اللعب</button>
+      <div class="start-wrap">
+        <button id="startBtn" class="btn-yellow" type="button">ابدأ اللعب</button>
       </div>
+
     </div>
   </div>
 
-  <!-- ✅ Popup التعليمات (بدون how.html) -->
-  <div id="overlay" class="overlay" role="dialog" aria-modal="true">
-    <div class="modal" id="modal" onclick="event.stopPropagation()">
-      <div class="modalHead">
-        <span>التعليمات</span>
-        <button class="closeX" id="closeHow" type="button">×</button>
+  <!-- تعليمات (منبثق) -->
+  <div id="howOverlay" class="overlay" role="dialog" aria-modal="true">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div style="text-align:center">
+        <div class="title">التعليمات</div>
       </div>
-      <div class="modalBody">
-        <div style="font-weight:900;margin-bottom:10px;">طريقة اللعب:</div>
-        <div>اللعبة تعتمد على “سالفة/موضوع” مخفي.</div>
-        <div>في كل جولة لاعب واحد يعرف السالفة، والباقين برا السالفة.</div>
-        <div>كل لاعب يسأل سؤال سريع أو يجاوب حسب دوره.</div>
-        <div>اللي يعرف السالفة يجاوب بدون ما يفضح الموضوع، والباقين يحاولون يفهمون السالفة.</div>
-        <div style="margin-top:10px;">بعد انتهاء الأدوار/الوقت يبدأ التصويت: كل اللاعبين يصوتون مين هو اللي داخل السالفة.</div>
-        <div style="margin-top:10px;font-weight:900;">طرق اللعب:</div>
-        <div>1) جهاز واحد: تلعبون كلكم على جوال واحد.</div>
-        <div>2) أجهزة متعددة: كل لاعب يدخل من جواله وكل شيء يتحدث عند الجميع.</div>
 
-        <button class="modalBtn" id="backHow" type="button">رجوع</button>
+      <div class="body">
+        <div style="font-weight:900; margin-bottom:6px;">طريقة اللعب:</div>
+        اللعبة تعتمد على “سالفة/موضوع” مخفي.<br>
+        في كل جولة: لاعب واحد يعرف السالفة، والباقين برا السالفة.<br><br>
+
+        <div style="font-weight:900; margin-bottom:6px;">الأدوار:</div>
+        كل لاعب يسأل سؤال سريع أو يجاوب حسب دوره.<br>
+        اللي يعرف السالفة يجاوب بذكاء بدون ما يفضح الموضوع، والباقين يحاولون يفهمون من الإجابات.<br><br>
+
+        <div style="font-weight:900; margin-bottom:6px;">التصويت:</div>
+        بعد انتهاء الأدوار/الوقت يبدأ التصويت: مين برا السالفة؟<br>
+        إذا انكشف برا السالفة يفوز اللي يعرفون السالفة، وإذا ما انكشف يفوز برا السالفة.<br><br>
+
+        <div style="font-weight:900; margin-bottom:6px;">طرق اللعب:</div>
+        1) جهاز واحد: تلعبون على جهاز واحد وينتقل الدور بينكم.<br>
+        2) أجهزة متعددة: كل لاعب من جواله وكل شيء يتحدّث عند الجميع.
       </div>
+
+      <button id="howBack" class="back" type="button">رجوع</button>
     </div>
   </div>
 
   <script>
-    const oneBtn = document.getElementById('oneBtn');
-    const multiBtn = document.getElementById('multiBtn');
-    const startBtn = document.getElementById('startBtn');
-    const howBtn = document.getElementById('howBtn');
+    const modeSingle = document.getElementById('modeSingle');
+    const modeMulti  = document.getElementById('modeMulti');
+    const startBtn   = document.getElementById('startBtn');
 
-    const overlay = document.getElementById('overlay');
-    const closeHow = document.getElementById('closeHow');
-    const backHow = document.getElementById('backHow');
+    let selectedMode = localStorage.getItem('bara_mode') || ''; // 'single' | 'multi'
+    applyModeUI();
 
-    let mode = localStorage.getItem('bara_mode_select') || 'one';
-
-    function paint(){
-      if(mode === 'multi'){
-        multiBtn.classList.add('btnSelected');
-        oneBtn.classList.remove('btnSelected');
-      }else{
-        oneBtn.classList.add('btnSelected');
-        multiBtn.classList.remove('btnSelected');
-      }
+    function applyModeUI(){
+      modeSingle.classList.toggle('selected', selectedMode === 'single');
+      modeMulti.classList.toggle('selected', selectedMode === 'multi');
+      startBtn.classList.toggle('enabled', !!selectedMode);
+      startBtn.classList.toggle('btn-yellow', true);
+      if(!!selectedMode) startBtn.classList.add('enabled');
+      else startBtn.classList.remove('enabled');
     }
 
-    oneBtn.addEventListener('click', ()=>{
-      mode = 'one';
-      localStorage.setItem('bara_mode_select', mode);
-      paint();
+    modeSingle.addEventListener('click', ()=>{
+      selectedMode = 'single';
+      localStorage.setItem('bara_mode', selectedMode);
+      applyModeUI();
+    });
+    modeMulti.addEventListener('click', ()=>{
+      selectedMode = 'multi';
+      localStorage.setItem('bara_mode', selectedMode);
+      applyModeUI();
     });
 
-    multiBtn.addEventListener('click', ()=>{
-      mode = 'multi';
-      localStorage.setItem('bara_mode_select', mode);
-      paint();
-    });
-
-    // زر ابدأ اللعب ينقل حسب النمط
     startBtn.addEventListener('click', ()=>{
-      if(mode === 'multi'){
-        location.href = 'players.html';
-      }else{
-        location.href = 'single.html';
-      }
+      if(!selectedMode) return;
+      if(selectedMode === 'single') location.href = 'single.html';
+      else location.href = 'multi.html';
     });
 
-    // تعليمات: Popup
-    function openHow(){ overlay.classList.add('show'); }
-    function closeHowFn(){ overlay.classList.remove('show'); }
+    // تعليمات (منبثق)
+    const howBtn = document.getElementById('howBtn');
+    const howOverlay = document.getElementById('howOverlay');
+    const howBack = document.getElementById('howBack');
 
-    howBtn.addEventListener('click', openHow);
-    closeHow.addEventListener('click', closeHowFn);
-    backHow.addEventListener('click', closeHowFn);
-    overlay.addEventListener('click', closeHowFn); // إغلاق عند الضغط خارج النافذة
-
-    paint();
+    howBtn.addEventListener('click', ()=> howOverlay.classList.add('show'));
+    howBack.addEventListener('click', ()=> howOverlay.classList.remove('show'));
+    howOverlay.addEventListener('click', ()=> howOverlay.classList.remove('show'));
   </script>
+
 </body>
 </html>
