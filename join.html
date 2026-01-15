@@ -81,7 +81,10 @@
       localStorage.setItem(key, JSON.stringify(players));
 
       ok.style.display='block';
-      setTimeout(()=> ok.style.display='none', 1600);
+      setTimeout(()=> ok.style.display='none', 600);
+
+      // ✅ بعد الانضمام: روح لصفحة الانتظار
+      location.href = `waiting.html?room=${encodeURIComponent(room)}&name=${encodeURIComponent(n)}`;
     });
   </script>
 </body>
