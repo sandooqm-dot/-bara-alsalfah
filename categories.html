@@ -10,131 +10,135 @@
   <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@700;800&display=swap" rel="stylesheet">
 
   <style>
-    :root{--bg:#e9e4d6;--olive:#4e5a2a;--panel:#6e7b46;--card:#efe9dd;--black:#111;--yellow:#ffd21a;--btnShadow:rgba(0,0,0,.22);--sel:#d8f0ff}
+    :root{--bg:#e9e4d6;--olive:#3f4a1f;--panel:#6e7b46;--black:#111;--yellow:#ffd21a}
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);font-family:"Baloo Bhaijaan 2",Arial,sans-serif;color:var(--black)}
-    .page{min-height:100svh;display:flex;justify-content:center;padding:18px 16px 28px}
-    .frame{width:min(560px,100%);border-radius:26px;border:6px solid var(--olive);padding:18px 14px 22px;position:relative}
-    .logo{position:absolute;left:14px;top:10px;width:92px;height:auto;pointer-events:none}
+    body{margin:0;background:var(--bg);font-family:"Baloo Bhaijaan 2",Arial,sans-serif;color:#111}
+    .wrap{min-height:100svh;display:flex;justify-content:center;padding:18px 14px 30px}
+    .card{width:min(560px,100%);position:relative}
+    .logo{position:absolute;left:8px;top:10px;width:92px;height:92px;object-fit:contain;pointer-events:none}
+    h1{margin:40px 0 10px;text-align:center;color:var(--olive);font-weight:900;font-size:44px}
 
-    .home{
-      position:fixed;left:16px;bottom:16px;width:64px;height:64px;border-radius:50%;
-      background:#bfe0ff;border:5px solid var(--black);display:grid;place-items:center;z-index:10;
-      box-shadow:0 10px 0 rgba(0,0,0,.14); cursor:pointer;
-    }
-    .home svg{width:34px;height:34px}
-
-    h1{margin:56px 0 16px;text-align:center;font-size:44px;color:var(--olive);font-weight:900}
-
-    .panel{width:92%;margin:0 auto;background:var(--panel);border-radius:26px;padding:18px 16px 18px;box-shadow:0 10px 0 rgba(0,0,0,.12)}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .panel{background:var(--panel);border-radius:28px;padding:18px 18px;margin:0 8px 16px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px}
     .cat{
-      background:var(--card);
-      border:6px solid var(--black);
+      background:var(--bg);
+      border:8px solid var(--black);
       border-radius:22px;
-      box-shadow:0 10px 0 var(--btnShadow);
       padding:12px 10px 10px;
+      box-shadow:0 10px 0 rgba(0,0,0,.18);
       cursor:pointer;
+      transition:transform .08s ease;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
       min-height:150px;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-      font-weight:900;
-      font-size:34px;
       text-align:center;
-      position:relative;
     }
-    .cat.selected{background:var(--sel)}
-    .cat img{width:120px;height:78px;object-fit:contain;margin-top:6px}
-    /* تكبير car و zoo شوي */
-    .cat img.big{width:138px;height:86px}
+    .cat:active{transform:translateY(2px)}
+    .cat.active{
+      background:#d7ebc8;
+      box-shadow:0 10px 0 rgba(0,0,0,.18), 0 0 0 8px rgba(255,210,26,.65) inset;
+    }
+    .catTitle{font-weight:900;font-size:30px;margin-bottom:8px}
+    .cat img{width:120px;height:80px;object-fit:contain}
 
-    .startWrap{width:92%;margin:16px auto 0}
-    .btnYellow{
-      width:100%;
-      background:var(--yellow);
-      color:#000;
-      border:6px solid var(--black);
+    .startWrap{display:flex;justify-content:center;margin-top:18px}
+    .btnStart{
+      width:min(420px,100%);background:var(--yellow);
+      border:5px solid var(--black);
       border-radius:999px;
-      font-size:44px;
-      font-weight:900;
-      padding:16px 14px;
-      box-shadow:0 12px 0 var(--btnShadow);
+      padding:16px 16px;
+      font-weight:900;font-size:40px;
+      box-shadow:0 10px 0 rgba(0,0,0,.18);
       cursor:pointer;
       opacity:.55;
-      pointer-events:none;
     }
-    .btnYellow.enabled{opacity:1;pointer-events:auto}
-    .btnYellow:active{transform:translateY(2px)}
+    .btnStart.enabled{opacity:1}
+    .btnStart:active{transform:translateY(2px)}
 
-    @media (max-width:430px){
-      h1{font-size:40px}
-      .cat{font-size:30px}
-      .cat img{width:110px}
-      .btnYellow{font-size:40px}
+    .homeBtn{
+      position:fixed;left:16px;bottom:16px;
+      width:64px;height:64px;border-radius:999px;
+      border:4px solid var(--black);
+      background:#bfe1ff;
+      box-shadow:0 8px 0 rgba(0,0,0,.18);
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;z-index:20;
     }
+    .homeBtn:active{transform:translateY(2px)}
+    .homeIcon{width:34px;height:34px}
   </style>
 </head>
 <body>
 
-  <button class="home" onclick="location.href='index.html'" aria-label="home">
-    <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M3 10.5L12 3l9 7.5"></path>
+  <div class="wrap">
+    <div class="card">
+      <img class="logo" src="logo.PNG" alt="logo">
+      <h1>اختر نوع السالفة</h1>
+
+      <div class="panel">
+        <div class="grid" id="grid"></div>
+
+        <div class="startWrap">
+          <button id="startBtn" class="btnStart" type="button">ابدأ اللعب</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="homeBtn" type="button" onclick="location.href='index.html'" aria-label="الصفحة الرئيسية">
+    <svg class="homeIcon" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 10.5 12 3l9 7.5"></path>
       <path d="M5 10v10h14V10"></path>
       <path d="M9 20v-6h6v6"></path>
     </svg>
   </button>
 
-  <div class="page">
-    <div class="frame">
-      <img class="logo" src="logo.PNG" alt="logo">
-      <h1>اختر نوع السالفة</h1>
+<script>
+  const cats = [
+    { id:'eat',  name:'مأكولات',      img:'eat.PNG'  },
+    { id:'zoo',  name:'حيوانات',      img:'zoo.PNG'  },
+    { id:'play', name:'لاعبين',       img:'play.PNG' },
+    { id:'car',  name:'سيارات',       img:'car.PNG'  },
+    { id:'frot', name:'فواكة وخضار',  img:'frot.PNG' },
+    { id:'cola', name:'مشروبات',      img:'cola.PNG' },
+  ];
 
-      <div class="panel">
-        <div class="grid" id="grid">
-          <div class="cat" data-key="eat">مأكولات<img src="eat.PNG" alt=""></div>
-          <div class="cat" data-key="zoo">حيوانات<img class="big" src="zoo.PNG" alt=""></div>
+  const grid = document.getElementById('grid');
+  const startBtn = document.getElementById('startBtn');
 
-          <div class="cat" data-key="play">لاعبين<img src="play.PNG" alt=""></div>
-          <div class="cat" data-key="car">سيارات<img class="big" src="car.PNG" alt=""></div>
+  let selected = localStorage.getItem('bara_cat') || '';
 
-          <div class="cat" data-key="frot">فواكة وخضار<img src="frot.PNG" alt=""></div>
-          <div class="cat" data-key="cola">مشروبات<img src="cola.PNG" alt=""></div>
-        </div>
-      </div>
-
-      <div class="startWrap">
-        <button id="goBtn" class="btnYellow" type="button">ابدأ اللعب</button>
-      </div>
-
-    </div>
-  </div>
-
-  <script>
-    const cats = Array.from(document.querySelectorAll('.cat'));
-    const goBtn = document.getElementById('goBtn');
-    let selected = localStorage.getItem('bara_category') || '';
-
-    function apply(){
-      cats.forEach(c => c.classList.toggle('selected', c.dataset.key === selected));
-      const ok = !!selected;
-      goBtn.classList.toggle('enabled', ok);
-    }
-
+  function render(){
+    grid.innerHTML = '';
     cats.forEach(c=>{
-      c.addEventListener('click', ()=>{
-        selected = c.dataset.key;
-        localStorage.setItem('bara_category', selected);
-        apply();
-      });
+      const el = document.createElement('div');
+      el.className = 'cat' + (selected===c.id ? ' active':'');
+      el.innerHTML = `<div class="catTitle">${c.name}</div><img src="${c.img}" alt="${c.name}">`;
+      el.onclick = () => {
+        selected = c.id;
+        localStorage.setItem('bara_cat', selected);
+        render();
+      };
+      grid.appendChild(el);
     });
 
-    goBtn.addEventListener('click', ()=>{
-      if(!selected) return;
-      // مؤقتًا تروح لصفحة game.html (عدلها لاحقًا مع منطق اللعب)
-      location.href = 'game.html';
-    });
+    if(selected){
+      startBtn.classList.add('enabled');
+      startBtn.style.opacity = '1';
+    }else{
+      startBtn.classList.remove('enabled');
+      startBtn.style.opacity = '.55';
+    }
+  }
 
-    apply();
-  </script>
+  startBtn.onclick = () => {
+    if(!selected) return;
+    location.href = 'game.html';
+  };
 
+  render();
+</script>
 </body>
 </html>
