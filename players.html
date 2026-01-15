@@ -96,6 +96,7 @@
       cursor:pointer;
       box-shadow:var(--shadow);
       transition:transform .08s ease, opacity .12s ease;
+      color: var(--black); /* ✅ التعديل: نص الزرين أسود */
     }
     .btn:active{transform:translateY(2px)}
     .btnShare{background:var(--blue)}
@@ -148,7 +149,7 @@
       background:#f0f0f0;
     }
     .tabBtn.active{filter:saturate(1.2);transform:translateY(1px)}
-    .tabLink{background:var(--yellow)}
+    .tabLink{background:var(--yellow); color: var(--black);}
     .tabCode{background:#4caf50;color:#fff}
     .tabQR{background:#f0a92a;color:#fff}
 
@@ -180,6 +181,7 @@
       font-weight:900;font-size:22px;
       cursor:pointer;
       box-shadow:0 8px 0 rgba(0,0,0,.18);
+      color: var(--black);
     }
     .qrImg{width:240px;height:240px;object-fit:contain;margin:10px auto 0;display:block;background:#fff;border-radius:18px;border:2px solid rgba(0,0,0,.12);padding:10px}
     .roomCode{
