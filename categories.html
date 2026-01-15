@@ -43,6 +43,12 @@
     .catTitle{font-weight:900;font-size:30px;margin-bottom:8px}
     .cat img{width:120px;height:80px;object-fit:contain}
 
+    /* ✅ فقط: تكبير zoo و car */
+    .cat img.big{
+      width:180px;
+      height:110px;
+    }
+
     .startWrap{display:flex;justify-content:center;margin-top:18px}
     .btnStart{
       width:min(420px,100%);background:var(--yellow);
@@ -115,7 +121,10 @@
     cats.forEach(c=>{
       const el = document.createElement('div');
       el.className = 'cat' + (selected===c.id ? ' active':'');
-      el.innerHTML = `<div class="catTitle">${c.name}</div><img src="${c.img}" alt="${c.name}">`;
+
+      const isBig = (c.id === 'zoo' || c.id === 'car');
+      el.innerHTML = `<div class="catTitle">${c.name}</div><img class="${isBig ? 'big' : ''}" src="${c.img}" alt="${c.name}">`;
+
       el.onclick = () => {
         selected = c.id;
         localStorage.setItem('bara_cat', selected);
