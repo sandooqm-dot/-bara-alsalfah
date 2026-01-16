@@ -123,7 +123,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
   import {
-    getFirestore, doc, setDoc, updateDoc, onSnapshot,
+    getFirestore, doc, setDoc, updateDoc, getDoc,
     serverTimestamp
   } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
@@ -165,10 +165,26 @@
     return out;
   }
 
-  // ---- Params ----
+  // ---- Params & Role ----
   const params = new URLSearchParams(location.search);
   const mode = (params.get('mode') || localStorage.getItem('bara_mode') || '').toLowerCase(); // single|multi
   const room = params.get('room') || localStorage.getItem('bara_room') || '';
+
+  // ✅ مهم: categories للمقدم فقط
+  // نعتبره "مقدم" إذا: role=host OR localStorage.bara_role === 'host'
+  const roleParam = (params.get('role') || '').toLowerCase();
+  const roleLocal = (localStorage.getItem('bara_role') || '').toLowerCase();
+  const isHost = (roleParam === 'host') || (roleLocal === 'host');
+
+  // إذا جهاز متعدد ومو مقدم -> رجعه للانتظار مباشرة
+  if(mode === 'multi' && room && !isHost){
+    location.replace('waiting.html?room=' + encodeURIComponent(room));
+  }
+
+  // إذا جهاز متعدد ومقدم -> ثبت الدور
+  if(mode === 'multi' && room && isHost){
+    localStorage.setItem('bara_role', 'host');
+  }
 
   // ---- UI Data ----
   const cats = [
@@ -183,27 +199,6 @@
   const grid = document.getElementById('grid');
   const startBtn = document.getElementById('startBtn');
   let selected = localStorage.getItem('bara_cat') || '';
-
-  // ---- Multi: Firestore room listener ----
-  let roomRef = null;
-  let currentPlayers = [];
-
-  if(mode === 'multi' && room){
-    roomRef = doc(db, "bara_rooms", room);
-
-    // تأكد أن وثيقة الغرفة موجودة
-    await setDoc(roomRef, {
-      room,
-      status: "lobby",
-      hostSeenAt: serverTimestamp()
-    }, { merge: true });
-
-    // استماع لاسماء اللاعبين من Firebase
-    onSnapshot(roomRef, (snap)=>{
-      const data = snap.data() || {};
-      currentPlayers = normPlayers(data.players || []);
-    });
-  }
 
   function render(){
     grid.innerHTML = '';
@@ -236,25 +231,54 @@
     }
   }
 
+  render();
+
+  // ---- Multi: room ref ----
+  let roomRef = null;
+  if(mode === 'multi' && room){
+    roomRef = doc(db, "bara_rooms", room);
+
+    // تأكد أن وثيقة الغرفة موجودة
+    await setDoc(roomRef, {
+      room,
+      status: "lobby",
+      hostSeenAt: serverTimestamp()
+    }, { merge: true });
+  }
+
   startBtn.onclick = async () => {
     if(!selected) return;
 
     // نحفظ الكتاغوري المختار محلياً
     localStorage.setItem('bara_cat', selected);
 
-    // ✅ أجهزة متعددة: نخزن الجولة في Firebase (عشان كل الأجهزة تتزامن)
+    // ✅ أجهزة متعددة: المقدم فقط هو اللي يبدأ
     if(mode === 'multi' && room && roomRef){
-      const wordsKey = 'bara_words_' + selected;   // نفس نظام كلماتك الحالي
+      if(!isHost){
+        // احتياط: لو لاعب وصل هنا بالغلط
+        location.replace('waiting.html?room=' + encodeURIComponent(room));
+        return;
+      }
+
+      // كلمات الكتاغوري من LocalStorage (نفس نظامك الحالي)
+      const wordsKey = 'bara_words_' + selected;
       const words = getJSON(wordsKey, []);
       const topic = pickRandom(words) || 'السالفة';
 
-      const players = Array.isArray(currentPlayers) ? currentPlayers : [];
-      const outName = (players.length > 0) ? pickRandom(players) : '';
+      // نجيب أسماء اللاعبين من Firebase (أحدث نسخة)
+      let players = [];
+      try{
+        const snap = await getDoc(roomRef);
+        const data = snap.data() || {};
+        players = normPlayers(data.players || []);
+      }catch(e){ players = []; }
 
+      const outName = (players.length > 0) ? pickRandom(players) : '';
       const roundId = String(Date.now());
 
+      // نخزن الجولة في Firebase (علشان كل الأجهزة تتزامن)
       await updateDoc(roomRef, {
-        status: "ready",          // جاهزين (نخلي waiting.html يحوّل اللاعبين عليها لاحقاً)
+        status: "stage1",     // (الخطوة الجاية: waiting.html يحول الكل لصفحة المرحلة 1)
         cat: selected,
         topic,
         outName,
@@ -263,7 +287,8 @@
         hostSeenAt: serverTimestamp()
       });
 
-      // المقدم ينتقل لصفحة اللعبة
+      // المقدم يروح للصفحة اللي بعد الكتاغوري (بنجهزها بعدين)
+      // حالياً نخليه يروح game.html مثل السابق مؤقتاً
       location.href = `game.html?mode=multi&room=${encodeURIComponent(room)}&role=host`;
       return;
     }
@@ -271,8 +296,6 @@
     // ✅ جهاز واحد
     location.href = `single.html?mode=single&cat=${encodeURIComponent(selected)}`;
   };
-
-  render();
 </script>
 </body>
 </html>
