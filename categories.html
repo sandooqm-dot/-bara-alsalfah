@@ -116,7 +116,7 @@
     </div>
   </div>
 
-  <button class="homeBtn" type="button" onclick="location.href='index.html'" aria-label="الصفحة الرئيسية">
+  <button id="homeBtn" class="homeBtn" type="button" aria-label="الصفحة الرئيسية">
     <svg class="homeIcon" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
       <path d="M3 10.5 12 3l9 7.5"></path>
       <path d="M5 10v10h14V10"></path>
@@ -136,6 +136,24 @@
 
   const grid = document.getElementById('grid');
   const startBtn = document.getElementById('startBtn');
+  const homeBtn = document.getElementById('homeBtn');
+
+  // ---- mode / room ----
+  const params = new URLSearchParams(location.search);
+  const mode = (params.get('mode') || localStorage.getItem('bara_mode') || 'single').toLowerCase(); // single | multi
+  const room = (params.get('room') || localStorage.getItem('bara_room') || '');
+
+  // Home:
+  // - المقدم: index.html
+  // - اللاعب (multi): waiting.html
+  homeBtn.onclick = () => {
+    if(mode === 'multi'){
+      if(room) location.href = 'waiting.html?room=' + encodeURIComponent(room);
+      else location.href = 'waiting.html';
+    }else{
+      location.href = 'index.html';
+    }
+  };
 
   let selected = localStorage.getItem('bara_cat') || '';
 
@@ -172,7 +190,22 @@
 
   startBtn.onclick = () => {
     if(!selected) return;
-    location.href = 'game.html';
+
+    // نحفظها
+    localStorage.setItem('bara_cat', selected);
+
+    // انتقال حسب النمط:
+    if(mode === 'single'){
+      // جهاز واحد -> صفحة توزيع الأدوار (single.html)
+      const qs = 'mode=single&cat=' + encodeURIComponent(selected);
+      location.href = 'single.html?' + qs;
+    }else{
+      // أجهزة متعددة -> صفحة اللعبة للاعبين (game.html)
+      // (نمرر room + cat + mode)
+      let qs = 'mode=multi&cat=' + encodeURIComponent(selected);
+      if(room) qs += '&room=' + encodeURIComponent(room);
+      location.href = 'game.html?' + qs;
+    }
   };
 
   render();
