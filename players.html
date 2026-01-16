@@ -31,7 +31,7 @@
       width:78px;height:78px;object-fit:contain;pointer-events:none;user-select:none;
     }
     h1{
-      margin:78px 0 16px;
+      margin:78px 0 12px;
       text-align:center;
       color:var(--olive);
       font-weight:900;
@@ -49,6 +49,35 @@
       display:flex;
       flex-direction:column;
       gap:14px;
+    }
+
+    /* ✅ صندوق اسم المقدم */
+    .hostBox{
+      background:rgba(0,0,0,.08);
+      border-radius:22px;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .hostLabel{
+      color:#fff;
+      font-weight:900;
+      text-align:center;
+      font-size:24px;
+      line-height:1.3;
+    }
+    .hostInput{
+      width:100%;
+      background:#fff;
+      border-radius:999px;
+      border:5px solid var(--black);
+      padding:12px 14px;
+      font-weight:900;
+      font-size:26px;
+      text-align:center;
+      outline:none;
+      box-shadow:0 8px 0 rgba(0,0,0,.18);
     }
 
     .panelTitle{
@@ -210,6 +239,13 @@
       </div>
 
       <div class="panel">
+
+        <!-- ✅ خانة اسم المقدم -->
+        <div class="hostBox">
+          <div class="hostLabel">اسم المقدم</div>
+          <input id="hostName" class="hostInput" placeholder="اكتب اسمك" autocomplete="off" />
+        </div>
+
         <div class="panelTitle">اسماء اللاعبين</div>
 
         <div id="listBox" class="listBox">
@@ -270,11 +306,11 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
     import {
-      getFirestore, doc, setDoc, onSnapshot,
+      getFirestore, doc, setDoc, updateDoc, onSnapshot,
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-    // ✅ بيانات مشروعك
+    // ✅ Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyDQx4gJZMHNWQBeMYsU4fknZHG0WFJ_ckc",
       authDomain: "bara-alsalfah.firebaseapp.com",
@@ -292,7 +328,9 @@
     const emptyHint = document.getElementById('emptyHint');
     const startBtn = document.getElementById('startBtn');
 
-    // ---- Room ----
+    // ✅ host input
+    const hostInput = document.getElementById('hostName');
+
     function genRoom(){
       return String(Math.floor(100000 + Math.random()*900000));
     }
@@ -303,25 +341,18 @@
       location.replace('players.html?room=' + room);
     }
 
-    // ✅ نثبت أن هذا الجهاز هو المقدم
-    localStorage.setItem('bara_role', 'host');
-    localStorage.setItem('bara_mode', 'multi');
-    localStorage.setItem('bara_room', room);
-
     const roomRef = doc(db, "bara_rooms", room);
 
-    // تأكد أن الغرفة موجودة (merge)
     await setDoc(roomRef, {
       room,
       status: "lobby",
       players: [],
+      hostName: "",
       createdAt: serverTimestamp(),
       hostSeenAt: serverTimestamp()
     }, { merge: true });
 
-    // ---- Render ----
-    let currentPlayers = [];
-
+    // ---- Helpers ----
     function norm(arr){
       const out = [];
       const seen = new Set();
@@ -335,6 +366,8 @@
       return out;
     }
 
+    // ---- Render ----
+    let currentPlayers = [];
     function render(){
       listBox.innerHTML = '';
       if(currentPlayers.length === 0){
@@ -349,20 +382,65 @@
           listBox.appendChild(div);
         });
       }
-      startBtn.disabled = currentPlayers.length < 3;
+
+      // ✅ لا يبدأ إلا إذا فيه مقدم + 3 لاعبين (تقدر تغير الشرط لاحقًا)
+      const hostOk = (hostInput.value || '').trim().length > 0;
+      startBtn.disabled = !(hostOk && currentPlayers.length >= 3);
     }
 
+    // ---- Host name save (local + firebase) ----
+    const hostLocalKey = `bara_room_${room}_hostName`;
+    hostInput.value = localStorage.getItem(hostLocalKey) || '';
+
+    let hostSaveTimer = null;
+    async function saveHostName(){
+      const name = (hostInput.value || '').trim();
+      localStorage.setItem(hostLocalKey, name);
+      try{
+        await updateDoc(roomRef, {
+          hostName: name,
+          hostSeenAt: serverTimestamp()
+        });
+      }catch(e){}
+      render();
+    }
+
+    hostInput.addEventListener('input', ()=>{
+      clearTimeout(hostSaveTimer);
+      hostSaveTimer = setTimeout(saveHostName, 250);
+    });
+    hostInput.addEventListener('blur', saveHostName);
+
+    // ---- Live listener ----
     onSnapshot(roomRef, (snap)=>{
       const data = snap.data() || {};
       currentPlayers = norm(data.players || []);
+      // إذا ما كتب المقدم اسمه هنا لكن موجود في Firebase (فتح من جهاز ثاني) نعرضه
+      const fbHost = String(data.hostName || '').trim();
+      if(!hostInput.value.trim() && fbHost){
+        hostInput.value = fbHost;
+        localStorage.setItem(hostLocalKey, fbHost);
+      }
       render();
     });
 
-    // ✅ التعديل الأهم:
-    // زر "ابدأ اللعب" يفتح صفحة الكتاغوري للمقدم فقط (بدون بدء اللعب للجميع)
-    startBtn.addEventListener('click', ()=>{
+    // ---- Start ----
+    startBtn.addEventListener('click', async ()=>{
+      const hostName = (hostInput.value || '').trim();
+      if(!hostName) return;
       if(currentPlayers.length < 3) return;
-      location.href = 'categories.html?room=' + encodeURIComponent(room) + '&mode=multi&role=host';
+
+      localStorage.setItem('bara_mode', 'multi');
+      localStorage.setItem('bara_room', room);
+
+      await updateDoc(roomRef, {
+        status: "playing",
+        hostName,
+        startedAt: serverTimestamp(),
+        hostSeenAt: serverTimestamp()
+      });
+
+      location.href = 'categories.html?room=' + room + '&mode=multi';
     });
 
     // ---- Share modal ----
@@ -450,6 +528,8 @@
 
     copyLinkBtn.addEventListener('click', ()=>copyText(joinUrl()));
     copyCodeBtn.addEventListener('click', ()=>copyText(room));
+
+    render();
   </script>
 </body>
 </html>
