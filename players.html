@@ -96,7 +96,7 @@
       cursor:pointer;
       box-shadow:var(--shadow);
       transition:transform .08s ease, opacity .12s ease;
-      color:#000; /* ✅ التعديل المطلوب: لون النص أسود */
+      color:#000;
     }
     .btn:active{transform:translateY(2px)}
     .btnShare{background:var(--blue)}
@@ -267,52 +267,112 @@
 
   <div id="toast" class="toast">تم النسخ ✅</div>
 
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+    import {
+      getFirestore, doc, setDoc, updateDoc, onSnapshot,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+    // ✅ بيانات مشروعك (نفس اللي أرسلتها)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDQx4gJZMHNWQBeMYsU4fknZHG0WFJ_ckc",
+      authDomain: "bara-alsalfah.firebaseapp.com",
+      projectId: "bara-alsalfah",
+      storageBucket: "bara-alsalfah.firebasestorage.app",
+      messagingSenderId: "658748312832",
+      appId: "1:658748312832:web:3e0c970ba54bb25c0437e5",
+      measurementId: "G-82ZV2RDDDP"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
     const listBox = document.getElementById('listBox');
     const emptyHint = document.getElementById('emptyHint');
     const startBtn = document.getElementById('startBtn');
 
+    // ---- Room ----
+    function genRoom(){
+      return String(Math.floor(100000 + Math.random()*900000));
+    }
+
     let room = new URLSearchParams(location.search).get('room');
     if(!room){
-      room = String(Math.floor(100000 + Math.random()*900000));
+      room = genRoom();
       location.replace('players.html?room=' + room);
     }
 
-    const KEY = 'bara_room_' + room + '_players';
+    // وثيقة الغرفة
+    const roomRef = doc(db, "bara_rooms", room);
 
-    function getPlayers(){
-      try{ return JSON.parse(localStorage.getItem(KEY) || '[]'); }
-      catch(e){ return []; }
+    // تأكد أن الغرفة موجودة (merge)
+    await setDoc(roomRef, {
+      room,
+      status: "lobby",
+      players: [],
+      createdAt: serverTimestamp(),
+      hostSeenAt: serverTimestamp()
+    }, { merge: true });
+
+    // ---- Render ----
+    let currentPlayers = [];
+
+    function norm(arr){
+      const out = [];
+      const seen = new Set();
+      (arr || []).forEach(x=>{
+        const n = String(x || "").trim();
+        if(!n) return;
+        if(seen.has(n)) return;
+        seen.add(n);
+        out.push(n);
+      });
+      return out;
     }
 
     function render(){
-      const players = getPlayers().filter(x => (x||'').trim().length>0);
       listBox.innerHTML = '';
-      if(players.length === 0){
+      if(currentPlayers.length === 0){
         listBox.appendChild(emptyHint);
         emptyHint.style.display = 'block';
       }else{
         emptyHint.style.display = 'none';
-        players.forEach(name=>{
+        currentPlayers.forEach(name=>{
           const div = document.createElement('div');
           div.className = 'nameItem';
           div.textContent = name;
           listBox.appendChild(div);
         });
       }
-      startBtn.disabled = players.length < 3;
+      startBtn.disabled = currentPlayers.length < 3;
     }
 
-    window.addEventListener('storage', (e)=>{
-      if(e.key === KEY) render();
+    // استماع لايف
+    onSnapshot(roomRef, (snap)=>{
+      const data = snap.data() || {};
+      currentPlayers = norm(data.players || []);
+      render();
     });
 
-    startBtn.addEventListener('click', ()=>{
+    // ---- Start ----
+    startBtn.addEventListener('click', async ()=>{
+      if(currentPlayers.length < 3) return;
+
       localStorage.setItem('bara_mode', 'multi');
       localStorage.setItem('bara_room', room);
+
+      // نخلي الحالة Playing عشان اللاعبين يتحولون من صفحة الانتظار لاحقًا
+      await updateDoc(roomRef, {
+        status: "playing",
+        startedAt: serverTimestamp(),
+        hostSeenAt: serverTimestamp()
+      });
+
       location.href = 'categories.html?room=' + room + '&mode=multi';
     });
 
+    // ---- Share modal ----
     const overlay = document.getElementById('overlay');
     const shareBtn = document.getElementById('shareBtn');
     const closeBtn = document.getElementById('closeBtn');
@@ -398,7 +458,8 @@
     copyLinkBtn.addEventListener('click', ()=>copyText(joinUrl()));
     copyCodeBtn.addEventListener('click', ()=>copyText(room));
 
-    render();
+    // تحديث Ping بسيط (اختياري)
+    try{ await updateDoc(roomRef, { hostSeenAt: serverTimestamp() }); }catch(e){}
   </script>
 </body>
 </html>
