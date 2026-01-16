@@ -67,8 +67,9 @@
     const params = new URLSearchParams(location.search);
     const room = params.get('room') || '';
     const nameInput = document.getElementById('name');
+    const joinBtn = document.getElementById('joinBtn');
 
-    document.getElementById('joinBtn').addEventListener('click', ()=>{
+    function doJoin(){
       const n = (nameInput.value || '').trim();
       if(!room || !n) return;
 
@@ -84,6 +85,16 @@
 
       // انتقال مباشر لصفحة الانتظار
       location.href = `waiting.html?room=${encodeURIComponent(room)}`;
+    }
+
+    joinBtn.addEventListener('click', doJoin);
+
+    // ✅ Enter = انضمام
+    nameInput.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        doJoin();
+      }
     });
   </script>
 </body>
