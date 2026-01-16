@@ -12,13 +12,16 @@
   <style>
     :root{
       --bg:#e9e4d6;
-      --olive:#3f4a1f;
+      --olive:#4e5a2a;
       --panel:#6e7b46;
       --beige:#e5d9b6;
-      --yellow:#ffd21a;
       --black:#111;
+      --yellow:#ffd21a;
       --blue:#bfe4ff;
       --shadow: 0 12px 0 rgba(0,0,0,.18);
+
+      --out:#d93a3a;
+      --in:#26b45a;
     }
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);font-family:"Baloo Bhaijaan 2",Arial,sans-serif;color:var(--black)}
@@ -40,11 +43,11 @@
     }
 
     .namePill{
-      margin:18px auto 18px;
+      margin:18px auto 14px;
       width:min(520px,100%);
       background:var(--beige);
       border-radius:22px;
-      padding:18px 18px;
+      padding:16px 18px;
       text-align:center;
       color:var(--olive);
       font-weight:900;
@@ -54,65 +57,59 @@
     .panel{
       background:var(--panel);
       border-radius:28px;
-      padding:22px 18px;
-      margin:0 6px 18px;
+      padding:20px 18px 18px;
+      margin:0 6px 14px;
       box-shadow:0 14px 0 rgba(0,0,0,.12);
-      min-height:46svh;
+      min-height:44svh;
       display:flex;
       flex-direction:column;
       justify-content:center;
-      gap:18px;
+      gap:14px;
     }
 
-    .bigText{
+    .hint{
       color:#fff;
       font-weight:900;
-      font-size:42px;
-      line-height:1.15;
+      font-size:36px;
+      line-height:1.25;
       text-align:center;
-      padding:4px 6px;
+      padding:0 6px;
     }
-    .subText{
-      color:#fff;
-      font-weight:900;
-      font-size:40px;
-      line-height:1.2;
+
+    .readyCard{
+      background:rgba(0,0,0,.10);
+      border:5px solid rgba(0,0,0,.18);
+      border-radius:24px;
+      padding:18px 14px;
+      min-height:140px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
       text-align:center;
-    }
-
-    .topicTop{
       color:#fff;
       font-weight:900;
-      font-size:44px;
-      text-align:right;
-      margin-top:-8px;
-      padding-right:10px;
-    }
-
-    .topicCenter{
-      color:#fff;
-      font-weight:900;
-      font-size:58px;
-      text-align:center;
-      margin-top:18px;
-      direction:rtl;
-      padding:0 8px;
-      word-break:break-word;
-    }
-
-    .btnWrap{display:flex;justify-content:center;margin-top:6px}
-    .btn{
-      width:min(420px,100%);
-      background:var(--yellow);
-      border:6px solid var(--black);
-      border-radius:22px;
-      padding:18px 16px;
-      font-weight:900;
-      font-size:54px;
+      font-size:52px;
       cursor:pointer;
-      box-shadow:var(--shadow);
+      user-select:none;
+      transition:transform .08s ease, filter .15s ease;
     }
-    .btn:active{transform:translateY(2px)}
+    .readyCard:active{transform:translateY(2px)}
+
+    .readyCard.out{background:var(--out)}
+    .readyCard.in{background:var(--in)}
+    .readyCard.neutral{background:rgba(0,0,0,.10)}
+
+    .namePillBottom{
+      margin:0 auto 0;
+      width:min(520px,100%);
+      background:var(--beige);
+      border-radius:22px;
+      padding:14px 18px;
+      text-align:center;
+      color:var(--olive);
+      font-weight:900;
+      font-size:46px;
+    }
 
     /* Home */
     .homeBtn{
@@ -134,11 +131,9 @@
     @media (max-width:420px){
       .title{font-size:38px}
       .namePill{font-size:46px}
-      .bigText{font-size:34px}
-      .subText{font-size:32px}
-      .topicTop{font-size:36px}
-      .topicCenter{font-size:48px}
-      .btn{font-size:46px}
+      .hint{font-size:30px}
+      .readyCard{font-size:44px; min-height:128px}
+      .namePillBottom{font-size:40px}
     }
   </style>
 </head>
@@ -151,13 +146,15 @@
         <div class="title">لعبة برا السالفة</div>
       </div>
 
-      <div id="namePill" class="namePill">—</div>
+      <div id="nameTop" class="namePill">—</div>
 
-      <div id="panel" class="panel"></div>
+      <div class="panel">
+        <div class="hint">إذا كنت جاهز اضغط<br>على المربع</div>
 
-      <div class="btnWrap">
-        <button id="actionBtn" class="btn" type="button">جاهز</button>
+        <div id="readyCard" class="readyCard neutral">اضغط جاهز</div>
       </div>
+
+      <div id="nameBottom" class="namePillBottom">—</div>
     </div>
   </div>
 
@@ -170,28 +167,40 @@
   </button>
 
 <script>
-  // ---------- Helpers ----------
   function getJSON(key, fallback){
     try{ return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
     catch(e){ return fallback; }
   }
-  function setJSON(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
 
-  // ---------- Params ----------
   const params = new URLSearchParams(location.search);
-  const mode = (params.get('mode') || localStorage.getItem('bara_mode') || 'multi').toLowerCase(); // multi غالباً هنا
-  const room = (params.get('room') || localStorage.getItem('bara_room') || '');
-  const cat  = (params.get('cat')  || localStorage.getItem('bara_cat')  || '');
+  const mode = (params.get('mode') || localStorage.getItem('bara_mode') || '').toLowerCase(); // multi
+  const room = params.get('room') || localStorage.getItem('bara_room') || '';
+  const role = (params.get('role') || 'player').toLowerCase(); // player | host
+  const cat  = params.get('cat') || localStorage.getItem('bara_cat') || '';
 
-  // اسم اللاعب (يظهر على جهازه)
-  const playerName =
-    (params.get('name') || '').trim() ||
-    (localStorage.getItem('bara_player_name') || '').trim() ||
-    (localStorage.getItem('player_name') || '').trim() ||
-    (localStorage.getItem('bara_name') || '').trim();
+  const nameTop = document.getElementById('nameTop');
+  const nameBottom = document.getElementById('nameBottom');
+  const readyCard = document.getElementById('readyCard');
 
-  // ---------- Home behavior ----------
+  // اسم اللاعب (في الأجهزة المتعددة)
+  let myName = '—';
+  if(mode === 'multi' && room){
+    myName = localStorage.getItem(`bara_room_${room}_myname`) || 'لاعب';
+  }else{
+    // لو فتحها المقدم للتجربة
+    myName = 'المقدم';
+  }
+
+  nameTop.textContent = myName;
+  nameBottom.textContent = myName;
+
+  // Home behavior حسب الاتفاق
   document.getElementById('homeBtn').onclick = () => {
+    if(role === 'host'){
+      location.href = 'index.html';
+      return;
+    }
+    // لاعب
     if(mode === 'multi'){
       if(room) location.href = 'waiting.html?room=' + encodeURIComponent(room);
       else location.href = 'waiting.html';
@@ -200,124 +209,39 @@
     }
   };
 
-  // ---------- UI refs ----------
-  const namePill = document.getElementById('namePill');
-  const panel = document.getElementById('panel');
-  const actionBtn = document.getElementById('actionBtn');
-
-  namePill.textContent = playerName || '—';
-
-  // ---------- State (ready -> reveal) ----------
-  const STEP_KEY = room ? ('bara_step_' + room + '_' + (playerName||'anon')) : ('bara_step_' + (playerName||'anon'));
-  let step = localStorage.getItem(STEP_KEY) || 'ready'; // ready | reveal
-
-  // ---------- Room shared data (إذا المقدم يسجلها) ----------
-  // المتوقع (اختياري) أن أحد الصفحات عند المقدم يحفظ:
-  // 1) topic: كلمة السالفة
-  // 2) outName: اسم اللاعب برا السالفة
-  //
-  // مثال شكل الداتا:
-  // { topic:"زرافة", outName:"أحمد", cat:"zoo" }
-  //
-  // مفاتيح نحاول نقرأ منها عشان نكون مرنين:
-  function readRoomState(){
-    if(!room) return null;
-
-    const keysToTry = [
-      'bara_room_state_' + room,
-      'bara_multi_state_' + room,
-      'bara_state_' + room,
-      'room_state_' + room
-    ];
-
-    for(const k of keysToTry){
-      const v = getJSON(k, null);
-      if(v && typeof v === 'object') return v;
-    }
-    return null;
+  // بيانات الجولة (محفوظة من categories.html للمقدم)
+  let topic = '';
+  let outName = '';
+  if(mode === 'multi' && room){
+    topic = localStorage.getItem(`bara_room_${room}_topic`) || '';
+    outName = localStorage.getItem(`bara_room_${room}_outName`) || '';
   }
 
-  function pickTopicFromLocalCategory(){
-    // fallback (لو ما فيه room state مشترك)
-    const key = cat ? ('bara_words_' + cat) : '';
-    const words = key ? getJSON(key, []) : [];
-    if(Array.isArray(words) && words.length){
-      return words[Math.floor(Math.random()*words.length)];
-    }
-    return 'السالفة';
+  // لو ما فيه بيانات (مثلاً فتحها لاعب قبل ما المقدم يبدأ)
+  if(mode === 'multi' && room && (!topic || !outName)){
+    readyCard.textContent = 'بانتظار المقدم...';
+    readyCard.className = 'readyCard neutral';
   }
 
-  function render(){
-    // لو ما عنده اسم
-    if(!playerName){
-      panel.innerHTML = `
-        <div class="bigText">اكتب اسمك أولاً</div>
-        <div class="subText">ارجع لصفحة الانضمام ثم ادخل اسمك</div>
-      `;
-      actionBtn.textContent = 'رجوع';
-      actionBtn.onclick = () => location.href = 'join.html' + (room ? ('?room=' + encodeURIComponent(room)) : '');
-      return;
-    }
+  let revealed = false;
 
-    // صفحة جاهز
-    if(step === 'ready'){
-      panel.innerHTML = `
-        <div class="subText">اضغط جاهز حتى تعرف<br>انت برا السالفة أو داخلها<br>ولاتخلي احد غيرك يشوف الشاشة !</div>
-      `;
-      actionBtn.textContent = 'جاهز';
-      return;
-    }
+  readyCard.addEventListener('click', ()=>{
+    if(revealed) return;
+    // إذا ما فيه سالفة بعد، لا تكشف
+    if(mode === 'multi' && room && (!topic || !outName)) return;
 
-    // صفحة الكشف
-    const roomState = readRoomState();
-    let topic = null;
-    let outName = null;
+    revealed = true;
 
-    if(roomState){
-      topic = (roomState.topic || '').toString().trim();
-      outName = (roomState.outName || '').toString().trim();
-    }
+    const isOut = (mode === 'multi' && room) ? (String(myName).trim() === String(outName).trim()) : false;
 
-    // fallback: لو ما فيه داتا مشتركة
-    if(!topic) topic = pickTopicFromLocalCategory();
-
-    const isOut = outName ? (outName === playerName) : false;
-
-    panel.innerHTML = `
-      <div class="topicTop">السالفة هي :</div>
-      <div class="topicCenter">${isOut ? '👀 انت برا السالفة' : escapeHTML(topic)}</div>
-    `;
-    actionBtn.textContent = 'فهمت';
-  }
-
-  function escapeHTML(s){
-    return String(s).replace(/[&<>"']/g, (m)=>({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-    }[m]));
-  }
-
-  actionBtn.addEventListener('click', ()=>{
-    if(!playerName) return;
-
-    if(step === 'ready'){
-      // ننتقل للكشف
-      step = 'reveal';
-      localStorage.setItem(STEP_KEY, step);
-      render();
-      return;
-    }
-
-    // بعد "فهمت" (مؤقتاً) نرجع لصفحة الانتظار للاعبين
-    if(mode === 'multi'){
-      if(room) location.href = 'waiting.html?room=' + encodeURIComponent(room);
-      else location.href = 'waiting.html';
+    if(isOut){
+      readyCard.className = 'readyCard out';
+      readyCard.textContent = 'برا السالفة';
     }else{
-      // للمقدم لو فتحها بالغلط
-      location.href = 'index.html';
+      readyCard.className = 'readyCard in';
+      readyCard.textContent = topic ? topic : 'داخل السالفة';
     }
   });
-
-  render();
 </script>
 </body>
 </html>
