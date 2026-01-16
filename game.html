@@ -3,53 +3,321 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>بداية اللعبة</title>
+  <title>برا السالفة</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@700;800&display=swap" rel="stylesheet">
 
   <style>
-    :root{--bg:#e9e4d6;--olive:#3f4a1f;--panel:#6e7b46;--black:#111;--yellow:#ffd21a}
-    body{margin:0;background:var(--bg);font-family:"Baloo Bhaijaan 2",Arial,sans-serif;color:#111}
-    .wrap{min-height:100svh;display:flex;justify-content:center;align-items:center;padding:18px}
-    .box{
-      width:min(560px,100%);
+    :root{
+      --bg:#e9e4d6;
+      --olive:#3f4a1f;
+      --panel:#6e7b46;
+      --beige:#e5d9b6;
+      --yellow:#ffd21a;
+      --black:#111;
+      --blue:#bfe4ff;
+      --shadow: 0 12px 0 rgba(0,0,0,.18);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);font-family:"Baloo Bhaijaan 2",Arial,sans-serif;color:var(--black)}
+    .wrap{min-height:100svh;display:flex;justify-content:center;padding:18px 14px 22px}
+    .card{width:min(620px,100%);position:relative}
+
+    .top{position:relative;padding:10px 8px 0;min-height:110px}
+    .logo{
+      position:absolute;left:10px;top:10px;
+      width:86px;height:86px;object-fit:contain;pointer-events:none;user-select:none;
+    }
+    .title{
+      margin:16px 0 0;
+      text-align:right;
+      color:var(--olive);
+      font-weight:900;
+      font-size:44px;
+      padding:0 0 0 96px;
+    }
+
+    .namePill{
+      margin:18px auto 18px;
+      width:min(520px,100%);
+      background:var(--beige);
+      border-radius:22px;
+      padding:18px 18px;
+      text-align:center;
+      color:var(--olive);
+      font-weight:900;
+      font-size:52px;
+    }
+
+    .panel{
       background:var(--panel);
       border-radius:28px;
-      padding:24px;
-      color:#fff;
-      border:6px solid #111;
-      box-shadow:0 12px 0 rgba(0,0,0,.18);
-      text-align:center;
-      font-size:26px;
-      font-weight:900;
-      line-height:1.8;
+      padding:22px 18px;
+      margin:0 6px 18px;
+      box-shadow:0 14px 0 rgba(0,0,0,.12);
+      min-height:46svh;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:18px;
     }
-    .btn{
+
+    .bigText{
+      color:#fff;
+      font-weight:900;
+      font-size:42px;
+      line-height:1.15;
+      text-align:center;
+      padding:4px 6px;
+    }
+    .subText{
+      color:#fff;
+      font-weight:900;
+      font-size:40px;
+      line-height:1.2;
+      text-align:center;
+    }
+
+    .topicTop{
+      color:#fff;
+      font-weight:900;
+      font-size:44px;
+      text-align:right;
+      margin-top:-8px;
+      padding-right:10px;
+    }
+
+    .topicCenter{
+      color:#fff;
+      font-weight:900;
+      font-size:58px;
+      text-align:center;
       margin-top:18px;
+      direction:rtl;
+      padding:0 8px;
+      word-break:break-word;
+    }
+
+    .btnWrap{display:flex;justify-content:center;margin-top:6px}
+    .btn{
       width:min(420px,100%);
       background:var(--yellow);
-      border:5px solid var(--black);
-      border-radius:999px;
-      padding:16px 16px;
-      font-weight:900;font-size:38px;
-      box-shadow:0 10px 0 rgba(0,0,0,.18);
+      border:6px solid var(--black);
+      border-radius:22px;
+      padding:18px 16px;
+      font-weight:900;
+      font-size:54px;
       cursor:pointer;
+      box-shadow:var(--shadow);
     }
     .btn:active{transform:translateY(2px)}
+
+    /* Home */
+    .homeBtn{
+      position:fixed;
+      left:14px;
+      bottom:14px;
+      width:74px;height:74px;
+      border-radius:22px;
+      border:6px solid var(--black);
+      background:var(--blue);
+      box-shadow:0 10px 0 rgba(0,0,0,.18);
+      display:grid;place-items:center;
+      z-index:40;
+      cursor:pointer;
+    }
+    .homeBtn:active{transform:translateY(2px)}
+    .homeBtn svg{width:38px;height:38px}
+
+    @media (max-width:420px){
+      .title{font-size:38px}
+      .namePill{font-size:46px}
+      .bigText{font-size:34px}
+      .subText{font-size:32px}
+      .topicTop{font-size:36px}
+      .topicCenter{font-size:48px}
+      .btn{font-size:46px}
+    }
   </style>
 </head>
 <body>
 
   <div class="wrap">
-    <div class="box">
-      تم اختيار الكتاغوري وبدأنا التجهيز<br>
-      (هذه صفحة مؤقتة — الخطوة الجاية: منطق اللعبة وجولات برا السالفة)
-      <br>
-      <button class="btn" onclick="location.href='categories.html'">رجوع للكتاغوريات</button>
+    <div class="card">
+      <div class="top">
+        <img class="logo" src="logo.PNG" alt="logo">
+        <div class="title">لعبة برا السالفة</div>
+      </div>
+
+      <div id="namePill" class="namePill">—</div>
+
+      <div id="panel" class="panel"></div>
+
+      <div class="btnWrap">
+        <button id="actionBtn" class="btn" type="button">جاهز</button>
+      </div>
     </div>
   </div>
 
+  <button id="homeBtn" class="homeBtn" type="button" aria-label="الرئيسية">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 10.5L12 3l9 7.5"></path>
+      <path d="M5 10v10h14V10"></path>
+      <path d="M9 20v-7h6v7"></path>
+    </svg>
+  </button>
+
+<script>
+  // ---------- Helpers ----------
+  function getJSON(key, fallback){
+    try{ return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
+    catch(e){ return fallback; }
+  }
+  function setJSON(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+
+  // ---------- Params ----------
+  const params = new URLSearchParams(location.search);
+  const mode = (params.get('mode') || localStorage.getItem('bara_mode') || 'multi').toLowerCase(); // multi غالباً هنا
+  const room = (params.get('room') || localStorage.getItem('bara_room') || '');
+  const cat  = (params.get('cat')  || localStorage.getItem('bara_cat')  || '');
+
+  // اسم اللاعب (يظهر على جهازه)
+  const playerName =
+    (params.get('name') || '').trim() ||
+    (localStorage.getItem('bara_player_name') || '').trim() ||
+    (localStorage.getItem('player_name') || '').trim() ||
+    (localStorage.getItem('bara_name') || '').trim();
+
+  // ---------- Home behavior ----------
+  document.getElementById('homeBtn').onclick = () => {
+    if(mode === 'multi'){
+      if(room) location.href = 'waiting.html?room=' + encodeURIComponent(room);
+      else location.href = 'waiting.html';
+    }else{
+      location.href = 'index.html';
+    }
+  };
+
+  // ---------- UI refs ----------
+  const namePill = document.getElementById('namePill');
+  const panel = document.getElementById('panel');
+  const actionBtn = document.getElementById('actionBtn');
+
+  namePill.textContent = playerName || '—';
+
+  // ---------- State (ready -> reveal) ----------
+  const STEP_KEY = room ? ('bara_step_' + room + '_' + (playerName||'anon')) : ('bara_step_' + (playerName||'anon'));
+  let step = localStorage.getItem(STEP_KEY) || 'ready'; // ready | reveal
+
+  // ---------- Room shared data (إذا المقدم يسجلها) ----------
+  // المتوقع (اختياري) أن أحد الصفحات عند المقدم يحفظ:
+  // 1) topic: كلمة السالفة
+  // 2) outName: اسم اللاعب برا السالفة
+  //
+  // مثال شكل الداتا:
+  // { topic:"زرافة", outName:"أحمد", cat:"zoo" }
+  //
+  // مفاتيح نحاول نقرأ منها عشان نكون مرنين:
+  function readRoomState(){
+    if(!room) return null;
+
+    const keysToTry = [
+      'bara_room_state_' + room,
+      'bara_multi_state_' + room,
+      'bara_state_' + room,
+      'room_state_' + room
+    ];
+
+    for(const k of keysToTry){
+      const v = getJSON(k, null);
+      if(v && typeof v === 'object') return v;
+    }
+    return null;
+  }
+
+  function pickTopicFromLocalCategory(){
+    // fallback (لو ما فيه room state مشترك)
+    const key = cat ? ('bara_words_' + cat) : '';
+    const words = key ? getJSON(key, []) : [];
+    if(Array.isArray(words) && words.length){
+      return words[Math.floor(Math.random()*words.length)];
+    }
+    return 'السالفة';
+  }
+
+  function render(){
+    // لو ما عنده اسم
+    if(!playerName){
+      panel.innerHTML = `
+        <div class="bigText">اكتب اسمك أولاً</div>
+        <div class="subText">ارجع لصفحة الانضمام ثم ادخل اسمك</div>
+      `;
+      actionBtn.textContent = 'رجوع';
+      actionBtn.onclick = () => location.href = 'join.html' + (room ? ('?room=' + encodeURIComponent(room)) : '');
+      return;
+    }
+
+    // صفحة جاهز
+    if(step === 'ready'){
+      panel.innerHTML = `
+        <div class="subText">اضغط جاهز حتى تعرف<br>انت برا السالفة أو داخلها<br>ولاتخلي احد غيرك يشوف الشاشة !</div>
+      `;
+      actionBtn.textContent = 'جاهز';
+      return;
+    }
+
+    // صفحة الكشف
+    const roomState = readRoomState();
+    let topic = null;
+    let outName = null;
+
+    if(roomState){
+      topic = (roomState.topic || '').toString().trim();
+      outName = (roomState.outName || '').toString().trim();
+    }
+
+    // fallback: لو ما فيه داتا مشتركة
+    if(!topic) topic = pickTopicFromLocalCategory();
+
+    const isOut = outName ? (outName === playerName) : false;
+
+    panel.innerHTML = `
+      <div class="topicTop">السالفة هي :</div>
+      <div class="topicCenter">${isOut ? '👀 انت برا السالفة' : escapeHTML(topic)}</div>
+    `;
+    actionBtn.textContent = 'فهمت';
+  }
+
+  function escapeHTML(s){
+    return String(s).replace(/[&<>"']/g, (m)=>({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[m]));
+  }
+
+  actionBtn.addEventListener('click', ()=>{
+    if(!playerName) return;
+
+    if(step === 'ready'){
+      // ننتقل للكشف
+      step = 'reveal';
+      localStorage.setItem(STEP_KEY, step);
+      render();
+      return;
+    }
+
+    // بعد "فهمت" (مؤقتاً) نرجع لصفحة الانتظار للاعبين
+    if(mode === 'multi'){
+      if(room) location.href = 'waiting.html?room=' + encodeURIComponent(room);
+      else location.href = 'waiting.html';
+    }else{
+      // للمقدم لو فتحها بالغلط
+      location.href = 'index.html';
+    }
+  });
+
+  render();
+</script>
 </body>
 </html>
