@@ -37,7 +37,7 @@
       font-weight:900;
       font-size:44px;
       letter-spacing:.2px;
-      padding:0 86px; /* يمنع تداخل مع اللوجو */
+      padding:0 86px;
     }
 
     .panel{
@@ -96,14 +96,13 @@
       cursor:pointer;
       box-shadow:var(--shadow);
       transition:transform .08s ease, opacity .12s ease;
-      color: var(--black); /* ✅ التعديل: نص الزرين أسود */
+      color:#000; /* ✅ التعديل المطلوب: لون النص أسود */
     }
     .btn:active{transform:translateY(2px)}
     .btnShare{background:var(--blue)}
     .btnStart{background:var(--yellow)}
     .btn:disabled{opacity:.55;cursor:not-allowed}
 
-    /* Home */
     .homeBtn{
       position:fixed;
       left:14px;
@@ -120,7 +119,6 @@
     .homeBtn:active{transform:translateY(2px)}
     .homeBtn svg{width:34px;height:34px}
 
-    /* Share modal */
     .overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;justify-content:center;align-items:center;padding:16px;z-index:50}
     .overlay.show{display:flex}
     .modal{
@@ -149,7 +147,7 @@
       background:#f0f0f0;
     }
     .tabBtn.active{filter:saturate(1.2);transform:translateY(1px)}
-    .tabLink{background:var(--yellow); color: var(--black);}
+    .tabLink{background:var(--yellow)}
     .tabCode{background:#4caf50;color:#fff}
     .tabQR{background:#f0a92a;color:#fff}
 
@@ -181,7 +179,7 @@
       font-weight:900;font-size:22px;
       cursor:pointer;
       box-shadow:0 8px 0 rgba(0,0,0,.18);
-      color: var(--black);
+      color:#000;
     }
     .qrImg{width:240px;height:240px;object-fit:contain;margin:10px auto 0;display:block;background:#fff;border-radius:18px;border:2px solid rgba(0,0,0,.12);padding:10px}
     .roomCode{
@@ -190,7 +188,6 @@
       padding:12px 12px;margin-top:10px;
     }
 
-    /* Toast */
     .toast{
       position:fixed;left:50%;bottom:92px;transform:translateX(-50%);
       background:#111;color:#fff;
@@ -225,7 +222,6 @@
     </div>
   </div>
 
-  <!-- Home -->
   <button class="homeBtn" type="button" onclick="location.href='index.html'" aria-label="الرئيسية">
     <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <path d="M3 10.5L12 3l9 7.5"></path>
@@ -234,7 +230,6 @@
     </svg>
   </button>
 
-  <!-- Share Modal -->
   <div id="overlay" class="overlay" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true">
       <div class="modalHeader">
@@ -273,12 +268,10 @@
   <div id="toast" class="toast">تم النسخ ✅</div>
 
   <script>
-    // ---------- ROOM + PLAYERS STORAGE ----------
     const listBox = document.getElementById('listBox');
     const emptyHint = document.getElementById('emptyHint');
     const startBtn = document.getElementById('startBtn');
 
-    // Room code ثابت للمقدم داخل جهازه
     let room = new URLSearchParams(location.search).get('room');
     if(!room){
       room = String(Math.floor(100000 + Math.random()*900000));
@@ -288,13 +281,8 @@
     const KEY = 'bara_room_' + room + '_players';
 
     function getPlayers(){
-      try{
-        return JSON.parse(localStorage.getItem(KEY) || '[]');
-      }catch(e){ return []; }
-    }
-    function setPlayers(arr){
-      localStorage.setItem(KEY, JSON.stringify(arr));
-      render();
+      try{ return JSON.parse(localStorage.getItem(KEY) || '[]'); }
+      catch(e){ return []; }
     }
 
     function render(){
@@ -312,24 +300,19 @@
           listBox.appendChild(div);
         });
       }
-      // تفعيل البدء فقط إذا 3 لاعبين على الأقل
       startBtn.disabled = players.length < 3;
     }
 
-    // تحديث إذا لاعب دخل من صفحة join (نفس المتصفح أو تبويب آخر)
     window.addEventListener('storage', (e)=>{
       if(e.key === KEY) render();
     });
 
-    // ---------- START ----------
     startBtn.addEventListener('click', ()=>{
-      // حفظ آخر غرفة/نمط
       localStorage.setItem('bara_mode', 'multi');
       localStorage.setItem('bara_room', room);
       location.href = 'categories.html?room=' + room + '&mode=multi';
     });
 
-    // ---------- SHARE MODAL ----------
     const overlay = document.getElementById('overlay');
     const shareBtn = document.getElementById('shareBtn');
     const closeBtn = document.getElementById('closeBtn');
@@ -378,7 +361,6 @@
       joinUrlEl.textContent = url;
       roomCodeEl.textContent = room;
 
-      // QR (صورة حقيقية)
       const qrURL = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' + encodeURIComponent(url);
       qrImg.src = qrURL;
       qrUrlSmall.textContent = url;
@@ -405,7 +387,6 @@
         await navigator.clipboard.writeText(text);
         showToast('تم النسخ ✅');
       }catch(e){
-        // fallback
         const ta = document.createElement('textarea');
         ta.value = text; document.body.appendChild(ta);
         ta.select(); document.execCommand('copy');
@@ -417,7 +398,6 @@
     copyLinkBtn.addEventListener('click', ()=>copyText(joinUrl()));
     copyCodeBtn.addEventListener('click', ()=>copyText(room));
 
-    // أول تشغيل
     render();
   </script>
 </body>
