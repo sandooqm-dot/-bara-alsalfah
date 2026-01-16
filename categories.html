@@ -44,17 +44,14 @@
 
     .catTitle{font-weight:900;font-size:30px;margin-bottom:8px}
 
-    /* ✅ صندوق ثابت للصورة (ما يغيّر حجم المربع) */
     .imgBox{
       width:180px;
       height:110px;
       display:flex;
       align-items:center;
       justify-content:center;
-      overflow:hidden; /* يحافظ على الشكل داخل المربع */
+      overflow:hidden;
     }
-
-    /* ✅ الصورة تكبر/تصغر بـ scale حسب كل كتاغوري */
     .imgBox img{
       width:100%;
       height:100%;
@@ -63,11 +60,10 @@
       transform-origin:center;
     }
 
-    /* ✅ ضبط المقاسات لتطابق الصورة المرجعية بصرياً */
     .cat[data-id="eat"]  { --imgScale:1.18; }
-    .cat[data-id="zoo"]  { --imgScale:1.55; }  /* كان صغير بسبب الفراغات */
+    .cat[data-id="zoo"]  { --imgScale:1.55; }
     .cat[data-id="play"] { --imgScale:0.90; }
-    .cat[data-id="car"]  { --imgScale:1.65; }  /* كان صغير بسبب الفراغات */
+    .cat[data-id="car"]  { --imgScale:1.65; }
     .cat[data-id="frot"] { --imgScale:1.22; }
     .cat[data-id="cola"] { --imgScale:1.28; }
 
@@ -116,7 +112,7 @@
     </div>
   </div>
 
-  <button id="homeBtn" class="homeBtn" type="button" aria-label="الصفحة الرئيسية">
+  <button class="homeBtn" type="button" onclick="location.href='index.html'" aria-label="الصفحة الرئيسية">
     <svg class="homeIcon" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
       <path d="M3 10.5 12 3l9 7.5"></path>
       <path d="M5 10v10h14V10"></path>
@@ -125,6 +121,16 @@
   </button>
 
 <script>
+  function getJSON(key, fallback){
+    try{ return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
+    catch(e){ return fallback; }
+  }
+  function setJSON(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+
+  const params = new URLSearchParams(location.search);
+  const mode = (params.get('mode') || localStorage.getItem('bara_mode') || '').toLowerCase(); // single|multi
+  const room = params.get('room') || localStorage.getItem('bara_room') || '';
+
   const cats = [
     { id:'eat',  name:'مأكولات',      img:'eat.PNG'  },
     { id:'zoo',  name:'حيوانات',      img:'zoo.PNG'  },
@@ -136,24 +142,6 @@
 
   const grid = document.getElementById('grid');
   const startBtn = document.getElementById('startBtn');
-  const homeBtn = document.getElementById('homeBtn');
-
-  // ---- mode / room ----
-  const params = new URLSearchParams(location.search);
-  const mode = (params.get('mode') || localStorage.getItem('bara_mode') || 'single').toLowerCase(); // single | multi
-  const room = (params.get('room') || localStorage.getItem('bara_room') || '');
-
-  // Home:
-  // - المقدم: index.html
-  // - اللاعب (multi): waiting.html
-  homeBtn.onclick = () => {
-    if(mode === 'multi'){
-      if(room) location.href = 'waiting.html?room=' + encodeURIComponent(room);
-      else location.href = 'waiting.html';
-    }else{
-      location.href = 'index.html';
-    }
-  };
 
   let selected = localStorage.getItem('bara_cat') || '';
 
@@ -188,24 +176,39 @@
     }
   }
 
+  function pickRandom(arr){
+    if(!Array.isArray(arr) || arr.length===0) return '';
+    return arr[Math.floor(Math.random()*arr.length)];
+  }
+
   startBtn.onclick = () => {
     if(!selected) return;
 
-    // نحفظها
+    // نحفظ الكتاغوري المختار
     localStorage.setItem('bara_cat', selected);
 
-    // انتقال حسب النمط:
-    if(mode === 'single'){
-      // جهاز واحد -> صفحة توزيع الأدوار (single.html)
-      const qs = 'mode=single&cat=' + encodeURIComponent(selected);
-      location.href = 'single.html?' + qs;
-    }else{
-      // أجهزة متعددة -> صفحة اللعبة للاعبين (game.html)
-      // (نمرر room + cat + mode)
-      let qs = 'mode=multi&cat=' + encodeURIComponent(selected);
-      if(room) qs += '&room=' + encodeURIComponent(room);
-      location.href = 'game.html?' + qs;
+    // (Multi) نحفظ سالفة الجولة داخل الغرفة + نحدد برا السالفة
+    if(mode === 'multi' && room){
+      const playersKey = `bara_room_${room}_players`;
+      const players = getJSON(playersKey, []).map(x => (x||'').trim()).filter(Boolean);
+
+      const wordsKey = 'bara_words_' + selected;
+      const words = getJSON(wordsKey, []);
+
+      const topic = pickRandom(words) || 'السالفة';
+      const outName = (players.length>0) ? pickRandom(players) : '';
+
+      localStorage.setItem(`bara_room_${room}_cat`, selected);
+      localStorage.setItem(`bara_room_${room}_topic`, topic);
+      localStorage.setItem(`bara_room_${room}_outName`, outName);
+      localStorage.setItem(`bara_room_${room}_round_id`, String(Date.now()));
+      // نرسل المقدم لصفحة اللعبة كـ host (للاختبار)
+      location.href = `game.html?mode=multi&room=${encodeURIComponent(room)}&cat=${encodeURIComponent(selected)}&role=host`;
+      return;
     }
+
+    // (Single)
+    location.href = `single.html?mode=single&cat=${encodeURIComponent(selected)}`;
   };
 
   render();
