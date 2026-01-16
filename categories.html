@@ -120,17 +120,57 @@
     </svg>
   </button>
 
-<script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+  import {
+    getFirestore, doc, setDoc, updateDoc, onSnapshot,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+  // ✅ Firebase Config (كما أرسلتها)
+  const firebaseConfig = {
+    apiKey: "AIzaSyDQx4gJZMHNWQBeMYsU4fknZHG0WFJ_ckc",
+    authDomain: "bara-alsalfah.firebaseapp.com",
+    projectId: "bara-alsalfah",
+    storageBucket: "bara-alsalfah.firebasestorage.app",
+    messagingSenderId: "658748312832",
+    appId: "1:658748312832:web:3e0c970ba54bb25c0437e5",
+    measurementId: "G-82ZV2RDDDP"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // ---- Helpers ----
   function getJSON(key, fallback){
     try{ return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
     catch(e){ return fallback; }
   }
-  function setJSON(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
 
+  function pickRandom(arr){
+    if(!Array.isArray(arr) || arr.length===0) return '';
+    return arr[Math.floor(Math.random()*arr.length)];
+  }
+
+  function normPlayers(arr){
+    const out = [];
+    const seen = new Set();
+    (arr || []).forEach(x=>{
+      const n = String(x || "").trim();
+      if(!n) return;
+      if(seen.has(n)) return;
+      seen.add(n);
+      out.push(n);
+    });
+    return out;
+  }
+
+  // ---- Params ----
   const params = new URLSearchParams(location.search);
   const mode = (params.get('mode') || localStorage.getItem('bara_mode') || '').toLowerCase(); // single|multi
   const room = params.get('room') || localStorage.getItem('bara_room') || '';
 
+  // ---- UI Data ----
   const cats = [
     { id:'eat',  name:'مأكولات',      img:'eat.PNG'  },
     { id:'zoo',  name:'حيوانات',      img:'zoo.PNG'  },
@@ -142,8 +182,28 @@
 
   const grid = document.getElementById('grid');
   const startBtn = document.getElementById('startBtn');
-
   let selected = localStorage.getItem('bara_cat') || '';
+
+  // ---- Multi: Firestore room listener ----
+  let roomRef = null;
+  let currentPlayers = [];
+
+  if(mode === 'multi' && room){
+    roomRef = doc(db, "bara_rooms", room);
+
+    // تأكد أن وثيقة الغرفة موجودة
+    await setDoc(roomRef, {
+      room,
+      status: "lobby",
+      hostSeenAt: serverTimestamp()
+    }, { merge: true });
+
+    // استماع لاسماء اللاعبين من Firebase
+    onSnapshot(roomRef, (snap)=>{
+      const data = snap.data() || {};
+      currentPlayers = normPlayers(data.players || []);
+    });
+  }
 
   function render(){
     grid.innerHTML = '';
@@ -176,38 +236,39 @@
     }
   }
 
-  function pickRandom(arr){
-    if(!Array.isArray(arr) || arr.length===0) return '';
-    return arr[Math.floor(Math.random()*arr.length)];
-  }
-
-  startBtn.onclick = () => {
+  startBtn.onclick = async () => {
     if(!selected) return;
 
-    // نحفظ الكتاغوري المختار
+    // نحفظ الكتاغوري المختار محلياً
     localStorage.setItem('bara_cat', selected);
 
-    // (Multi) نحفظ سالفة الجولة داخل الغرفة + نحدد برا السالفة
-    if(mode === 'multi' && room){
-      const playersKey = `bara_room_${room}_players`;
-      const players = getJSON(playersKey, []).map(x => (x||'').trim()).filter(Boolean);
-
-      const wordsKey = 'bara_words_' + selected;
+    // ✅ أجهزة متعددة: نخزن الجولة في Firebase (عشان كل الأجهزة تتزامن)
+    if(mode === 'multi' && room && roomRef){
+      const wordsKey = 'bara_words_' + selected;   // نفس نظام كلماتك الحالي
       const words = getJSON(wordsKey, []);
-
       const topic = pickRandom(words) || 'السالفة';
-      const outName = (players.length>0) ? pickRandom(players) : '';
 
-      localStorage.setItem(`bara_room_${room}_cat`, selected);
-      localStorage.setItem(`bara_room_${room}_topic`, topic);
-      localStorage.setItem(`bara_room_${room}_outName`, outName);
-      localStorage.setItem(`bara_room_${room}_round_id`, String(Date.now()));
-      // نرسل المقدم لصفحة اللعبة كـ host (للاختبار)
-      location.href = `game.html?mode=multi&room=${encodeURIComponent(room)}&cat=${encodeURIComponent(selected)}&role=host`;
+      const players = Array.isArray(currentPlayers) ? currentPlayers : [];
+      const outName = (players.length > 0) ? pickRandom(players) : '';
+
+      const roundId = String(Date.now());
+
+      await updateDoc(roomRef, {
+        status: "ready",          // جاهزين (نخلي waiting.html يحوّل اللاعبين عليها لاحقاً)
+        cat: selected,
+        topic,
+        outName,
+        roundId,
+        updatedAt: serverTimestamp(),
+        hostSeenAt: serverTimestamp()
+      });
+
+      // المقدم ينتقل لصفحة اللعبة
+      location.href = `game.html?mode=multi&room=${encodeURIComponent(room)}&role=host`;
       return;
     }
 
-    // (Single)
+    // ✅ جهاز واحد
     location.href = `single.html?mode=single&cat=${encodeURIComponent(selected)}`;
   };
 
