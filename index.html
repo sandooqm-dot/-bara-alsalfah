@@ -24,7 +24,6 @@
     *{box-sizing:border-box}
     body{
       margin:0;
-      /* ✅ الخلفية خارج الإطار = نفس لون داخل الصفحة */
       background:var(--bg);
       font-family:"Baloo Bhaijaan 2", Arial, sans-serif;
       color:var(--black);
@@ -96,9 +95,8 @@
     .how-btn .label{ color:#000; font-weight:900; }
     .mode-btn.selected{ background:var(--selected); }
 
-    /* ✅ زر ابدأ اللعب خارج الصندوق: أصغر من الأطراف */
     .start-wrap{
-      width:78%;              /* كان 86% */
+      width:78%;
       margin:24px auto 0;
     }
     .btn-yellow{
@@ -265,7 +263,9 @@
 
     startBtn.addEventListener('click', ()=>{
       if(!selectedMode) return;
-      if(selectedMode === 'single') location.href = 'single.html';
+
+      // ✅ التعديل الوحيد: جهاز واحد يروح لصفحة إدخال الأسماء (one.html)
+      if(selectedMode === 'single') location.href = 'one.html';
       else location.href = 'players.html';
     });
 
