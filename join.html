@@ -47,8 +47,10 @@
       box-shadow:0 12px 0 var(--btnShadow);
       cursor:pointer;
       margin-top:14px;
+      transition:opacity .12s ease;
     }
     button:active{transform:translateY(2px)}
+    button:disabled{opacity:.6;cursor:not-allowed}
   </style>
 </head>
 <body>
@@ -57,34 +59,88 @@
       <h1>انضم للغرفة</h1>
       <div class="panel">
         <div class="label">اكتب اسمك ثم انضم</div>
-        <input id="name" placeholder="اسم اللاعب" />
+        <input id="name" placeholder="اسم اللاعب" autocomplete="off" />
         <button id="joinBtn" type="button">انضمام</button>
       </div>
     </div>
   </div>
 
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+    import {
+      getFirestore, doc, setDoc, updateDoc,
+      serverTimestamp, arrayUnion
+    } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+    // ✅ بيانات مشروعك
+    const firebaseConfig = {
+      apiKey: "AIzaSyDQx4gJZMHNWQBeMYsU4fknZHG0WFJ_ckc",
+      authDomain: "bara-alsalfah.firebaseapp.com",
+      projectId: "bara-alsalfah",
+      storageBucket: "bara-alsalfah.firebasestorage.app",
+      messagingSenderId: "658748312832",
+      appId: "1:658748312832:web:3e0c970ba54bb25c0437e5",
+      measurementId: "G-82ZV2RDDDP"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
     const params = new URLSearchParams(location.search);
-    const room = params.get('room') || '';
+    const room = (params.get('room') || '').trim();
+
     const nameInput = document.getElementById('name');
     const joinBtn = document.getElementById('joinBtn');
 
-    function doJoin(){
-      const n = (nameInput.value || '').trim();
-      if(!room || !n) return;
+    function safeName(raw){
+      // تنظيف بسيط (بدون تغيير الشكل العام)
+      return String(raw || '')
+        .replace(/\s+/g,' ')
+        .trim();
+    }
 
-      // حفظ اللاعب في غرفة المقدم
-      const key = `bara_room_${room}_players`;
-      let players = [];
-      try { players = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
-      if(!players.includes(n)) players.push(n);
-      localStorage.setItem(key, JSON.stringify(players));
+    async function doJoin(){
+      const n = safeName(nameInput.value);
 
-      // حفظ اسمه عنده (مفيد لاحقاً)
-      localStorage.setItem(`bara_room_${room}_myname`, n);
+      if(!room){
+        alert('رمز الغرفة غير موجود.');
+        return;
+      }
+      if(!n){
+        nameInput.focus();
+        return;
+      }
 
-      // انتقال مباشر لصفحة الانتظار
-      location.href = `waiting.html?room=${encodeURIComponent(room)}`;
+      joinBtn.disabled = true;
+
+      try{
+        const roomRef = doc(db, "bara_rooms", room);
+
+        // تأكد أن الوثيقة موجودة (merge)
+        await setDoc(roomRef, {
+          room,
+          status: "lobby",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+
+        // إضافة الاسم لقائمة اللاعبين بدون تكرار (arrayUnion)
+        await updateDoc(roomRef, {
+          players: arrayUnion(n),
+          updatedAt: serverTimestamp()
+        });
+
+        // ✅ كل لاعب يشوف اسمه في جهازه (متطلبك)
+        localStorage.setItem(`bara_room_${room}_myname`, n);
+
+        // انتقال لصفحة الانتظار
+        location.href = `waiting.html?room=${encodeURIComponent(room)}`;
+
+      }catch(err){
+        console.error(err);
+        alert('صار خطأ في الانضمام. حاول مرة ثانية.');
+        joinBtn.disabled = false;
+      }
     }
 
     joinBtn.addEventListener('click', doJoin);
