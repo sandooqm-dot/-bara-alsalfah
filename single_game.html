@@ -53,11 +53,12 @@
       color:var(--text);
     }
 
+    /* إطار اللعبة */
     .wrap{
       min-height:100vh;
       display:flex;
       justify-content:center;
-      padding:18px 14px 120px;
+      padding:18px 14px 120px; /* مساحة للشريط السفلي */
     }
     .frame{
       width:min(var(--containerMax), 100%);
@@ -68,6 +69,7 @@
       position:relative;
     }
 
+    /* رأس الصفحة (شعار + عنوان) */
     .topbar{
       display:flex;
       align-items:center;
@@ -85,6 +87,7 @@
       object-fit:contain;
     }
 
+    /* شارة/عنوان كبير */
     .badgeTitle{
       margin:14px auto 16px;
       width:fit-content;
@@ -99,6 +102,7 @@
       text-align:center;
     }
 
+    /* صندوق كبير */
     .bigCard{
       background:var(--card);
       color:var(--white);
@@ -113,6 +117,7 @@
       position:relative;
     }
 
+    /* صندوق داخلي للكلمة/السالفة */
     .innerCream{
       width:100%;
       border-radius: var(--radiusBig);
@@ -142,13 +147,21 @@
       line-height:1.6;
       padding: 0 10px;
     }
+    .msgTextSmall{
+      font-size: var(--subTextSizeSmall);
+      font-weight:800;
+      line-height:1.6;
+      padding: 0 10px;
+    }
 
+    /* صفحة السالفة: كلمة كبيرة */
     .topicWord{
       font-size: var(--bigWordSize);
       font-weight:1000;
       letter-spacing:.5px;
     }
 
+    /* صفحة وقت الأسئلة */
     .askLine{
       font-size: var(--askLineSize);
       font-weight:1000;
@@ -157,7 +170,6 @@
     }
     .askLine .who{ color: var(--yellow); }
     .askLine .mid{ color: #fff; margin:0 10px; }
-
     .askHelpBox{
       width:100%;
       max-width: 420px;
@@ -170,6 +182,7 @@
       line-height:1.6;
     }
 
+    /* الشريط السفلي: زر ثابت + زر الرئيسية */
     .bottomBar{
       position:fixed;
       left:0; right:0;
@@ -204,19 +217,19 @@
     .homeBtn svg{ width:34px;height:34px; }
 
     .cta{
-      height: 56px;                 /* compact دائماً */
-      border-radius: 22px;
+      height: var(--btnH);
+      border-radius: var(--btnRadius);
       background: var(--yellow);
       color: var(--yellowText);
       border:4px solid #000;
       box-shadow: var(--shadow);
-      font-size: 26px;
+      font-size: 28px;
       font-weight:1000;
       display:flex;
       align-items:center;
       justify-content:center;
-      width: 78%;
-      max-width: 360px;
+      width: 86%;
+      max-width: 420px;
       margin: 0 auto;
       pointer-events:auto;
       cursor:pointer;
@@ -225,10 +238,29 @@
       padding: 0 14px;
     }
 
+    @media (max-width: 420px){
+      .cta{ width: 88%; }
+    }
+    @media (max-width: 360px){
+      .cta{ width: 90%; font-size: 26px; }
+      .homeBtn{ width:56px;height:56px; }
+      .homeBtn svg{ width:30px;height:30px; }
+    }
+
+    /* زر تصويت */
     .cta.vote{
       background: var(--vote);
       color:#fff;
       max-width: 360px;
+    }
+
+    /* زر التالي الأصغر */
+    .cta.compact{
+      height: 56px;
+      border-radius: 22px;
+      max-width: 360px;
+      width: 78%;
+      font-size: 26px;
     }
 
     .spacerBottom{ height: 18px; }
@@ -260,18 +292,11 @@
         </svg>
       </button>
 
-      <button class="cta" id="ctaBtn">التالي</button>
+      <button class="cta compact" id="ctaBtn">التالي</button>
     </div>
   </div>
 
 <script>
-/* =========================
-   مفاتيح التخزين الصحيحة لمشروعك
-   ========================= */
-const PLAYERS_KEY = "bara_players";          // من single.html
-const CAT_ID_KEY  = "bara_category_id";      // من categories.html
-const STATE_KEY   = "bara_singleState";      // حالة اللعب (نسخة ثابتة)
-
 /* =========================
    Helpers
    ========================= */
@@ -292,36 +317,43 @@ function escapeHtml(str){
     .replaceAll('"',"&quot;")
     .replaceAll("'","&#039;");
 }
-function clearAllBaraState(){
-  // يمسح كل مفاتيح bara_ من sessionStorage/localStorage
-  const ssKeys = [];
+function clearBaraSession(){
+  const keys = [];
   for(let i=0;i<sessionStorage.length;i++){
     const k = sessionStorage.key(i);
-    if(k) ssKeys.push(k);
+    if(k) keys.push(k);
   }
-  ssKeys.forEach(k => { if(k.startsWith("bara_")) sessionStorage.removeItem(k); });
-
-  const lsKeys = [];
-  for(let i=0;i<localStorage.length;i++){
-    const k = localStorage.key(i);
-    if(k) lsKeys.push(k);
-  }
-  lsKeys.forEach(k => { if(k.startsWith("bara_")) localStorage.removeItem(k); });
+  keys.forEach(k=>{
+    if(k.startsWith("bara_")) sessionStorage.removeItem(k);
+  });
 }
 
 /* =========================
-   قراءة البيانات (مفاتيحك)
-   ========================= */
-const players = getSessionJSON(PLAYERS_KEY) || [];  // ✅ صار يقرأ الصحيح
-const categoryKey = (sessionStorage.getItem(CAT_ID_KEY) || "zoo").trim(); // ✅ صار يقرأ الصحيح
+   قراءة البيانات - حل جذري لتوحيد المفاتيح
+   =========================
+   الصحيح عندنا:
+   - الأسماء: bara_players
+   - الكتاغوري: bara_category_id
+   (ونخلي fallback لنسخ قديمة لو موجودة)
+*/
+const players =
+  getSessionJSON("bara_players") ||
+  getSessionJSON("players") || [];
 
+const categoryKey = String(
+  sessionStorage.getItem("bara_category_id") ||
+  sessionStorage.getItem("categoryKey") ||
+  "zoo"
+).trim();
+
+/* إذا ما فيه أسماء: نرجع لصفحة الأسماء (single.html) بدل الرئيسية */
 if(!players.length){
-  // إذا دخل هنا بدون أسماء، نرجعه للرئيسية (هذا طبيعي)
-  location.href = "index.html";
+  alert("الأسماء غير موجودة. رجّع لصفحة إدخال الأسماء ثم جرّب مرة ثانية.");
+  location.href = "single.html";
 }
 
 /* =========================
-   مواضيع حسب الكتاغوري
+   الداتا (مؤقتة الآن)
    ========================= */
 const TOPICS = {
   zoo:  ["زرافة","أسد","نمر","فيل","ذئب","غزال","قرد","حصان","ثعلب","دب"],
@@ -331,9 +363,12 @@ const TOPICS = {
   eat:  ["كبسة","مندي","بيتزا","شاورما","برجر","مكرونة","سمبوسة","جريش","مضغوط","فلافل"],
   play: ["كرة قدم","بلوت","شطرنج","فورتنايت","فيفا","ببجي","كود","مونوبولي","أونو","ليدو"]
 };
+
 function pickRandom(arr){
   return arr[Math.floor(Math.random()*arr.length)];
 }
+
+/* لا نطيح على zoo بالغلط إلا لو الكتاغوري فعلاً غير معروف */
 const topicList = TOPICS[categoryKey] || TOPICS.zoo;
 const topicWord = pickRandom(topicList);
 
@@ -342,9 +377,9 @@ const outsiderIndex = Math.floor(Math.random() * players.length);
 const outsiderName = players[outsiderIndex];
 
 /* =========================
-   Screens State
+   State (بمفتاح bara_ عشان ما يصير تعارض)
    ========================= */
-let state = getSessionJSON(STATE_KEY);
+let state = getSessionJSON("bara_singleState");
 if(!state){
   state = {
     screen: 0,
@@ -362,7 +397,7 @@ if(!state){
     state.pairings.push({ asker: players[i], target: players[targetIndex] });
   }
 
-  setSessionJSON(STATE_KEY, state);
+  setSessionJSON("bara_singleState", state);
 }
 
 /* DOM */
@@ -371,13 +406,13 @@ const content = document.getElementById("content");
 const ctaBtn = document.getElementById("ctaBtn");
 const homeBtn = document.getElementById("homeBtn");
 
-/* Home */
+/* الرئيسية: تصفير + رجوع */
 homeBtn.addEventListener("click", () => {
-  clearAllBaraState();
+  clearBaraSession();
   location.href = "index.html";
 });
 
-/* CTA */
+/* زر CTA */
 ctaBtn.addEventListener("click", () => next());
 
 render();
@@ -386,6 +421,7 @@ render();
    Render
    ========================= */
 function render(){
+  ctaBtn.classList.add("compact");
   ctaBtn.classList.remove("vote");
   ctaBtn.textContent = "التالي";
 
@@ -399,7 +435,7 @@ function render(){
       <div class="bigCard" style="min-height:260px;">
         <div class="msgText">
           اعطو الجوال لـ <span style="color:var(--yellow); font-weight:1000;">${escapeHtml(p)}</span><br/>
-          اضغط التالي حتى تعرف انت برا السالفة! أو داخلها<br/>
+          اضغط التالي حتى تعرف انت برا السالفة أو داخلها<br/>
           ولا تخلي احد غيرك يشوف الشاشة!
         </div>
       </div>
@@ -410,14 +446,14 @@ function render(){
   if(s === 1){
     const p = players[state.revealIndex];
     const isOut = (p === outsiderName);
-    pageTitle.textContent = " ";
 
+    pageTitle.textContent = " ";
     if(isOut){
       content.innerHTML = `
         <div class="bigCard">
           <div>
             <div class="innerCream" style="font-size:40px; font-weight:1000;">السالفة هي :</div>
-            <div class="topicWord" style="margin-top:20px;">أنت برا السالفة 👀</div>
+            <div class="topicWord" style="margin-top:20px;">أنت برا السالفة</div>
           </div>
         </div>
       `;
@@ -450,6 +486,7 @@ function render(){
   if(s === 3){
     pageTitle.textContent = "وقت الاسئلة";
     const pair = state.pairings[state.askIndex];
+
     content.innerHTML = `
       <div class="bigCard" style="min-height:320px;">
         <div style="width:100%;">
@@ -464,7 +501,7 @@ function render(){
           </div>
 
           <div class="askHelpBox">
-            اختر سؤالك بعناية حتى اللي برا السالفة ما يعرف عن إيش تتكلمون
+            اختر سؤالك بعناية حتى اللي برا السالفة ما يعرف عن ايش تتكلمون
           </div>
         </div>
       </div>
@@ -476,6 +513,7 @@ function render(){
     pageTitle.textContent = "ما تأكدت صح ؟";
     ctaBtn.textContent = "تصويت";
     ctaBtn.classList.add("vote");
+    ctaBtn.classList.add("compact");
 
     content.innerHTML = `
       <div class="bigCard" style="min-height:320px;">
@@ -497,7 +535,10 @@ function render(){
 function next(){
   const s = state.screen;
 
-  if(s === 0){ state.screen = 1; return saveAndRender(); }
+  if(s === 0){
+    state.screen = 1;
+    return saveAndRender();
+  }
 
   if(s === 1){
     state.revealIndex++;
@@ -524,13 +565,13 @@ function next(){
   }
 
   if(s === 4){
-    // حسب اتفاقك: بعد ضغط "تصويت" نوقف ولا نسوي شي
+    // حسب اتفاقك: بعد ضغط "تصويت" نوقف
     return;
   }
 }
 
 function saveAndRender(){
-  setSessionJSON(STATE_KEY, state);
+  setSessionJSON("bara_singleState", state);
   render();
 }
 </script>
