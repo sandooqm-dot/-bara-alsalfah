@@ -2,122 +2,23 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>لعبة برا السالفة</title>
-
-  <!-- ملف الستايل الموحد -->
-  <link rel="stylesheet" href="styles/style.css">
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-  <div class="app-frame">
+  <div class="container">
+    <h1>لعبة برا السالفة</h1>
 
-    <!-- اللوقو -->
-    <img src="logo.PNG" class="logo" alt="logo">
-
-    <!-- العنوان -->
-    <h1 class="title">لعبة برا السالفة</h1>
-
-    <!-- كرت الأزرار -->
-    <div class="card">
-
-      <button class="btn btn-mode" id="singleBtn">
-        جهاز واحد
-      </button>
-
-      <button class="btn btn-mode" id="multiBtn">
-        أجهزة متعددة
-      </button>
-
-      <button class="btn" id="rulesBtn">
-        تعليمات اللعبة
-      </button>
-
+    <div class="mode-box">
+      <button class="mode-btn active" data-mode="single">جهاز واحد</button>
+      <button class="mode-btn" data-mode="multi">أجهزة متعددة</button>
+      <button class="info-btn">تعليمات اللعبة</button>
     </div>
 
-    <!-- زر ابدأ اللعب -->
-    <button class="btn btn-primary" id="startBtn">
-      ابدأ اللعب
-    </button>
-
+    <button class="start-btn" id="startGame">ابدأ اللعب</button>
   </div>
 
-  <!-- نافذة التعليمات -->
-  <div class="modal" id="rulesModal">
-    <div class="modal-box">
-
-      <h2>التعليمات</h2>
-
-      <p>
-        اللعبة تعتمد على "سالفة / موضوع" مخفي.<br>
-        في كل جولة لاعب واحد يعرف السالفة والباقين برا السالفة.
-      </p>
-
-      <p>
-        كل لاعب يسأل أو يجاوب حسب دوره.<br>
-        اللي يعرف السالفة يحاول يجاوب بدون ما يفضحها.
-      </p>
-
-      <p>
-        بعد انتهاء الأسئلة يبدأ التصويت لاكتشاف مين برا السالفة.
-      </p>
-
-      <button class="btn btn-primary" id="closeRules">
-        رجوع
-      </button>
-
-    </div>
-  </div>
-
-  <!-- منطق الصفحة -->
-  <script>
-    let selectedMode = null;
-
-    const singleBtn = document.getElementById("singleBtn");
-    const multiBtn  = document.getElementById("multiBtn");
-    const startBtn  = document.getElementById("startBtn");
-
-    const rulesBtn   = document.getElementById("rulesBtn");
-    const rulesModal = document.getElementById("rulesModal");
-    const closeRules = document.getElementById("closeRules");
-
-    // اختيار نمط واحد فقط
-    singleBtn.onclick = () => {
-      selectedMode = "single";
-      singleBtn.classList.add("active");
-      multiBtn.classList.remove("active");
-    };
-
-    multiBtn.onclick = () => {
-      selectedMode = "multi";
-      multiBtn.classList.add("active");
-      singleBtn.classList.remove("active");
-    };
-
-    // ابدأ اللعب
-    startBtn.onclick = () => {
-      if (!selectedMode) {
-        alert("اختر نمط اللعب أولاً");
-        return;
-      }
-
-      if (selectedMode === "single") {
-        window.location.href = "single.html";
-      } else {
-        window.location.href = "multi.html";
-      }
-    };
-
-    // التعليمات
-    rulesBtn.onclick = () => {
-      rulesModal.classList.add("active");
-    };
-
-    closeRules.onclick = () => {
-      rulesModal.classList.remove("active");
-    };
-  </script>
-
+  <script src="script.js"></script>
 </body>
 </html>
