@@ -20,8 +20,6 @@
       --sky:#d8efff;
       --yellow:#f3c515;
       --black:#111;
-      --shadow-gray:rgba(0,0,0,.18);
-      --shadow-soft:rgba(0,0,0,.14);
     }
 
     *{box-sizing:border-box}
@@ -99,7 +97,6 @@
       bottom:-22px;
       height:28px;
       background:rgba(0,0,0,.18);
-      filter:blur(0.2px);
       border-radius:999px;
       opacity:.25;
     }
@@ -121,9 +118,9 @@
     .pill:active{transform:translateY(1px)}
     .pill + .pill{margin-top:16px}
 
-    /* اختيار النمط فقط يغيّر لون الخلفية */
-    .mode.selected{background:var(--cream)}
-    .mode.unselected{background:var(--sky)}
+    /* ✅ المطلوب: الزر المختار يصير سماوي */
+    .mode.selected{background:var(--sky)}
+    .mode.unselected{background:var(--cream)}
 
     /* زر ابدأ اللعب + ظل رمادي تحته */
     .start-wrap{
@@ -171,7 +168,7 @@
     }
     .overlay.show{display:flex}
 
-    /* نفس الإطار الخارجي داخل المودال لكن أصغر شوي من الصفحة */
+    /* نافذة أصغر شوي من الصفحة */
     .modal-shell{
       width:min(560px, 96vw);
       max-height:90vh;
@@ -246,6 +243,7 @@
 
     <div class="card-wrap">
       <section class="card" aria-label="اختيار نمط اللعب">
+        <!-- ✅ الافتراضي: جهاز واحد مختار (سماوي) -->
         <button id="btnSingle" class="pill mode selected" type="button">جهاز واحد</button>
         <button id="btnMulti" class="pill mode unselected" type="button">أجهزة متعددة</button>
         <button id="btnHelp" class="pill" type="button">تعليمات اللعبة</button>
@@ -288,7 +286,7 @@
   </div>
 
   <script>
-    // اختيار النمط: تغيير لون الزر فقط
+    // اختيار النمط: الزر المختار يصير سماوي
     let mode = "single"; // single | multi
 
     const btnSingle = document.getElementById("btnSingle");
@@ -300,14 +298,17 @@
 
     function setMode(next){
       mode = next;
+
       if(mode === "single"){
         btnSingle.classList.add("selected");
         btnSingle.classList.remove("unselected");
+
         btnMulti.classList.add("unselected");
         btnMulti.classList.remove("selected");
       }else{
         btnMulti.classList.add("selected");
         btnMulti.classList.remove("unselected");
+
         btnSingle.classList.add("unselected");
         btnSingle.classList.remove("selected");
       }
