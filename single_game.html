@@ -1,492 +1,599 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>برا السالفة - جهاز واحد</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>لعبة برا السالفة - اللعب الفردي</title>
 
   <style>
     :root{
-      --beige:#e9e1cf;
-      --olive:#6f7a52;
-      --olive-dark:#3f4e2c;
-      --cream:#efe7d7;
-      --card-cream:#e6dcbf;
-      --yellow:#f3c515;
-      --black:#111;
-      --white:#fff;
+      --bg:#e9e4d6;
+      --frame:#3f5a2a;
+      --card:#6a8450;
+      --card2:#d8cfb1;
+      --text:#1b1b1b;
+      --white:#ffffff;
 
-      --home-blue:#86c9ff;
-      --roof:#ff5b6a;
+      --yellow:#f2c21b;
+      --yellowText:#111;
 
-      /* زر التصويت */
-      --vote:#5b2a86; /* بنفسجي غامق (تقدر تغيّره لأحمر داكن لو تبي) */
-      /* --vote:#7b1e1e;  أحمر داكن */
+      --purple:#7a44a3;
+      --vote:#7b1f1f;   /* أحمر داكن */
+      --shadow: 0 10px 0 rgba(0,0,0,.25);
+
+      /* مقاسات قابلة للتعديل بسرعة */
+      --containerMax: 520px;
+      --radiusBig: 26px;
+      --radiusMid: 18px;
+
+      --boxPad: 22px;
+      --boxMinH: 260px;
+
+      --titleSize: 18px;
+      --headerSize: 26px;
+      --bigWordSize: 54px;     /* كلمة السالفة */
+      --playerNameSize: 36px;  /* اسم اللاعب الكبير */
+      --askLineSize: 36px;     /* (أحمد اسأل طلال) */
+      --subTextSize: 22px;     /* نصوص التعليمات داخل المربعات */
+      --subTextSizeSmall: 22px;
+
+      --btnH: 62px;            /* ارتفاع زر التالي/تصويت */
+      --btnRadius: 26px;
+
+      --homeSize: 60px;        /* حجم زر الرئيسية */
+      --homeGap: 12px;         /* مسافة زر الرئيسية عن الحواف */
+      --bottomGap: 16px;       /* مسافة الشريط السفلي */
     }
 
     *{box-sizing:border-box}
-    html,body{height:100%}
-
     body{
       margin:0;
-      background:var(--beige);
-      font-family:"Baloo Bhaijaan 2", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+      background:var(--bg);
+      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;
+      color:var(--text);
+    }
+
+    /* إطار اللعبة */
+    .wrap{
+      min-height:100vh;
       display:flex;
       justify-content:center;
-      align-items:stretch;
-      padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom);
-      color:#111;
+      padding:18px 14px 120px; /* مساحة للشريط السفلي */
     }
-
-    .page{
-      width:min(560px, 100%);
-      min-height:calc(100vh - (env(safe-area-inset-top) + env(safe-area-inset-bottom)));
-      margin:auto;
-      border:6px solid var(--olive-dark);
-      border-radius:22px;
-      background:var(--beige);
-      padding:22px 18px 24px;
+    .frame{
+      width:min(var(--containerMax), 100%);
+      border:10px solid var(--frame);
+      border-radius: var(--radiusBig);
+      background:transparent;
+      padding:18px 16px 24px;
       position:relative;
-      overflow:hidden;
     }
 
+    /* رأس الصفحة (شعار + عنوان) */
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:10px;
+    }
+    .brandTitle{
+      font-size:var(--titleSize);
+      font-weight:700;
+      color:#2f3f22;
+      opacity:.95;
+    }
     .logo{
-      position:absolute;
-      left:18px;
-      top:22px;
-      width:78px;
-      height:auto;
+      width:54px;height:54px;
       object-fit:contain;
-      pointer-events:none;
-      user-select:none;
     }
 
-    .top-title{
-      position:absolute;
-      right:20px;
-      top:26px;
-      color:var(--olive-dark);
+    /* شارة/عنوان كبير */
+    .badgeTitle{
+      margin:14px auto 16px;
+      width:fit-content;
+      max-width:100%;
+      padding:14px 26px;
+      border-radius: 22px;
+      background: rgba(216,207,177,.9);
+      color:#395427;
       font-weight:900;
-      font-size:22px;
-      opacity:.9;
-      white-space:nowrap;
-    }
-
-    /* عنوان بيج (مثل وقت الاسئلة / ما تأكدت صح) */
-    .pill{
-      margin:86px auto 16px;
-      width:min(420px, 100%);
-      background:var(--card-cream);
-      border-radius:22px;
-      padding:18px 16px;
-      text-align:center;
-      color:var(--olive-dark);
-      font-weight:900;
-      font-size:clamp(30px, 6.4vw, 46px);
-      line-height:1.05;
-    }
-
-    /* بطاقة خضراء */
-    .green-card{
-      width:min(470px, 100%);
-      margin:0 auto;
-      background:var(--olive);
-      border-radius:18px;
-      padding:26px 18px;
-      color:var(--white);
-      text-align:center;
-      font-weight:900;
-      font-size:clamp(28px, 5.8vw, 42px);
-      line-height:1.35;
-    }
-
-    .green-card .small{
-      font-weight:800;
-      font-size:clamp(18px, 3.8vw, 24px);
-      opacity:.95;
-    }
-
-    .hl{
-      color:var(--yellow);
-      font-weight:900;
-    }
-
-    /* مستطيل اسم اللاعب بالأعلى (مثل الصورة الأولى) */
-    .name-banner{
-      margin:98px auto 16px;
-      width:min(460px, 100%);
-      background:var(--card-cream);
-      border-radius:22px;
-      padding:22px 18px;
-      text-align:center;
-      color:var(--olive-dark);
-      font-weight:900;
-      font-size:clamp(34px, 7.2vw, 54px);
+      font-size: var(--headerSize);
       line-height:1;
-    }
-
-    .spacer{height:16px}
-
-    /* زر أصفر */
-    .btn{
-      display:block;
-      width:min(420px, 100%);
-      margin:18px auto 0;
-      border:4px solid var(--black);
-      border-radius:30px;
-      padding:16px 16px;
-      font-size:clamp(30px, 6.2vw, 48px);
-      font-weight:900;
-      background:var(--yellow);
-      color:#111;
-      cursor:pointer;
-      box-shadow:0 12px 0 rgba(0,0,0,.22);
-      -webkit-tap-highlight-color:transparent;
-      transition:transform .05s ease;
       text-align:center;
     }
-    .btn:active{transform:translateY(1px)}
 
-    /* زر التصويت */
-    .btn-vote{
-      background:var(--vote);
-      color:#fff;
-    }
-
-    /* نص صغير أسفل البطاقة داخل صفحة التصويت */
-    .foot-note{
-      margin-top:12px;
-      color:#fff;
-      opacity:.95;
-      font-size:clamp(18px, 3.9vw, 24px);
-      font-weight:800;
-    }
-
-    /* زر المنزل */
-    .home{
-      position:absolute;
-      left:22px;
-      bottom:22px;
-      width:88px;
-      height:88px;
-      border-radius:999px;
-      border:6px solid #000;
-      background:var(--home-blue);
+    /* صندوق كبير */
+    .bigCard{
+      background:var(--card);
+      color:var(--white);
+      border-radius: var(--radiusBig);
+      padding: var(--boxPad);
+      min-height: var(--boxMinH);
+      box-shadow: 0 0 0 8px rgba(216,207,177,.75) inset;
       display:flex;
       align-items:center;
       justify-content:center;
+      text-align:center;
+      position:relative;
+    }
+
+    /* صندوق داخلي للكلمة/السالفة */
+    .innerCream{
+      width:100%;
+      border-radius: var(--radiusBig);
+      background: rgba(216,207,177,.55);
+      padding: 16px 18px;
+      margin: 0 auto 12px;
+      color:#2f3f22;
+      font-weight:900;
+      text-align:center;
+    }
+
+    .playerNameBox{
+      margin: 10px auto 16px;
+      width:100%;
+      border-radius: 22px;
+      background: rgba(216,207,177,.55);
+      padding: 18px 16px;
+      font-weight:900;
+      font-size: var(--playerNameSize);
+      color:#3a5227;
+      text-align:center;
+    }
+
+    .msgText{
+      font-size: var(--subTextSize);
+      font-weight:800;
+      line-height:1.6;
+      padding: 0 10px;
+    }
+    .msgTextSmall{
+      font-size: var(--subTextSizeSmall);
+      font-weight:800;
+      line-height:1.6;
+      padding: 0 10px;
+    }
+
+    /* صفحة السالفة: كلمة كبيرة */
+    .topicLabel{
+      position:absolute;
+      top:18px;
+      right:18px;
+      left:18px;
+      text-align:right;
+      font-weight:900;
+      font-size: 40px;
+      color: rgba(255,255,255,.95);
+    }
+    .topicWord{
+      font-size: var(--bigWordSize);
+      font-weight:1000;
+      letter-spacing:.5px;
+    }
+
+    /* صفحة وقت الأسئلة */
+    .askLine{
+      font-size: var(--askLineSize);
+      font-weight:1000;
+      line-height:1.2;
+      margin-bottom: 18px;
+    }
+    .askLine .who{ color: var(--yellow); }
+    .askLine .mid{ color: #fff; margin:0 10px; }
+    .askHelpBox{
+      width:100%;
+      max-width: 420px;
+      margin: 0 auto;
+      border-radius: 22px;
+      background: rgba(0,0,0,.08);
+      padding: 18px 18px;
+      font-size: var(--subTextSizeSmall);
+      font-weight:900;
+      line-height:1.6;
+    }
+
+    /* الشريط السفلي: زر ثابت + زر الرئيسية */
+    .bottomBar{
+      position:fixed;
+      left:0; right:0;
+      bottom: var(--bottomGap);
+      display:flex;
+      justify-content:center;
+      pointer-events:none;
+      z-index:9999;
+    }
+    .bottomInner{
+      width:min(var(--containerMax), calc(100% - 28px));
+      position:relative;
+      pointer-events:none;
+    }
+
+    .homeBtn{
+      position:absolute;
+      left: var(--homeGap);
+      bottom:0;
+      width: var(--homeSize);
+      height: var(--homeSize);
+      border-radius: 50%;
+      background: #bfe7ff;
+      border:4px solid #000;
+      box-shadow: var(--shadow);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events:auto;
       cursor:pointer;
-      -webkit-tap-highlight-color:transparent;
-      box-shadow:0 10px 0 rgba(0,0,0,.18);
     }
-    .home:active{transform:translateY(1px)}
+    .homeBtn svg{ width:34px;height:34px; }
 
-    /* إخفاء/إظهار الشاشات */
-    .screen{display:none}
-    .screen.active{display:block}
-
-    @media (min-width: 900px){
-      body{align-items:center}
-      .page{min-height:820px}
+    .cta{
+      height: var(--btnH);
+      border-radius: var(--btnRadius);
+      background: var(--yellow);
+      color: var(--yellowText);
+      border:4px solid #000;
+      box-shadow: var(--shadow);
+      font-size: 28px;
+      font-weight:1000;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width: 86%;
+      max-width: 420px;
+      margin: 0 auto;
+      pointer-events:auto;
+      cursor:pointer;
+      user-select:none;
+      text-align:center;
+      padding: 0 14px;
     }
+
+    /* مهم: لا يتداخل زر الرئيسية مع الزر */
+    @media (max-width: 420px){
+      .cta{ width: 88%; }
+    }
+    @media (max-width: 360px){
+      .cta{ width: 90%; font-size: 26px; }
+      .homeBtn{ width:56px;height:56px; }
+      .homeBtn svg{ width:30px;height:30px; }
+    }
+
+    /* زر تصويت */
+    .cta.vote{
+      background: var(--vote);
+      color:#fff;
+      max-width: 360px;
+    }
+
+    /* زر التالي الأصغر (حسب طلبك تقليل الأطراف) */
+    .cta.compact{
+      height: 56px;
+      border-radius: 22px;
+      max-width: 360px;
+      width: 78%;
+      font-size: 26px;
+    }
+
+    /* مساحة داخل الصفحة حتى ما يغطي الشريط السفلي المحتوى */
+    .spacerBottom{ height: 18px; }
+
   </style>
 </head>
-
 <body>
-  <main class="page">
-    <img class="logo" src="logo.PNG" alt="شعار صندوق المسابقات">
-    <div class="top-title">لعبة برا السالفة</div>
 
-    <!-- شاشة 1: اعطوا الجوال -->
-    <section id="sHandoff" class="screen">
-      <div id="playerBanner" class="name-banner">—</div>
-      <div class="green-card">
-        <div>
-          اعطو الجوال لـ <span id="handoffName" class="hl">—</span>
+  <div class="wrap">
+    <div class="frame" id="frame">
+      <div class="topbar">
+        <div class="brandTitle">لعبة برا السالفة</div>
+        <img class="logo" src="logo.PNG" alt="logo" />
+      </div>
+
+      <div class="badgeTitle" id="pageTitle"> </div>
+
+      <!-- محتوى ديناميكي -->
+      <div id="content"></div>
+
+      <div class="spacerBottom"></div>
+    </div>
+  </div>
+
+  <!-- شريط ثابت أسفل -->
+  <div class="bottomBar">
+    <div class="bottomInner">
+      <button class="homeBtn" id="homeBtn" aria-label="الرئيسية" title="الرئيسية">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M3 11.5L12 4l9 7.5" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6.5 10.5V20h11V10.5" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <button class="cta compact" id="ctaBtn">التالي</button>
+    </div>
+  </div>
+
+<script>
+/* =========================
+   قراءة البيانات (لا تعتمد على localStorage الدائم)
+   ========================= */
+function getSessionJSON(key){
+  try{
+    const v = sessionStorage.getItem(key);
+    return v ? JSON.parse(v) : null;
+  }catch(e){ return null; }
+}
+function setSessionJSON(key, val){
+  sessionStorage.setItem(key, JSON.stringify(val));
+}
+
+/* نتوقع أن الصفحات السابقة تخزن:
+   - players: array of names
+   - categoryKey: مثل car / frot / cola / zoo
+*/
+const players = getSessionJSON("players") || [];
+const categoryKey = (sessionStorage.getItem("categoryKey") || "zoo").trim();
+
+if(!players.length){
+  // إذا دخل هنا بدون أسماء، نرجعه للصفحة الرئيسية
+  location.href = "index.html";
+}
+
+const TOPICS = {
+  zoo:  ["زرافة","أسد","نمر","فيل","ذئب","غزال","قرد","حصان","ثعلب","دب"],
+  car:  ["تويوتا","مرسيدس","هوندا","هيونداي","نيسان","كيا","شفروليه","فورد","بي إم دبليو","أودي"],
+  frot: ["تفاح","موز","عنب","برتقال","فراولة","مانجو","رمان","خيار","طماطم","بطيخ"],
+  cola: ["كولا","بيبسي","سفن أب","ميرندا","عصير برتقال","عصير تفاح","شاي مثلج","قهوة","حليب","ماء غازي"],
+  eat:  ["كبسة","مندي","بيتزا","شاورما","برجر","مكرونة","سمبوسة","جريش","مضغوط","فلافل"],
+  play: ["كرة قدم","بلوت","شطرنج","فورتنايت","فيفا","ببجي","كود","مونوبولي","أونو","ليدو"]
+};
+
+function pickRandom(arr){
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+
+/* إذا كتاغوري غير موجود: لا نطيح على zoo بالغلط إلا كحل أخير */
+const topicList = TOPICS[categoryKey] || TOPICS.zoo;
+const topicWord = pickRandom(topicList);
+
+/* اختيار برا السالفة */
+const outsiderIndex = Math.floor(Math.random() * players.length);
+const outsiderName = players[outsiderIndex];
+
+/* =========================
+   منطق الشاشات
+   0) تسليم الجوال للاعب X
+   1) إظهار (برا/داخل) + السالفة أو برا السالفة
+   2) وقت الأسئلة (تعليمات)
+   3) فلان يسأل فلان (تتكرر)
+   4) التصويت (زر تصويت)
+   ========================= */
+let state = getSessionJSON("singleState");
+if(!state){
+  state = {
+    screen: 0,
+    revealIndex: 0,   // من نعرض له الآن في مرحلة التسليم
+    askIndex: 0,      // كم مرة صفحة "فلان يسأل فلان"
+    pairings: []      // الأزواج عشوائية
+  };
+
+  // توليد أزواج عشوائية (كل واحد يسأل واحد مختلف)
+  const n = players.length;
+  for(let i=0;i<n;i++){
+    let asker = players[i];
+    let targetIndex = i;
+    while(targetIndex === i){
+      targetIndex = Math.floor(Math.random()*n);
+    }
+    state.pairings.push({ asker, target: players[targetIndex] });
+  }
+
+  setSessionJSON("singleState", state);
+}
+
+/* عناصر DOM */
+const pageTitle = document.getElementById("pageTitle");
+const content = document.getElementById("content");
+const ctaBtn = document.getElementById("ctaBtn");
+const homeBtn = document.getElementById("homeBtn");
+
+/* زر الرئيسية: يرجع للصفحة الرئيسية + يصفر بيانات الجلسة */
+homeBtn.addEventListener("click", () => {
+  sessionStorage.removeItem("players");
+  sessionStorage.removeItem("categoryKey");
+  sessionStorage.removeItem("singleState");
+  location.href = "index.html";
+});
+
+/* زر CTA */
+ctaBtn.addEventListener("click", () => {
+  next();
+});
+
+render();
+
+/* =========================
+   Render Screens
+   ========================= */
+function render(){
+  // افتراضي زر CTA
+  ctaBtn.classList.add("compact");
+  ctaBtn.classList.remove("vote");
+  ctaBtn.textContent = "التالي";
+
+  const s = state.screen;
+
+  if(s === 0){
+    // تسليم الجوال للاعب
+    const p = players[state.revealIndex];
+    pageTitle.textContent = " ";
+    content.innerHTML = `
+      <div class="playerNameBox">${escapeHtml(p)}</div>
+      <div class="bigCard" style="min-height:260px;">
+        <div class="msgText">
+          اعطو الجوال لـ <span style="color:var(--yellow); font-weight:1000;">${escapeHtml(p)}</span><br/>
+          اضغط التالي حتى تعرف انت برا السالفة! أو داخلها<br/>
+          ولا تخلي احد غيرك يشوف الشاشة!
         </div>
-        <div class="spacer"></div>
-        <div>اضغط التالي حتى تعرف</div>
-        <div>انت برا السالفة أو داخلها</div>
-        <div>ولاتخلي احد غيرك يشوف الشاشة !</div>
       </div>
-      <button id="btnNextFromHandoff" class="btn" type="button">التالي</button>
-    </section>
+    `;
+    return;
+  }
 
-    <!-- شاشة 2: كشف الدور -->
-    <section id="sReveal" class="screen">
-      <div class="pill">السالفة هي :</div>
-      <div id="revealCard" class="green-card">
-        <div id="revealText" style="font-size:clamp(34px,7.2vw,58px); line-height:1.1;">—</div>
-      </div>
-      <button id="btnReady" class="btn" type="button">جاهز</button>
-    </section>
+  if(s === 1){
+    // عرض النتيجة لهذا اللاعب
+    const p = players[state.revealIndex];
+    const isOut = (p === outsiderName);
 
-    <!-- شاشة 3: وقت الأسئلة (تعليمات) -->
-    <section id="sQIntro" class="screen">
-      <div class="pill">وقت الاسئلة</div>
-      <div class="green-card">
-        <div>كل شخص راح يسأل</div>
-        <div>شخص ثاني سؤال متعلق</div>
-        <div>بالسالفة اضغط التالي</div>
-        <div>حتى تعرفون مين يسأل</div>
-        <div>مين</div>
-      </div>
-      <button id="btnStartAsking" class="btn" type="button">التالي</button>
-    </section>
-
-    <!-- شاشة 4: (لاعب) يسأل (لاعب) -->
-    <section id="sAsk" class="screen">
-      <div class="pill">وقت الاسئلة</div>
-      <div class="green-card">
-        <div style="font-size:clamp(34px,7vw,56px); line-height:1.1;">
-          <span id="asker" class="hl">—</span> يسأل <span id="asked" class="hl">—</span>
+    pageTitle.textContent = " ";
+    if(isOut){
+      content.innerHTML = `
+        <div class="bigCard">
+          <div>
+            <div class="innerCream" style="font-size:40px; font-weight:1000;">السالفة هي :</div>
+            <div class="topicWord" style="margin-top:20px;">أنت برا السالفة 👀</div>
+          </div>
         </div>
-        <div class="spacer"></div>
-        <div>سؤال متعلق بالسالفة!</div>
-        <div class="small">اختار سؤالك بعناية حتى</div>
-        <div class="small">الي برا السالفة مايعرف</div>
-        <div class="small">عن ايش تتكلمون</div>
+      `;
+    }else{
+      content.innerHTML = `
+        <div class="bigCard">
+          <div>
+            <div class="innerCream" style="font-size:40px; font-weight:1000;">السالفة هي :</div>
+            <div class="topicWord" style="margin-top:20px;">${escapeHtml(topicWord)}</div>
+          </div>
+        </div>
+      `;
+    }
+    return;
+  }
+
+  if(s === 2){
+    // وقت الأسئلة
+    pageTitle.textContent = "وقت الاسئلة";
+    content.innerHTML = `
+      <div class="bigCard" style="min-height:280px;">
+        <div class="msgText">
+          كل شخص راح يسأل شخص ثاني سؤال متعلق بالسالفة<br/>
+          اضغط التالي حتى تعرفون مين يسأل مين
+        </div>
       </div>
-      <button id="btnToVote" class="btn" type="button">التالي</button>
-    </section>
+    `;
+    return;
+  }
 
-    <!-- شاشة 5: ما تأكدت صح؟ + زر صوّت -->
-    <section id="sVote" class="screen">
-      <div class="pill">ما تأكدت صح ؟</div>
-      <div class="green-card">
-        <div>الحين يقدر اي احد</div>
-        <div>يسأل شخص يشك انه</div>
-        <div>هو الي برا السالفة</div>
-        <div class="foot-note">بعد الانتهاء من الاسالة اضغط تصويت</div>
+  if(s === 3){
+    // فلان يسأل فلان
+    pageTitle.textContent = "وقت الاسئلة";
+    const pair = state.pairings[state.askIndex];
+    content.innerHTML = `
+      <div class="bigCard" style="min-height:320px;">
+        <div style="width:100%;">
+          <div class="askLine">
+            <span class="who">${escapeHtml(pair.asker)}</span>
+            <span class="mid">يسأل</span>
+            <span class="who">${escapeHtml(pair.target)}</span>
+          </div>
+
+          <div class="msgText" style="margin-bottom:12px;">
+            سؤال متعلق بالسالفة!
+          </div>
+
+          <div class="askHelpBox">
+            اختر سؤالك بعناية حتى اللي برا السالفة ما يعرف عن إيش تتكلمون
+          </div>
+        </div>
       </div>
-      <button id="btnVote" class="btn btn-vote" type="button">صوّت</button>
-    </section>
+    `;
+    return;
+  }
 
-    <!-- زر المنزل -->
-    <button class="home" id="homeBtn" type="button" aria-label="الصفحة الرئيسية">
-      <svg width="52" height="52" viewBox="0 0 64 64" aria-hidden="true">
-        <path d="M10 30 L32 12 L54 30" fill="none" stroke="#000" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M18 28 V54 H46 V28" fill="#fff" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
-        <path d="M28 54 V38 H36 V54" fill="#86c9ff" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
-        <path d="M21 26 L32 17 L43 26" fill="none" stroke="var(--roof)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
-  </main>
+  if(s === 4){
+    // التصويت
+    pageTitle.textContent = "ما تأكدت صح ؟";
+    ctaBtn.textContent = "تصويت";
+    ctaBtn.classList.add("vote");
+    ctaBtn.classList.add("compact");
 
-  <script>
-    /* =========================
-       ✅ قراءة الأسماء + اختيار الكتاغوري
-       ========================= */
-    const STORE_PREFIX = "bara_";
+    content.innerHTML = `
+      <div class="bigCard" style="min-height:320px;">
+        <div class="msgText">
+          الحين يقدر أي أحد يسأل شخص يشك إنه هو اللي برا السالفة<br/><br/>
+          <div style="font-size:22px; font-weight:1000; opacity:.95;">
+            بعد الانتهاء من الأسئلة اضغط <span style="color:var(--yellow);">تصويت</span>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+}
 
-    function safeParseJSON(s){
-      try{ return JSON.parse(s); }catch(e){ return null; }
+/* =========================
+   Next Logic
+   ========================= */
+function next(){
+  const s = state.screen;
+
+  if(s === 0){
+    // من تسليم -> عرض
+    state.screen = 1;
+    saveAndRender();
+    return;
+  }
+
+  if(s === 1){
+    // بعد العرض: نروح للي بعده أو وقت الأسئلة
+    state.revealIndex++;
+    if(state.revealIndex >= players.length){
+      state.screen = 2;
+    }else{
+      state.screen = 0;
     }
+    saveAndRender();
+    return;
+  }
 
-    function getPlayers(){
-      const keys = ["bara_players", "bara_players_list", "players", "playerNames"];
-      for(const k of keys){
-        const v = sessionStorage.getItem(k);
-        if(!v) continue;
-        const arr = safeParseJSON(v);
-        if(Array.isArray(arr)){
-          const clean = arr.map(x => (x||"").toString().trim()).filter(Boolean);
-          if(clean.length >= 3) return clean;
-        }
-      }
-      return null;
+  if(s === 2){
+    // وقت الأسئلة -> أول "يسأل"
+    state.screen = 3;
+    state.askIndex = 0;
+    saveAndRender();
+    return;
+  }
+
+  if(s === 3){
+    // نكرر "يسأل" بعدد اللاعبين
+    state.askIndex++;
+    if(state.askIndex >= state.pairings.length){
+      state.screen = 4; // صفحة التصويت
     }
+    saveAndRender();
+    return;
+  }
 
-    // استخراج كلمات الكتاغوري من ملف data/<id>.js (يحاول يلقط أول Array داخل الملف)
-    async function loadCategoryWords(catId){
-      const url = `data/${catId}.js`;
-      const res = await fetch(url, { cache: "no-store" });
-      const txt = await res.text();
+  if(s === 4){
+    // حسب اتفاقك: بعد ضغط "تصويت" نوقف ولا نسوي شي
+    // (لا انتقال)
+    return;
+  }
+}
 
-      // نلقط أول [ ... ] في الملف
-      const start = txt.indexOf("[");
-      const end   = txt.lastIndexOf("]");
-      if(start === -1 || end === -1 || end <= start) return [];
+function saveAndRender(){
+  setSessionJSON("singleState", state);
+  render();
+}
 
-      const arrText = txt.slice(start, end + 1);
+/* =========================
+   Utils
+   ========================= */
+function escapeHtml(str){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+</script>
 
-      // نحاول نرجّعها كـ JS Array
-      try{
-        const fn = new Function(`return (${arrText});`);
-        const arr = fn();
-        if(Array.isArray(arr)){
-          return arr.map(x => (x||"").toString().trim()).filter(Boolean);
-        }
-      }catch(e){}
-
-      return [];
-    }
-
-    function pickRandom(arr){
-      return arr[Math.floor(Math.random() * arr.length)];
-    }
-
-    function show(id){
-      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-      document.getElementById(id).classList.add("active");
-    }
-
-    function clearAllGameState(){
-      const ssKeys = [];
-      for(let i=0; i<sessionStorage.length; i++){
-        const k = sessionStorage.key(i);
-        if(k) ssKeys.push(k);
-      }
-      ssKeys.forEach(k => { if(k.startsWith(STORE_PREFIX)) sessionStorage.removeItem(k); });
-
-      const lsKeys = [];
-      for(let i=0; i<localStorage.length; i++){
-        const k = localStorage.key(i);
-        if(k) lsKeys.push(k);
-      }
-      lsKeys.forEach(k => { if(k.startsWith(STORE_PREFIX)) localStorage.removeItem(k); });
-    }
-
-    /* =========================
-       ✅ منطق اللعبة (جهاز واحد)
-       ========================= */
-    const homeBtn = document.getElementById("homeBtn");
-    homeBtn.addEventListener("click", () => {
-      clearAllGameState();
-      window.location.href = "index.html";
-    });
-
-    const playerBanner = document.getElementById("playerBanner");
-    const handoffName  = document.getElementById("handoffName");
-
-    const revealText = document.getElementById("revealText");
-    const btnNextFromHandoff = document.getElementById("btnNextFromHandoff");
-    const btnReady = document.getElementById("btnReady");
-    const btnStartAsking = document.getElementById("btnStartAsking");
-    const btnToVote = document.getElementById("btnToVote");
-    const btnVote = document.getElementById("btnVote");
-
-    const askerEl = document.getElementById("asker");
-    const askedEl = document.getElementById("asked");
-
-    let players = getPlayers();
-    if(!players){
-      // إذا ما لقينا أسماء، نرجّع للصفحة الرئيسية
-      window.location.href = "index.html";
-    }
-
-    // حفظ الأسماء خلال اللعب (Session فقط)
-    sessionStorage.setItem("bara_players", JSON.stringify(players));
-
-    let catId = sessionStorage.getItem("bara_category_id");
-    if(!catId) catId = "zoo"; // احتياط
-
-    let secretWord = sessionStorage.getItem("bara_secret_word");
-    let outIdxStr  = sessionStorage.getItem("bara_out_idx");
-
-    let outIdx = (outIdxStr !== null) ? Number(outIdxStr) : -1;
-
-    let current = 0;         // اللاعب الحالي في توزيع الأدوار
-    let phase = "handoff";   // handoff / reveal / qintro / ask / vote
-
-    function setHandoff(i){
-      phase = "handoff";
-      const name = players[i];
-      playerBanner.textContent = name;
-      handoffName.textContent  = name;
-      show("sHandoff");
-    }
-
-    function setReveal(i){
-      phase = "reveal";
-      // تحديث عنوان "السالفة هي :" فقط كعنوان ثابت مثل الصور
-      if(i === outIdx){
-        revealText.textContent = "انت برا السالفة 👀";
-      }else{
-        revealText.textContent = secretWord || "—";
-      }
-      show("sReveal");
-    }
-
-    function setQIntro(){
-      phase = "qintro";
-      show("sQIntro");
-    }
-
-    function randomAskPair(){
-      const a = pickRandom(players);
-      let b = pickRandom(players);
-      while(b === a && players.length > 1){
-        b = pickRandom(players);
-      }
-      return { a, b };
-    }
-
-    function setAsk(){
-      phase = "ask";
-      const pair = randomAskPair();
-      askerEl.textContent = pair.a;
-      askedEl.textContent = pair.b;
-      show("sAsk");
-    }
-
-    function setVote(){
-      phase = "vote";
-      show("sVote");
-    }
-
-    // أزرار التنقل
-    btnNextFromHandoff.addEventListener("click", () => {
-      // من اعطوا الجوال → كشف الدور لنفس اللاعب
-      setReveal(current);
-    });
-
-    btnReady.addEventListener("click", () => {
-      // من كشف الدور → اللاعب التالي أو وقت الأسئلة
-      current++;
-      if(current < players.length){
-        setHandoff(current);
-      }else{
-        setQIntro();
-      }
-    });
-
-    btnStartAsking.addEventListener("click", () => {
-      setAsk();
-    });
-
-    btnToVote.addEventListener("click", () => {
-      setVote();
-    });
-
-    // ✅ زر التصويت: لا يسوي شيء الآن (حسب طلبك)
-    btnVote.addEventListener("click", () => {
-      // متعمد: بدون أي انتقال أو إجراء
-    });
-
-    // البداية: جهّز كلمة + برا السالفة
-    (async function init(){
-      // اختيار برا السالفة مرة واحدة
-      if(outIdx === -1 || Number.isNaN(outIdx)){
-        outIdx = Math.floor(Math.random() * players.length);
-        sessionStorage.setItem("bara_out_idx", String(outIdx));
-      }
-
-      // اختيار كلمة مرة واحدة
-      if(!secretWord){
-        const words = await loadCategoryWords(catId);
-        secretWord = words.length ? pickRandom(words) : "زرافة";
-        sessionStorage.setItem("bara_secret_word", secretWord);
-      }
-
-      // ابدأ أول لاعب
-      current = 0;
-      setHandoff(current);
-    })();
-  </script>
 </body>
 </html>
