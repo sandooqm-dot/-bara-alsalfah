@@ -11,11 +11,11 @@
 
   <style>
     :root{
-      --beige:#e9e1cf;     /* لون الفراغ */
-      --olive:#6f7a52;     /* أخضر البطاقة */
-      --olive-dark:#3f4e2c;/* إطار الصفحة */
-      --cream:#efe7d7;     /* خلفية داخلية فاتحة */
-      --yellow:#f3c515;    /* زر ابدأ اللعب */
+      --beige:#e9e1cf;
+      --olive:#6f7a52;
+      --olive-dark:#3f4e2c;
+      --cream:#efe7d7;
+      --yellow:#f3c515;
       --black:#111;
       --input-border:#4f6a2a;
       --plus:#b46ac6;
@@ -125,14 +125,12 @@
       outline:none;
     }
 
-    /* placeholder أصغر وباهت */
     .name-input::placeholder{
       color:#111;
       opacity:.45;
       font-weight:800;
       font-size:0.72em;
     }
-    /* يختفي فور الضغط */
     .name-input:focus::placeholder{
       opacity:0;
       color:transparent;
@@ -222,7 +220,7 @@
       </div>
     </section>
 
-    <!-- زر المنزل: يرجع للرئيسية + يصفّر كل شيء ويرجع 3 مربعات -->
+    <!-- زر المنزل: تصفير كامل + رجوع للرئيسية -->
     <button class="home" id="homeBtn" type="button" aria-label="الصفحة الرئيسية">
       <svg width="52" height="52" viewBox="0 0 64 64" aria-hidden="true">
         <path d="M10 30 L32 12 L54 30" fill="none" stroke="#000" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
@@ -234,12 +232,22 @@
   </main>
 
   <script>
-    // حفظ الأسماء (بنحتاجها لاحقًا)
-    const STORAGE_KEY = "bara_single_players";
+    // ✅ نحفظ فقط داخل الجلسة الحالية + نخليه ينتهي تلقائيًا إذا تغير اليوم
+    const SS_PLAYERS = "bara_single_players";
+    const SS_COUNT   = "bara_single_count";
+    const SS_DATE    = "bara_single_date";
 
     const namesBox = document.getElementById("namesBox");
     const startBtn = document.getElementById("startBtn");
     const homeBtn  = document.getElementById("homeBtn");
+
+    function todayKey(){
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      return `${yyyy}-${mm}-${dd}`;
+    }
 
     function createInput(index, value=""){
       const input = document.createElement("input");
@@ -251,7 +259,7 @@
       input.value = value;
 
       input.addEventListener("input", () => {
-        saveNames();
+        saveToSession();
         updateStartState();
       });
 
@@ -266,21 +274,47 @@
       return getAllInputs().map(i => (i.value || "").trim());
     }
 
-    function saveNames(){
-      const names = getNamesTrimmed();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(names));
-      localStorage.setItem("bara_mode", "single");
-    }
-
     function updateStartState(){
-      const names = getNamesTrimmed().filter(n => n.length > 0);
-      startBtn.disabled = names.length < 3;
+      const filled = getNamesTrimmed().filter(n => n.length > 0);
+      startBtn.disabled = filled.length < 3;
     }
 
     function rebuildPlaceholders(){
       const inputs = getAllInputs();
       inputs.forEach((inp, idx) => {
         inp.placeholder = `اللاعب رقم ${idx + 1}`;
+      });
+    }
+
+    function saveToSession(){
+      sessionStorage.setItem(SS_DATE, todayKey());
+      sessionStorage.setItem(SS_COUNT, String(getAllInputs().length));
+      sessionStorage.setItem(SS_PLAYERS, JSON.stringify(getNamesTrimmed()));
+      sessionStorage.setItem("bara_mode", "single");
+    }
+
+    function clearAllGameState(){
+      // يمسح كل مفاتيح bara_ من sessionStorage + localStorage احتياط
+      const ssKeys = [];
+      for(let i=0; i<sessionStorage.length; i++){
+        const k = sessionStorage.key(i);
+        if(k) ssKeys.push(k);
+      }
+      ssKeys.forEach(k => {
+        if(k.startsWith("bara_") || k === SS_PLAYERS || k === SS_COUNT || k === SS_DATE){
+          sessionStorage.removeItem(k);
+        }
+      });
+
+      const lsKeys = [];
+      for(let i=0; i<localStorage.length; i++){
+        const k = localStorage.key(i);
+        if(k) lsKeys.push(k);
+      }
+      lsKeys.forEach(k => {
+        if(k.startsWith("bara_")){
+          localStorage.removeItem(k);
+        }
       });
     }
 
@@ -307,58 +341,55 @@
         const newInput = createInput(inputs.length + 1, "");
         namesBox.insertBefore(newInput, plus);
         rebuildPlaceholders();
-        saveNames();
+        saveToSession();
         updateStartState();
       });
 
       namesBox.appendChild(btn);
     }
 
-    function clearGameState(){
-      // يمسح كل شيء مرتبط باللعبة (أي مفتاح يبدأ بـ bara_) + أسماء اللاعبين
-      const keys = [];
-      for(let i=0; i<localStorage.length; i++){
-        const k = localStorage.key(i);
-        if(k) keys.push(k);
-      }
-      keys.forEach(k => {
-        if(k === STORAGE_KEY || k.startsWith("bara_")){
-          localStorage.removeItem(k);
-        }
-      });
-    }
-
     function init(){
-      let saved = [];
-      try{
-        saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-        if(!Array.isArray(saved)) saved = [];
-      }catch(e){
-        saved = [];
+      // ✅ إذا تغير اليوم: نبدأ من الصفر (3 مربعات فاضية)
+      const savedDate = sessionStorage.getItem(SS_DATE);
+      if(savedDate && savedDate !== todayKey()){
+        clearAllGameState();
       }
 
-      const initialCount = Math.max(3, saved.length);
+      let savedNames = [];
+      let savedCount = 0;
 
-      for(let i=1; i<=initialCount; i++){
-        const val = (saved[i-1] || "");
+      try{
+        savedNames = JSON.parse(sessionStorage.getItem(SS_PLAYERS) || "[]");
+        if(!Array.isArray(savedNames)) savedNames = [];
+      }catch(e){
+        savedNames = [];
+      }
+
+      savedCount = parseInt(sessionStorage.getItem(SS_COUNT) || "0", 10);
+      if(!Number.isFinite(savedCount) || savedCount < 3) savedCount = 0;
+
+      const count = Math.max(3, savedCount || savedNames.length || 3);
+
+      for(let i=1; i<=count; i++){
+        const val = (savedNames[i-1] || "");
         namesBox.appendChild(createInput(i, val));
       }
 
       addPlusButton();
       rebuildPlaceholders();
       updateStartState();
-      saveNames();
+      saveToSession();
     }
 
-    // ✅ زر المنزل: تصفير كل شيء + رجوع للرئيسية (وبالتالي ترجع 3 مربعات فقط)
+    // ✅ زر المنزل: تصفير كامل + رجوع للرئيسية
     homeBtn.addEventListener("click", () => {
-      clearGameState();
+      clearAllGameState();
       window.location.href = "index.html";
     });
 
-    // ابدأ اللعب (الصفحة القادمة لاحقًا)
+    // ✅ ابدأ اللعب: يحفظ الأسماء عشان نحتاجها داخل اللعبة
     startBtn.addEventListener("click", () => {
-      saveNames();
+      saveToSession();
       window.location.href = "single_game.html";
     });
 
