@@ -2,335 +2,301 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>لعبة برا السالفة - إدخال الأسماء</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>لعبة برا السالفة - جهاز واحد</title>
 
   <style>
     :root{
-      --bg: #E9E4D8;          /* الخلفية */
-      --green: #647B4A;       /* أخضر الإطار/الصندوق */
-      --greenDark: #3C4F2A;
-      --card: #F2E8D2;        /* بيج الصناديق */
-      --white: #ffffff;
-      --black: #111111;
-      --yellow: #F2C315;      /* زر التالي/ابدأ */
-      --purple: #A55AC8;      /* زر + */
-      --border: #1A1A1A;
-      --shadow: 0 10px 0 rgba(0,0,0,.25);
-      --radius: 22px;
-      --radiusSoft: 18px;
+      --bg:#e9e3d6;          /* البيج */
+      --frame:#e9e3d6;
+      --green:#3f5b2a;       /* أخضر الإطار */
+      --green2:#6e8554;
+      --yellow:#f2c300;      /* زر أصفر */
+      --purple:#8b49b9;      /* زر + */
+      --text:#1a1a1a;
+      --muted:#9a9a9a;
+      --shadow: 0 10px 0 rgba(0,0,0,0.18);
+      --shadowSmall: 0 8px 0 rgba(0,0,0,0.18);
+      --border: 5px solid #000;
+      --radius: 28px;
     }
 
-    *{ box-sizing: border-box; }
+    *{ box-sizing:border-box; }
     body{
       margin:0;
       background: var(--bg);
       font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
-      color: var(--black);
+      color: var(--text);
     }
 
-    /* إطار الصفحة مثل الصورة */
+    /* يضمن أن البيج يملأ أي فراغ على الشاشات الكبيرة */
+    .page{
+      min-height: 100vh;
+      padding: 14px 12px;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+    }
+
     .frame{
-      width: min(92vw, 560px);
-      height: min(92vh, 980px);
-      margin: 24px auto;
-      border: 8px solid var(--greenDark);
+      width: min(520px, 100%);
+      background: var(--frame);
+      border: 6px solid var(--green);
       border-radius: 26px;
-      padding: 16px 14px 0;
+      padding: 18px 16px 18px;
       position: relative;
-      background: transparent;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+
+      /* مهم: نخليها تتوسع لو زادت الأسماء (فالزر ينزل تحت تلقائياً) */
+      min-height: calc(100vh - 28px);
+      display:flex;
+      flex-direction:column;
     }
 
-    /* الهيدر */
-    .top{
+    .topRow{
       display:flex;
       align-items:flex-start;
       justify-content:space-between;
-      gap: 10px;
-      padding: 6px 6px 0;
-      flex: 0 0 auto;
+      gap:12px;
+      margin-bottom: 10px;
     }
-    .brand{
+
+    .title{
       font-weight: 800;
-      color: var(--greenDark);
+      color: var(--green);
       font-size: 16px;
-      margin-top: 2px;
-      white-space: nowrap;
+      line-height: 1.2;
+      margin-top: 4px;
+      text-align:right;
     }
+
     .logo{
-      width: 56px;
-      height: 56px;
+      width: 70px;
+      height: 36px;
       object-fit: contain;
-      flex: 0 0 auto;
+      opacity: 0.95;
     }
 
-    /* محتوى قابل للتمرير (عشان إذا كثرت الأسماء) */
-    .content{
-      flex: 1 1 auto;
-      overflow: auto;
-      padding: 10px 6px 140px; /* مساحة للزر السفلي */
-    }
-
-    h1{
-      margin: 14px 0 14px;
+    h2{
+      margin: 10px 0 14px;
       text-align:center;
-      color: var(--greenDark);
-      font-size: 26px;
+      color: var(--green);
+      font-size: 22px;
       font-weight: 900;
     }
 
     .inputs{
-      display: grid;
-      gap: 14px;
-      width: 100%;
-      max-width: 460px;
-      margin: 0 auto;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      margin-top: 2px;
     }
 
-    .player-input{
+    .nameInput{
       width: 100%;
-      background: var(--white);
-      border: 4px solid var(--green);
-      border-radius: var(--radiusSoft);
       padding: 14px 14px;
-      font-size: 22px;
-      font-weight: 800;
-      text-align: center;
-      outline: none;
+      border: 4px solid var(--green2);
+      border-radius: 18px;
+      background:#fff;
+      font-size: 20px;
+      font-weight: 700;
+      color:#111;
+      outline:none;
+      text-align:center;
     }
-    .player-input::placeholder{
-      color: rgba(0,0,0,.35);
+    .nameInput::placeholder{
+      color: var(--muted);
       font-weight: 800;
+      font-size: 18px; /* أصغر */
+      opacity: 0.75;   /* أبهت */
     }
 
     /* زر + */
-    .add-wrap{
+    .plusWrap{
       display:flex;
       justify-content:center;
-      margin: 14px 0 6px;
+      margin: 18px 0 6px;
     }
-    .add-btn{
-      width: 66px;
-      height: 66px;
-      border-radius: 16px;
-      border: 4px solid var(--border);
+    .plusBtn{
+      width: 62px;
+      height: 62px;
+      border-radius: 14px;
+      border: 4px solid #000;
       background: var(--purple);
-      box-shadow: var(--shadow);
       display:flex;
-      align-items:center;
       justify-content:center;
+      align-items:center;
+      box-shadow: var(--shadowSmall);
       cursor:pointer;
       user-select:none;
     }
-    .add-btn span{
-      font-size: 44px;
+    .plusBtn span{
+      color:#fff;            /* الزائد أبيض */
+      font-size: 40px;
+      font-weight: 900;
       line-height: 1;
-      font-weight: 1000;
-      color: #fff; /* + أبيض */
-      transform: translateY(-2px);
-    }
-    .add-btn:active{
-      transform: translateY(2px);
-      box-shadow: 0 6px 0 rgba(0,0,0,.25);
+      transform: translateY(-1px);
     }
 
-    /* الشريط السفلي الثابت */
-    .bottom-bar{
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      padding: 14px 14px 16px;
-      background: linear-gradient(to top, rgba(233,228,216,1) 70%, rgba(233,228,216,0));
+    /* منطقة زر ابدأ اللعب — في المكان اللي رسمته */
+    .actionArea{
+      margin-top: auto; /* هذا يخليه ينزل تحت إذا في فراغ، وإذا كثر المحتوى ينزل تحت تلقائي */
       display:flex;
-      align-items:center;
       justify-content:center;
-      gap: 12px;
-      z-index: 5;
-      pointer-events: none; /* نفعّل على الأزرار فقط */
+      padding: 18px 0 calc(18px + env(safe-area-inset-bottom));
     }
 
-    .home-btn{
-      pointer-events: auto;
-      position: absolute;
-      left: 14px;
-      bottom: 18px;
-      width: 66px;
-      height: 66px;
-      border-radius: 18px;
-      border: 4px solid var(--border);
-      background: #B7E1FF;
-      box-shadow: var(--shadow);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-    }
-    .home-btn svg{
-      width: 36px;
-      height: 36px;
-    }
-    .home-btn:active{
-      transform: translateY(2px);
-      box-shadow: 0 6px 0 rgba(0,0,0,.25);
-    }
-
-    .primary-btn{
-      pointer-events: auto;
-      width: min(92%, 460px);
-      height: 74px;
-      border-radius: 22px;
-      border: 4px solid var(--border);
+    .startBtn{
+      border: 4px solid #000;
       background: var(--yellow);
+      color:#111;              /* النص أسود */
+      font-weight: 900;
+      font-size: 24px;
+      border-radius: 22px;
+      padding: 12px 26px;      /* تصغير الحواف */
+      min-width: 220px;        /* أصغر من قبل */
+      max-width: 78%;
       box-shadow: var(--shadow);
-      font-size: 30px;
-      font-weight: 1000;
-      color: var(--black); /* النص أسود */
       cursor:pointer;
-      text-align:center;
-      /* عشان ما يتداخل مع زر الرئيسية: نترك مساحة يسار */
-      padding-left: 74px;
-      padding-right: 18px;
-    }
-    .primary-btn:active{
-      transform: translateY(2px);
-      box-shadow: 0 6px 0 rgba(0,0,0,.25);
     }
 
-    /* على الشاشات الصغيرة جداً */
-    @media (max-height: 720px){
-      h1{ font-size: 24px; }
-      .player-input{ font-size: 20px; padding: 12px; }
-      .primary-btn{ height: 70px; font-size: 28px; }
-      .add-btn{ width: 62px; height: 62px; }
-      .add-btn span{ font-size: 42px; }
+    /* زر الرئيسية (لا يتداخل مع زر ابدأ اللعب) */
+    .homeBtn{
+      position: fixed;
+      left: 18px;
+      bottom: calc(18px + env(safe-area-inset-bottom));
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      border: 4px solid #000;
+      background: #bfe3ff;
+      box-shadow: var(--shadowSmall);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      cursor:pointer;
+      z-index: 9999;
+    }
+    .homeBtn svg{
+      width: 34px;
+      height: 34px;
+      fill: #111;
+    }
+
+    /* تحسين على الشاشات الصغيرة جدًا */
+    @media (max-width: 360px){
+      h2{ font-size: 20px; }
+      .nameInput{ font-size: 18px; }
+      .startBtn{ font-size: 22px; min-width: 200px; }
+      .plusBtn{ width: 58px; height: 58px; }
+      .plusBtn span{ font-size: 38px; }
     }
   </style>
 </head>
 
 <body>
-  <div class="frame">
-    <div class="top">
-      <div class="brand">لعبة برا السالفة</div>
-      <!-- تأكد أن اسم اللوجو مطابق لملفك: logo.PNG أو logo.png -->
-      <img class="logo" src="logo.PNG" alt="logo">
-    </div>
+  <div class="page">
+    <div class="frame">
+      <div class="topRow">
+        <div class="title">لعبة برا السالفة</div>
+        <!-- غيّر اسم اللوقو لو عندك مختلف -->
+        <img class="logo" src="logo.PNG" alt="logo">
+      </div>
 
-    <div class="content">
-      <h1>ادخل اسماء اللاعبين :</h1>
+      <h2>ادخل اسماء اللاعبين :</h2>
 
-      <div class="inputs" id="inputs"></div>
+      <div class="inputs" id="inputs">
+        <input class="nameInput" type="text" placeholder="اللاعب رقم 1" />
+        <input class="nameInput" type="text" placeholder="اللاعب رقم 2" />
+        <input class="nameInput" type="text" placeholder="اللاعب رقم 3" />
+      </div>
 
-      <div class="add-wrap">
-        <div class="add-btn" id="addBtn" role="button" aria-label="إضافة لاعب">
+      <div class="plusWrap">
+        <div class="plusBtn" id="addBtn" aria-label="إضافة لاعب">
           <span>+</span>
         </div>
       </div>
-    </div>
 
-    <div class="bottom-bar">
-      <button class="home-btn" id="homeBtn" title="الرئيسية" aria-label="الرئيسية">
-        <!-- أيقونة منزل -->
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M3 11.2L12 4l9 7.2v9.3a1.5 1.5 0 0 1-1.5 1.5H4.5A1.5 1.5 0 0 1 3 20.5v-9.3Z" stroke="#111" stroke-width="2.2" />
-          <path d="M9 22v-7h6v7" stroke="#111" stroke-width="2.2" />
-        </svg>
-      </button>
-
-      <button class="primary-btn" id="startBtn">ابدأ اللعب</button>
+      <div class="actionArea">
+        <button class="startBtn" id="startBtn">ابدأ اللعب</button>
+      </div>
     </div>
   </div>
 
+  <!-- زر الرئيسية ثابت -->
+  <div class="homeBtn" id="homeBtn" title="الرئيسية" aria-label="الرئيسية">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
+    </svg>
+  </div>
+
   <script>
-    // ====== إعدادات ======
-    const MIN_PLAYERS = 3;
-    const MAX_PLAYERS = 10;
-
-    // نحفظ أسماء اللاعبين أثناء اللعب فقط (لو خرج/قفل المتصفح، يبدأ من جديد)
-    // تخزين مؤقت في sessionStorage
-    const KEY = "bara_players_session";
-
-    // ====== Helpers ======
-    function loadPlayers(){
-      try{
-        const raw = sessionStorage.getItem(KEY);
-        const arr = raw ? JSON.parse(raw) : null;
-        if(Array.isArray(arr)) return arr;
-      }catch(e){}
-      return [];
-    }
-
-    function savePlayers(){
-      const values = Array.from(document.querySelectorAll(".player-input")).map(i => i.value.trim());
-      sessionStorage.setItem(KEY, JSON.stringify(values));
-    }
-
-    function createInput(index, value){
-      const input = document.createElement("input");
-      input.type = "text";
-      input.className = "player-input";
-      input.placeholder = "اللاعب رقم " + (index + 1);
-      input.value = value || "";
-      input.addEventListener("input", savePlayers);
-      return input;
-    }
-
-    function renderInputs(count, existingValues){
-      const wrap = document.getElementById("inputs");
-      wrap.innerHTML = "";
-      for(let i=0;i<count;i++){
-        wrap.appendChild(createInput(i, existingValues[i] || ""));
+    // يخلي النص (placeholder) يختفي فور الضغط على المربع
+    document.addEventListener('focusin', (e) => {
+      if (e.target.classList && e.target.classList.contains('nameInput')) {
+        e.target.dataset.ph = e.target.placeholder;
+        e.target.placeholder = '';
       }
+    });
+    document.addEventListener('focusout', (e) => {
+      if (e.target.classList && e.target.classList.contains('nameInput')) {
+        if (!e.target.value.trim()) {
+          e.target.placeholder = e.target.dataset.ph || '';
+        }
+      }
+    });
+
+    const inputsWrap = document.getElementById('inputs');
+    const addBtn = document.getElementById('addBtn');
+    const startBtn = document.getElementById('startBtn');
+    const homeBtn = document.getElementById('homeBtn');
+
+    function nextIndex(){
+      return inputsWrap.querySelectorAll('.nameInput').length + 1;
     }
 
-    // ====== Init ======
-    (function init(){
-      const stored = loadPlayers();
-      const count = Math.max(MIN_PLAYERS, Math.min(MAX_PLAYERS, stored.length || MIN_PLAYERS));
-      renderInputs(count, stored);
-    })();
-
-    // ====== زر + (بدون ما يضيع الأسماء) ======
-    document.getElementById("addBtn").addEventListener("click", () => {
-      const inputs = Array.from(document.querySelectorAll(".player-input"));
-      const currentCount = inputs.length;
-      if(currentCount >= MAX_PLAYERS) return;
-
-      const values = inputs.map(i => i.value);
-      renderInputs(currentCount + 1, values);
-      savePlayers();
-      // نزّل للآخر شوي
-      setTimeout(() => {
-        const content = document.querySelector(".content");
-        content.scrollTop = content.scrollHeight;
-      }, 0);
+    // ✅ إصلاح مشكلة اختفاء الأسماء: لا نعيد بناء القائمة نهائياً، فقط نضيف input جديد
+    addBtn.addEventListener('click', () => {
+      const i = document.createElement('input');
+      i.className = 'nameInput';
+      i.type = 'text';
+      i.placeholder = `اللاعب رقم ${nextIndex()}`;
+      inputsWrap.appendChild(i);
+      i.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => i.focus(), 200);
     });
 
-    // ====== زر الرئيسية (يصفر كل شيء ويرجع للصفحة الرئيسية) ======
-    document.getElementById("homeBtn").addEventListener("click", () => {
-      sessionStorage.removeItem(KEY);        // حذف الأسماء (تصفيير)
-      // لو عندك مفاتيح أخرى للعبة لاحقاً، أضفها هنا
-      window.location.href = "index.html";
+    function clearBaraState(){
+      // يمسح أي بيانات تخص اللعبة فقط (bara_)
+      for (let k = localStorage.length - 1; k >= 0; k--) {
+        const key = localStorage.key(k);
+        if (key && key.startsWith('bara_')) localStorage.removeItem(key);
+      }
+      sessionStorage.removeItem('bara_players');
+      sessionStorage.removeItem('bara_selectedCategory');
+      sessionStorage.removeItem('bara_secretWord');
+      sessionStorage.removeItem('bara_outPlayerIndex');
+    }
+
+    homeBtn.addEventListener('click', () => {
+      clearBaraState();
+      window.location.href = 'index.html';
     });
 
-    // ====== ابدأ اللعب ======
-    document.getElementById("startBtn").addEventListener("click", () => {
-      const inputs = Array.from(document.querySelectorAll(".player-input"));
-      const names = inputs.map(i => i.value.trim()).filter(Boolean);
+    startBtn.addEventListener('click', () => {
+      const names = Array.from(inputsWrap.querySelectorAll('.nameInput'))
+        .map(i => i.value.trim())
+        .filter(Boolean);
 
-      if(names.length < MIN_PLAYERS){
-        alert("لازم تدخل على الأقل " + MIN_PLAYERS + " أسماء.");
+      if (names.length < 3) {
+        alert('لازم تدخل 3 أسماء على الأقل');
         return;
       }
 
-      // احفظ الأسماء للجلسة (أثناء اللعب)
-      sessionStorage.setItem(KEY, JSON.stringify(names));
+      // نخزنها خلال اللعب فقط (إذا قفل المتصفح تروح)
+      sessionStorage.setItem('bara_players', JSON.stringify(names));
 
-      // انتقل لصفحة الكتاغوريات
-      window.location.href = "categories.html";
+      // نوديه صفحة الكتاغوريات
+      window.location.href = 'categories.html';
     });
   </script>
 </body>
