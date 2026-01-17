@@ -6,60 +6,67 @@
 body {
   margin: 0;
   background: #f3efdf;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
 }
 
-.container {
+/* الإطار الخارجي */
+.frame {
   width: 92vw;
-  max-width: 420px;
+  max-width: 430px;
+  background: #f6f2e8;
   border: 4px solid #5b6b2f;
   border-radius: 22px;
-  padding: 24px 16px 28px;
-  background: #f6f2e8;
+  padding: 24px 16px 30px;
 }
 
+/* العنوان */
 h1 {
-  margin: 0 0 20px;
+  margin: 0 0 22px;
   text-align: center;
-  color: #5b6b2f;
   font-size: 26px;
-  font-weight: bold;
+  font-weight: 800;
+  color: #4f5f2a;
 }
 
-.mode-box {
+/* الصندوق الأخضر */
+.box {
   background: #7a8748;
   border-radius: 22px;
   padding: 18px 14px;
 }
 
-.mode-btn,
-.info-btn {
+/* الأزرار */
+.mode-btn {
   width: 100%;
   padding: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   border-radius: 999px;
-  border: 4px solid #1f1f1f;
+  border: 4px solid #000;
   background: #f2eee3;
   font-size: 20px;
-  font-weight: bold;
+  font-weight: 800;
+  color: #000;
   cursor: pointer;
 }
 
+/* الزر المختار */
 .mode-btn.active {
   background: #d9f0ff;
 }
 
+/* زر ابدأ */
 .start-btn {
   margin-top: 22px;
   width: 100%;
   padding: 18px;
   background: #ffd400;
   border-radius: 999px;
-  border: 4px solid #1f1f1f;
+  border: 4px solid #000;
   font-size: 24px;
-  font-weight: bold;
+  font-weight: 900;
+  color: #000;
   cursor: pointer;
 }
