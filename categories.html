@@ -17,9 +17,37 @@
       --cream:#efe7d7;
       --yellow:#f3c515;
       --black:#111;
-      --active:#d8efff; /* نفس السماوي */
+      --active:#d8efff; /* السماوي عند التفعيل */
       --home-blue:#86c9ff;
       --roof:#ff5b6a;
+
+      /* =========================
+         ✅ قائمة تعديل أحجام الصور
+         عدّل الأرقام فقط
+         ========================= */
+      /* اسم الملف: eat.PNG */
+      --img-eat-w: 100%;
+      --img-eat-h: 80px;
+
+      /* اسم الملف: zoo.PNG */
+      --img-zoo-w: 100%;
+      --img-zoo-h: 100px;
+
+      /* اسم الملف: play.PNG */
+      --img-play-w: 100%;
+      --img-play-h: 74px;
+
+      /* اسم الملف: car.PNG */
+      --img-car-w: 100%;
+      --img-car-h: 100px;
+
+      /* اسم الملف: frot.PNG */
+      --img-frot-w: 100%;
+      --img-frot-h: 85px;
+
+      /* اسم الملف: cola.PNG */
+      --img-cola-w: 100%;
+      --img-cola-h: 85px;
     }
 
     *{box-sizing:border-box}
@@ -36,7 +64,6 @@
       color:#111;
     }
 
-    /* إطار الصفحة */
     .page{
       width:min(560px, 100%);
       min-height:calc(100vh - (env(safe-area-inset-top) + env(safe-area-inset-bottom)));
@@ -49,7 +76,6 @@
       overflow:hidden;
     }
 
-    /* شعار أعلى اليسار */
     .logo{
       position:absolute;
       left:18px;
@@ -61,7 +87,6 @@
       user-select:none;
     }
 
-    /* العنوان */
     h1{
       margin:78px 0 18px;
       text-align:center;
@@ -71,7 +96,6 @@
       line-height:1.05;
     }
 
-    /* لوحة الكتاغوريات */
     .grid-wrap{
       width:min(500px, 100%);
       margin:0 auto;
@@ -99,7 +123,6 @@
       gap:16px;
     }
 
-    /* مربع الكتاغوري */
     .cat{
       border:6px solid #000;
       border-radius:26px;
@@ -119,7 +142,6 @@
     }
     .cat:active{transform:translateY(1px)}
 
-    /* عنوان داخل المربع */
     .cat .title{
       font-weight:900;
       color:#111;
@@ -129,17 +151,22 @@
       margin-bottom:10px;
     }
 
-    /* صورة داخل المربع */
+    /* الصور داخل المربعات */
     .cat img{
-      width:100%;
-      height:74px;
       object-fit:contain;
       display:block;
       pointer-events:none;
       user-select:none;
     }
 
-    /* الحالة النشطة */
+    /* ربط كل صورة بمتغيراتها */
+    .img-eat  { width:var(--img-eat-w);  height:var(--img-eat-h); }
+    .img-zoo  { width:var(--img-zoo-w);  height:var(--img-zoo-h); }
+    .img-play { width:var(--img-play-w); height:var(--img-play-h); }
+    .img-car  { width:var(--img-car-w);  height:var(--img-car-h); }
+    .img-frot { width:var(--img-frot-w); height:var(--img-frot-h); }
+    .img-cola { width:var(--img-cola-w); height:var(--img-cola-h); }
+
     .cat.active{
       background:var(--active);
       border-color:#000;
@@ -151,11 +178,10 @@
       inset:6px;
       border:5px solid #000;
       border-radius:20px;
-      opacity:.28; /* إحساس إطار إضافي */
+      opacity:.28;
       pointer-events:none;
     }
 
-    /* زر ابدأ اللعب */
     .start-wrap{
       display:flex;
       justify-content:center;
@@ -184,7 +210,6 @@
       transform:none;
     }
 
-    /* زر المنزل */
     .home{
       position:absolute;
       left:22px;
@@ -218,35 +243,34 @@
 
     <section class="grid-wrap" aria-label="الكتاغوريات">
       <div class="grid">
-        <!-- يسار/يمين مثل الصورة -->
         <button class="cat" type="button" data-id="eat" data-label="مأكولات" aria-label="مأكولات">
           <div class="title">مأكولات</div>
-          <img src="eat.PNG" alt="">
+          <img class="img-eat" src="eat.PNG" alt="">
         </button>
 
         <button class="cat" type="button" data-id="zoo" data-label="حيوانات" aria-label="حيوانات">
           <div class="title">حيوانات</div>
-          <img src="zoo.PNG" alt="">
+          <img class="img-zoo" src="zoo.PNG" alt="">
         </button>
 
         <button class="cat" type="button" data-id="play" data-label="لاعبين" aria-label="لاعبين">
           <div class="title">لاعبين</div>
-          <img src="play.PNG" alt="">
+          <img class="img-play" src="play.PNG" alt="">
         </button>
 
         <button class="cat" type="button" data-id="car" data-label="سيارات" aria-label="سيارات">
           <div class="title">سيارات</div>
-          <img src="car.PNG" alt="">
+          <img class="img-car" src="car.PNG" alt="">
         </button>
 
         <button class="cat" type="button" data-id="frot" data-label="فواكه وخضار" aria-label="فواكه وخضار">
           <div class="title">فواكه وخضار</div>
-          <img src="frot.PNG" alt="">
+          <img class="img-frot" src="frot.PNG" alt="">
         </button>
 
         <button class="cat" type="button" data-id="cola" data-label="مشروبات" aria-label="مشروبات">
           <div class="title">مشروبات</div>
-          <img src="cola.PNG" alt="">
+          <img class="img-cola" src="cola.PNG" alt="">
         </button>
       </div>
     </section>
@@ -255,7 +279,6 @@
       <button id="startBtn" class="start" type="button" disabled>ابدأ اللعب</button>
     </div>
 
-    <!-- زر المنزل -->
     <button class="home" id="homeBtn" type="button" aria-label="الصفحة الرئيسية">
       <svg width="52" height="52" viewBox="0 0 64 64" aria-hidden="true">
         <path d="M10 30 L32 12 L54 30" fill="none" stroke="#000" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
@@ -267,8 +290,6 @@
   </main>
 
   <script>
-    // نخزن اختيار الكتاغوري عشان صفحة اللعبة تستخدمه وتختار كلمة عشوائية
-    // (الاختيار العشوائي نفسه بنسويه داخل صفحة اللعبة عندما نربطها فعليًا مع data/*.js)
     const CAT_KEY_ID    = "bara_category_id";
     const CAT_KEY_LABEL = "bara_category_label";
 
@@ -295,7 +316,6 @@
       btn.addEventListener("click", () => setActive(btn));
     });
 
-    // زر المنزل: تصفير كامل + رجوع للرئيسية
     function clearAllGameState(){
       const ssKeys = [];
       for(let i=0; i<sessionStorage.length; i++){
@@ -321,10 +341,8 @@
       window.location.href = "index.html";
     });
 
-    // ابدأ اللعب: يروح لصفحة اللعب (حالياً single_game.html)
     startBtn.addEventListener("click", () => {
       if(!selected) return;
-      // ننتقل لصفحة اللعب، وهناك راح يتم اختيار كلمة/سالفة عشوائية من data الخاص بالكتاغوري
       window.location.href = "single_game.html";
     });
   </script>
