@@ -12,7 +12,6 @@
       --green-dark:#3e4f23;
       --yellow:#f6c61a;
       --black:#111;
-      --blue:#d7efff;
       --shadow: rgba(0,0,0,.22);
       --plus:#b05bbd; /* بنفسجي */
     }
@@ -40,10 +39,11 @@
       border:10px solid var(--green-dark);
       border-radius:26px;
       background:var(--beige);
-      padding:14px 14px 18px;
+      padding:14px 14px 130px; /* مساحة للأزرار الثابتة تحت */
       min-height:calc(100vh - 40px);
       box-shadow:0 6px 18px rgba(0,0,0,.12);
       position:relative;
+      overflow:hidden;
     }
 
     .topbar{
@@ -100,14 +100,11 @@
       outline:none;
     }
 
-    /* placeholder أصغر + باهت */
     .nameInput::placeholder{
       color: rgba(0,0,0,.35);
       font-weight:800;
       font-size: .82em;
     }
-
-    /* يخفي placeholder فور الضغط/التركيز */
     .nameInput:focus::placeholder{ color: transparent; }
 
     .controls{
@@ -119,11 +116,11 @@
       gap:12px;
     }
 
-    /* زر + سميك وواضح */
+    /* ✅ زر + أصغر + علامة + باللون الأبيض */
     .plusBtn{
-      width:86px;
-      height:86px;
-      border-radius:22px;
+      width:70px;
+      height:70px;
+      border-radius:18px;
       border:6px solid #000;
       background:var(--plus);
       box-shadow:0 10px 0 var(--shadow);
@@ -136,14 +133,34 @@
     .plusBtn:active{ transform:translateY(1px); box-shadow:0 9px 0 var(--shadow); }
 
     .plusIcon{
-      width:44px;
-      height:44px;
+      width:36px;
+      height:36px;
       display:block;
     }
 
+    /* ✅ شريط أزرار ثابت تحت: (ابدأ اللعب بالوسط) + (المنزل يسار) */
+    .fixedBottom{
+      position:absolute;
+      left:0;
+      right:0;
+      bottom:16px;
+      display:flex;
+      justify-content:center;
+      align-items:flex-end;
+      pointer-events:none; /* نرجعها للأزرار فقط */
+    }
+    .fixedBottomInner{
+      width:100%;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      position:relative;
+      pointer-events:none;
+    }
+
     .startBtn{
+      pointer-events:auto;
       width:min(420px, 92%);
-      margin:14px auto 0;
       background:var(--yellow);
       border:6px solid #000;
       border-radius:999px;
@@ -152,14 +169,17 @@
       padding:16px 18px;
       cursor:pointer;
       box-shadow:0 10px 0 var(--shadow);
-      display:block;
+      color:#111;              /* ✅ النص أسود */
+      -webkit-text-fill-color:#111; /* ✅ يمنع تغيّر اللون في بعض الأجهزة */
+      text-decoration:none;
     }
     .startBtn:active{ transform:translateY(1px); box-shadow:0 9px 0 var(--shadow); }
 
     .homeBtn{
+      pointer-events:auto;
       position:absolute;
-      left:18px;
-      bottom:18px;
+      left:14px;
+      bottom:-2px;
       width:72px;
       height:72px;
       border-radius:50%;
@@ -173,13 +193,17 @@
     }
     .homeBtn:active{ transform:translateY(1px); box-shadow:0 7px 0 var(--shadow); }
 
-    .homeBtn img{ width:48px; height:48px; object-fit:contain; }
+    .homeSvg{
+      width:44px;
+      height:44px;
+      display:block;
+    }
 
     @media (max-width:360px){
-      .plusBtn{ width:78px; height:78px; border-width:5px; }
-      .plusIcon{ width:40px; height:40px; }
+      .plusBtn{ width:64px; height:64px; border-width:5px; }
+      .plusIcon{ width:34px; height:34px; }
       .homeBtn{ width:66px; height:66px; }
-      .homeBtn img{ width:44px; height:44px; }
+      .homeSvg{ width:40px; height:40px; }
       .nameInput{ border-width:4px; }
     }
   </style>
@@ -199,27 +223,33 @@
 
       <div class="controls">
         <button class="plusBtn" id="plusBtn" aria-label="add">
-          <!-- + سميك (SVG) -->
+          <!-- ✅ + أبيض -->
           <svg class="plusIcon" viewBox="0 0 64 64" aria-hidden="true">
-            <path d="M28 10h8v18h18v8H36v18h-8V36H10v-8h18V10z" fill="#111"/>
+            <path d="M28 10h8v18h18v8H36v18h-8V36H10v-8h18V10z" fill="#fff"/>
           </svg>
         </button>
       </div>
 
-      <button class="startBtn" id="startBtn">ابدأ اللعب</button>
+      <!-- ✅ أزرار ثابتة أسفل -->
+      <div class="fixedBottom">
+        <div class="fixedBottomInner">
+          <button class="startBtn" id="startBtn">ابدأ اللعب</button>
 
-      <button class="homeBtn" id="homeBtn" aria-label="home">
-        <img src="home.png" alt="home">
-      </button>
+          <button class="homeBtn" id="homeBtn" aria-label="home">
+            <!-- ✅ أيقونة منزل SVG (بدون صورة خارجية) -->
+            <svg class="homeSvg" viewBox="0 0 64 64" aria-hidden="true">
+              <path d="M8 30L32 10l24 20" fill="none" stroke="#111" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 28v26h32V28" fill="none" stroke="#111" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M26 54V40h12v14" fill="none" stroke="#111" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 
   <script>
-    /***************
-     * نظام التخزين:
-     * - نخزن الأسماء في sessionStorage أثناء اللعب فقط
-     * - وإذا دخلت بعد يوم جديد (تاريخ مختلف) نبدأ من جديد
-     ***************/
     const KEY_NAMES = "bara_players";
     const KEY_DATE  = "bara_session_date";
 
@@ -236,7 +266,6 @@
       sessionStorage.removeItem(KEY_DATE);
     }
 
-    // إذا تاريخ اليوم مختلف: صفّر
     (function ensureFreshSession(){
       const t = todayKey();
       const saved = sessionStorage.getItem(KEY_DATE);
@@ -251,7 +280,6 @@
     const startBtn = document.getElementById("startBtn");
     const homeBtn = document.getElementById("homeBtn");
 
-    // نبدأ بـ 3 مربعات افتراضيًا
     function getNames(){
       try{
         const v = sessionStorage.getItem(KEY_NAMES);
@@ -286,7 +314,6 @@
         input.value = val || "";
         input.placeholder = `اللاعب رقم ${idx+1}`;
 
-        // مهم: ما نمسح القيم القديمة، فقط نحدّث index الحالي
         input.addEventListener("input", () => {
           const names = getNames();
           names[idx] = input.value.trim();
@@ -297,44 +324,34 @@
       });
     }
 
-    // إضافة لاعب جديد بدون حذف السابق
     plusBtn.addEventListener("click", () => {
       const arr = getNames();
       arr.push("");
       saveNames(arr);
       render();
-
-      // فوكس على المربع الجديد
       const inputs = listEl.querySelectorAll("input.nameInput");
       const last = inputs[inputs.length - 1];
       if(last) last.focus();
     });
 
-    // ابدأ اللعب -> يروح للكتاغوريات (أنت عندك categories.html)
     startBtn.addEventListener("click", () => {
       const raw = getNames();
       const cleaned = raw.map(x => (x || "").trim()).filter(x => x.length > 0);
 
-      // لازم 3 أسماء على الأقل (تقدر تغيّرها إذا تبي)
       if(cleaned.length < 3){
         alert("لازم تدخل 3 أسماء على الأقل");
         return;
       }
 
-      // نخزن الأسماء للمرحلة القادمة
       saveNames(cleaned);
-
-      // انتقال للكتاغوريات
       window.location.href = "categories.html";
     });
 
-    // زر المنزل: يصفر كل شيء ويرجع للرئيسية
     homeBtn.addEventListener("click", () => {
       resetAll();
       window.location.href = "index.html";
     });
 
-    // تشغيل أولي
     buildDefaultIfEmpty();
     render();
   </script>
