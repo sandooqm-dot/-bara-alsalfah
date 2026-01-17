@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لعبة برا السالفة</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <img src="assets/logo.png" alt="شعار اللعبة" class="logo">
+
+    <h1 class="title">لعبة برا السالفة</h1>
+
+    <div class="mode-buttons">
+      <button id="singleBtn" class="mode-btn">جهاز واحد</button>
+      <button id="multiBtn" class="mode-btn active">أجهزة متعددة</button>
+    </div>
+
+    <button id="howToBtn" class="secondary-btn">تعليمات اللعبة</button>
+    <button id="startBtn" class="main-btn">ابدأ اللعب</button>
+  </div>
+
+  <!-- ✅ النافذة المنبثقة لتعليمات اللعبة -->
+  <div id="howToModal" class="modal">
+    <div class="modal-content">
+      <h2>التعليمات</h2>
+      <p>
+        اللعبة تعتمد على "سالفة/موضوع" مخفي.<br>
+        في كل جولة: لاعب يعرف السالفة والباقين برا السالفة.<br><br>
+        بعد نهاية الأدوار يبدأ التصويت: من برا السالفة؟<br>
+        إذا انكشف برا السالفة، يفوز اللي عرفوا السالفة، والعكس صحيح.
+      </p>
+      <p>
+        <b>أنماط اللعب:</b><br>
+        1️⃣ جهاز واحد: تلعبون على نفس الجهاز.<br>
+        2️⃣ أجهزة متعددة: كل لاعب من جواله ويتزامن التقدم بينكم.
+      </p>
+      <button id="closeModal" class="main-btn">رجوع</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
