@@ -1,0 +1,173 @@
+/* ===============================
+   الهوية العامة للعبة برا السالفة
+=============================== */
+
+/* 1) الخط */
+@font-face {
+  font-family: "GameArabic";
+  src: local("Greta Arabic AR LT Black"),
+       local("GretaArabic"),
+       local("Cairo Black"),
+       local("Changa Bold");
+  font-weight: 900;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "GameArabic", sans-serif;
+}
+
+body {
+  background: #efe7d6;
+  direction: rtl;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 2) الإطار الخارجي */
+.app-frame {
+  width: 100%;
+  max-width: 420px;
+  min-height: 95vh;
+  background: #efe7d6;
+  border: 12px solid #5c6f1f;
+  border-radius: 28px;
+  padding: 20px 16px 30px;
+  position: relative;
+}
+
+/* 3) اللوجو */
+.logo {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 90px;
+}
+
+/* 4) العناوين */
+.title {
+  text-align: center;
+  font-size: 36px;
+  color: #4f611a;
+  margin: 60px 0 20px;
+}
+
+/* 5) الكرت الأخضر */
+.card {
+  background: #7a8f4d;
+  border-radius: 24px;
+  padding: 24px 16px;
+  margin: 20px 0;
+}
+
+/* 6) الأزرار العامة */
+.btn {
+  width: 100%;
+  padding: 14px 0;
+  margin: 10px 0;
+  font-size: 24px;
+  border-radius: 22px;
+  border: 5px solid #000;
+  background: #f3efe5;
+  color: #000;
+  cursor: pointer;
+}
+
+/* زر أساسي */
+.btn-primary {
+  background: #ffd400;
+}
+
+/* زر تحديد النمط */
+.btn-mode.active {
+  background: #dff2ff;
+}
+
+/* 7) كروت الكتاغوريات */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.category {
+  background: #f3efe5;
+  border-radius: 20px;
+  border: 5px solid #000;
+  padding: 12px;
+  text-align: center;
+}
+
+.category img {
+  max-width: 80px;
+  margin-top: 10px;
+}
+
+/* 8) الاسم أعلى الصفحات */
+.player-name {
+  background: #e6dcb8;
+  border-radius: 18px;
+  text-align: center;
+  padding: 12px;
+  font-size: 26px;
+  color: #4f611a;
+  margin: 20px 0;
+}
+
+/* 9) نص داخل الكروت */
+.card-text {
+  color: #fff;
+  font-size: 26px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* 10) نافذة منبثقة (التعليمات) */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-box {
+  background: #7a8f4d;
+  width: 90%;
+  max-width: 380px;
+  border-radius: 24px;
+  padding: 20px;
+}
+
+.modal-box h2 {
+  background: #efe3c0;
+  border-radius: 18px;
+  padding: 10px;
+  text-align: center;
+  color: #4f611a;
+  margin-bottom: 16px;
+}
+
+.modal-box p {
+  color: #fff;
+  font-size: 20px;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+/* 11) زر الهوم */
+.home-btn {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  width: 60px;
+}
