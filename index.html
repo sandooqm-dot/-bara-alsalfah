@@ -4,39 +4,41 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>لعبة برا السالفة</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <img src="assets/logo.png" alt="شعار اللعبة" class="logo">
+  <div class="main-container">
+    <div class="card">
+      <img src="assets/logo.png" alt="شعار اللعبة" class="logo">
+      <h1 class="title">لعبة برا السالفة</h1>
 
-    <h1 class="title">لعبة برا السالفة</h1>
-
-    <div class="mode-buttons">
-      <button id="singleBtn" class="mode-btn">جهاز واحد</button>
-      <button id="multiBtn" class="mode-btn active">أجهزة متعددة</button>
+      <div class="buttons">
+        <button id="singleBtn" class="btn mode">جهاز واحد</button>
+        <button id="multiBtn" class="btn mode active">أجهزة متعددة</button>
+        <button id="howBtn" class="btn info">تعليمات اللعبة</button>
+        <button id="startBtn" class="btn start">ابدأ اللعب</button>
+      </div>
     </div>
-
-    <button id="howToBtn" class="secondary-btn">تعليمات اللعبة</button>
-    <button id="startBtn" class="main-btn">ابدأ اللعب</button>
   </div>
 
-  <!-- ✅ النافذة المنبثقة لتعليمات اللعبة -->
-  <div id="howToModal" class="modal">
-    <div class="modal-content">
+  <!-- نافذة التعليمات -->
+  <div id="howModal" class="modal">
+    <div class="modal-box">
       <h2>التعليمات</h2>
       <p>
         اللعبة تعتمد على "سالفة/موضوع" مخفي.<br>
-        في كل جولة: لاعب يعرف السالفة والباقين برا السالفة.<br><br>
-        بعد نهاية الأدوار يبدأ التصويت: من برا السالفة؟<br>
-        إذا انكشف برا السالفة، يفوز اللي عرفوا السالفة، والعكس صحيح.
-      </p>
-      <p>
+        في كل جولة: لاعب واحد يعرف السالفة، والباقين برا السالفة.<br><br>
+        <b>الأدوار:</b><br>
+        كل لاعب يسأل أو يجاوب حسب دوره. اللي يعرف السالفة يجاوب بذكاء بدون ما يفضحها، والباقين يحاولون يفهمونها.<br><br>
+        <b>التصويت:</b><br>
+        بعد انتهاء الأدوار يبدأ التصويت: من برا السالفة؟<br>
+        إذا انكشف برا السالفة يفوز اللي عرفوا، وإذا ما انكشف يفوز برا السالفة.<br><br>
         <b>أنماط اللعب:</b><br>
         1️⃣ جهاز واحد: تلعبون على نفس الجهاز.<br>
-        2️⃣ أجهزة متعددة: كل لاعب من جواله ويتزامن التقدم بينكم.
+        2️⃣ أجهزة متعددة: كل لاعب يدخل من جواله.
       </p>
-      <button id="closeModal" class="main-btn">رجوع</button>
+      <button id="closeModal" class="btn start">رجوع</button>
     </div>
   </div>
 
