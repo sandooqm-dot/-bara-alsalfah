@@ -5,247 +5,280 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>لعبة برا السالفة - جهاز واحد</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@600;700;800;900&display=swap" rel="stylesheet">
+
   <style>
     :root{
-      --bg:#e9e3d6;          /* البيج */
-      --frame:#e9e3d6;
-      --green:#3f5b2a;       /* أخضر الإطار */
-      --green2:#6e8554;
-      --yellow:#f2c300;      /* زر أصفر */
-      --purple:#8b49b9;      /* زر + */
-      --text:#1a1a1a;
-      --muted:#9a9a9a;
-      --shadow: 0 10px 0 rgba(0,0,0,0.18);
-      --shadowSmall: 0 8px 0 rgba(0,0,0,0.18);
-      --border: 5px solid #000;
-      --radius: 28px;
+      --beige:#e9e3d6;
+      --green:#6f8250;
+      --green-dark:#3f4e2c;
+      --cream:#efe7d7;
+
+      --yellow:#f3c515;
+      --black:#111;
+
+      --purple:#8b49b9;
+      --home-blue:#bfe7ff;
+
+      --shadow:0 12px 0 rgba(0,0,0,.22);
+      --shadowSmall:0 10px 0 rgba(0,0,0,.18);
     }
 
-    *{ box-sizing:border-box; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+
     body{
       margin:0;
-      background: var(--bg);
-      font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
-      color: var(--text);
+      background:var(--beige);
+      font-family:"Baloo Bhaijaan 2", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+      display:flex;
+      justify-content:center;
+      align-items:stretch;
+      padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom);
+      color:#111;
     }
 
     .page{
-      min-height: 100vh;
-      padding: 14px 12px;
-      display:flex;
-      justify-content:center;
-      align-items:flex-start;
-    }
-
-    .frame{
-      width: min(520px, 100%);
-      background: var(--frame);
-      border: 6px solid var(--green);
-      border-radius: 26px;
-      padding: 18px 16px 18px;
-      position: relative;
-      min-height: calc(100vh - 28px);
+      width:min(560px, 100%);
+      min-height:calc(100vh - (env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+      margin:auto;
+      border:6px solid var(--green-dark);
+      border-radius:22px;
+      background:var(--beige);
+      padding:22px 18px 24px;
+      position:relative;
+      overflow:hidden;
       display:flex;
       flex-direction:column;
     }
 
-    .topRow{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom: 10px;
-    }
-
-    .title{
-      font-weight: 800;
-      color: var(--green);
-      font-size: 16px;
-      line-height: 1.2;
-      margin-top: 4px;
-      text-align:right;
-    }
-
+    /* شعار أعلى يسار + عنوان أعلى يمين مثل الصورة */
     .logo{
-      width: 70px;
-      height: 36px;
-      object-fit: contain;
-      opacity: 0.95;
+      position:absolute;
+      left:18px;
+      top:18px;
+      width:90px;
+      height:auto;
+      object-fit:contain;
+      pointer-events:none;
+      user-select:none;
+    }
+    .topTitle{
+      position:absolute;
+      right:18px;
+      top:22px;
+      font-weight:900;
+      color:var(--green-dark);
+      font-size:18px;
+      opacity:.95;
     }
 
-    h2{
-      margin: 10px 0 14px;
+    /* العنوان الكبير */
+    h1{
+      margin:72px 0 18px;
       text-align:center;
-      color: var(--green);
-      font-size: 22px;
-      font-weight: 900;
+      color:var(--green-dark);
+      font-weight:900;
+      font-size:clamp(34px, 6.2vw, 56px);
+      line-height:1.05;
+      letter-spacing:.2px;
     }
 
-    .inputs{
+    /* لوحة خضراء داخلية مثل الصورة */
+    .panel{
+      width:min(520px, 100%);
+      margin:0 auto;
+      background:var(--green);
+      border-radius:26px;
+      padding:18px 16px 20px;
+      box-shadow:0 18px 0 rgba(0,0,0,.10);
+      position:relative;
       display:flex;
       flex-direction:column;
       gap:14px;
-      margin-top: 2px;
+      flex:1;
+    }
+
+    .panelTitle{
+      text-align:center;
+      color:#fff;
+      font-weight:900;
+      font-size:clamp(28px, 5.6vw, 44px);
+      line-height:1.1;
+      margin-top:2px;
+    }
+
+    /* صندوق الأسماء الكبير (بيج) بإطار أسود سميك */
+    .namesBox{
+      background:rgba(233,227,214,.92);
+      border:7px solid #000;
+      border-radius:26px;
+      padding:18px 16px 18px;
+      min-height:300px;              /* يعطي نفس الفراغ بالصورة */
+      box-shadow:0 14px 0 rgba(0,0,0,.20);
+      display:flex;
+      flex-direction:column;
+      gap:16px;
     }
 
     .nameInput{
-      width: 100%;
-      padding: 14px 14px;
-      border: 4px solid var(--green2);
-      border-radius: 18px;
+      width:100%;
       background:#fff;
-      font-size: 20px;
-      font-weight: 700;
+      border:5px solid var(--green-dark);
+      border-radius:999px;
+      padding:14px 14px;
+      font-size:clamp(22px, 4.2vw, 34px);
+      font-weight:900;
       color:#111;
       outline:none;
       text-align:center;
     }
     .nameInput::placeholder{
-      color: var(--muted);
-      font-weight: 800;
-      font-size: 18px;
-      opacity: 0.75;
+      color:rgba(0,0,0,.35);
+      font-weight:900;
     }
 
+    /* زر + (شكل زائد بنفس الصورة: بدون مربع) */
     .plusWrap{
       display:flex;
       justify-content:center;
-      margin: 18px 0 6px;
+      margin-top:2px;
+      margin-bottom:2px;
     }
     .plusBtn{
-      width: 62px;
-      height: 62px;
-      border-radius: 14px;
-      border: 4px solid #000;
-      background: var(--purple);
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      box-shadow: var(--shadowSmall);
+      width:86px;
+      height:86px;
+      border-radius:999px;
+      background:transparent;
+      border:none;
       cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      display:flex;
+      align-items:center;
+      justify-content:center;
       user-select:none;
     }
-    .plusBtn span{
-      color:#fff;
-      font-size: 40px;
-      font-weight: 900;
-      line-height: 1;
-      transform: translateY(-1px);
+    .plusIcon{
+      width:64px;
+      height:64px;
+      display:block;
+      filter: drop-shadow(0 8px 0 rgba(0,0,0,.25));
     }
 
-    .actionArea{
-      margin-top: auto;
+    /* زر ابدأ اللعب داخل اللوحة بأسفل مثل الصورة */
+    .startWrap{
       display:flex;
       justify-content:center;
-      padding: 18px 0 calc(18px + env(safe-area-inset-bottom));
+      margin-top:auto; /* ينزل تلقائياً إذا زاد المحتوى */
+      padding-top:8px;
     }
-
     .startBtn{
-      border: 4px solid #000;
-      background: var(--yellow);
+      width:min(420px, 92%);
+      border:6px solid #000;
+      border-radius:999px;
+      padding:14px 18px;
+      font-size:clamp(30px, 5.8vw, 44px);
+      font-weight:900;
+      background:var(--yellow);
       color:#111;
-      font-weight: 900;
-      font-size: 24px;
-      border-radius: 22px;
-      padding: 12px 26px;
-      min-width: 220px;
-      max-width: 78%;
-      box-shadow: var(--shadow);
       cursor:pointer;
+      box-shadow:0 12px 0 rgba(0,0,0,.22);
+      -webkit-tap-highlight-color:transparent;
+      transition:transform .05s ease, opacity .2s ease, filter .2s ease;
+    }
+    .startBtn:active{transform:translateY(1px)}
+    .startBtn[disabled]{
+      opacity:.55;
+      filter:saturate(.6);
+      cursor:not-allowed;
+      transform:none;
     }
 
-    .homeBtn{
-      position: fixed;
-      left: 18px;
-      bottom: calc(18px + env(safe-area-inset-bottom));
-      width: 64px;
-      height: 64px;
-      border-radius: 18px;
-      border: 4px solid #000;
-      background: #bfe3ff;
-      box-shadow: var(--shadowSmall);
+    /* زر الرئيسية (آمن وما يتداخل) */
+    .home{
+      position:fixed;
+      left:18px;
+      bottom:calc(18px + env(safe-area-inset-bottom));
+      width:72px;
+      height:72px;
+      border-radius:999px;
+      border:6px solid #000;
+      background:var(--home-blue);
       display:flex;
-      justify-content:center;
       align-items:center;
+      justify-content:center;
       cursor:pointer;
-      z-index: 9999;
+      -webkit-tap-highlight-color:transparent;
+      box-shadow:0 10px 0 rgba(0,0,0,.18);
+      z-index:9999;
     }
-    .homeBtn svg{
-      width: 34px;
-      height: 34px;
-      fill: #111;
-    }
+    .home:active{transform:translateY(1px)}
+    .home svg{width:40px;height:40px}
 
-    @media (max-width: 360px){
-      h2{ font-size: 20px; }
-      .nameInput{ font-size: 18px; }
-      .startBtn{ font-size: 22px; min-width: 200px; }
-      .plusBtn{ width: 58px; height: 58px; }
-      .plusBtn span{ font-size: 38px; }
+    @media (max-width:360px){
+      .namesBox{min-height:270px}
+      .home{width:66px;height:66px}
+      .home svg{width:36px;height:36px}
+      .plusBtn{width:78px;height:78px}
+      .plusIcon{width:58px;height:58px}
     }
   </style>
 </head>
 
 <body>
-  <div class="page">
-    <div class="frame">
-      <div class="topRow">
-        <div class="title">لعبة برا السالفة</div>
-        <img class="logo" src="logo.PNG" alt="logo">
-      </div>
+  <main class="page">
+    <img class="logo" src="logo.PNG" alt="شعار صندوق المسابقات">
+    <div class="topTitle">اللعب من جهاز واحد</div>
 
-      <h2>ادخل اسماء اللاعبين :</h2>
+    <h1>اللعب من جهاز واحد</h1>
 
-      <div class="inputs" id="inputs">
+    <section class="panel">
+      <div class="panelTitle">ادخل اسماء اللاعبين :</div>
+
+      <div class="namesBox" id="inputs">
         <input class="nameInput" type="text" placeholder="اللاعب رقم 1" />
         <input class="nameInput" type="text" placeholder="اللاعب رقم 2" />
         <input class="nameInput" type="text" placeholder="اللاعب رقم 3" />
       </div>
 
       <div class="plusWrap">
-        <div class="plusBtn" id="addBtn" aria-label="إضافة لاعب">
-          <span>+</span>
-        </div>
+        <button class="plusBtn" id="addBtn" type="button" aria-label="إضافة لاعب">
+          <!-- زائد بنفس شكل الصورة (بنفسجي + ظل + إطار أسود) -->
+          <svg class="plusIcon" viewBox="0 0 64 64" aria-hidden="true">
+            <path d="M28 10h8v44h-8z" fill="var(--purple)" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+            <path d="M10 28h44v8H10z" fill="var(--purple)" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+          </svg>
+        </button>
       </div>
 
-      <div class="actionArea">
-        <button class="startBtn" id="startBtn">ابدأ اللعب</button>
+      <div class="startWrap">
+        <button class="startBtn" id="startBtn" type="button">ابدأ اللعب</button>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
 
-  <div class="homeBtn" id="homeBtn" title="الرئيسية" aria-label="الرئيسية">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
+  <button class="home" id="homeBtn" type="button" aria-label="الصفحة الرئيسية">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <path d="M10 30 L32 12 L54 30" fill="none" stroke="#000" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M18 28 V54 H46 V28" fill="#fff" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M28 54 V38 H36 V54" fill="#86c9ff" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M21 26 L32 17 L43 26" fill="none" stroke="#c84b4b" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
-  </div>
+  </button>
 
   <script>
-    // يخلي النص (placeholder) يختفي فور الضغط على المربع
-    document.addEventListener('focusin', (e) => {
-      if (e.target.classList && e.target.classList.contains('nameInput')) {
-        e.target.dataset.ph = e.target.placeholder;
-        e.target.placeholder = '';
-      }
-    });
-    document.addEventListener('focusout', (e) => {
-      if (e.target.classList && e.target.classList.contains('nameInput')) {
-        if (!e.target.value.trim()) {
-          e.target.placeholder = e.target.dataset.ph || '';
-        }
-      }
-    });
-
     const inputsWrap = document.getElementById('inputs');
     const addBtn = document.getElementById('addBtn');
     const startBtn = document.getElementById('startBtn');
-    const homeBtn = document.getElementById('homeBtn');
+    const homeBtn  = document.getElementById('homeBtn');
 
     function nextIndex(){
       return inputsWrap.querySelectorAll('.nameInput').length + 1;
     }
 
-    // ✅ لا نحذف/نعيد بناء القائمة، فقط نضيف input جديد
+    // ✅ لا تختفي الأسماء: نضيف input جديد فقط
     addBtn.addEventListener('click', () => {
       const i = document.createElement('input');
       i.className = 'nameInput';
@@ -257,42 +290,23 @@
     });
 
     function clearBaraState(){
-      // يمسح بيانات اللعبة فقط
-      const ssKeys = [];
-      for(let i=0; i<sessionStorage.length; i++){
-        const k = sessionStorage.key(i);
-        if(k) ssKeys.push(k);
-      }
-      ssKeys.forEach(k => {
-        if(k.startsWith("bara_")) sessionStorage.removeItem(k);
-      });
+      // امسح مفاتيح اللعبة المحتملة (قديمة/جديدة)
+      sessionStorage.removeItem('bara_players');
+      sessionStorage.removeItem('players');
+      sessionStorage.removeItem('baraPlayers');
 
-      sessionStorage.removeItem("players");
-      sessionStorage.removeItem("categoryKey");
-      sessionStorage.removeItem("singleState");
+      sessionStorage.removeItem('bara_category_id');
+      sessionStorage.removeItem('bara_category_label');
+      sessionStorage.removeItem('categoryKey');
+      sessionStorage.removeItem('bara_selectedCategory');
+
+      sessionStorage.removeItem('singleState');
     }
 
     homeBtn.addEventListener('click', () => {
       clearBaraState();
       window.location.href = 'index.html';
     });
-
-    // ✅ حل جذري: نخزن الأسماء بأكثر من مفتاح (عشان كل الصفحات تقرأها)
-    function savePlayersEverywhere(names){
-      const payload = JSON.stringify(names);
-
-      // المفاتيح التي يعتمد عليها single_game.html
-      sessionStorage.setItem("players", payload);
-
-      // مفاتيح توافقية موجودة عندك في صفحات ثانية
-      sessionStorage.setItem("bara_players", payload);
-      sessionStorage.setItem("bara_players_list", payload);
-      sessionStorage.setItem("baraPlayers", payload);
-      sessionStorage.setItem("bara_players_names", payload);
-
-      // خطوة
-      sessionStorage.setItem("bara_step", "names");
-    }
 
     startBtn.addEventListener('click', () => {
       const names = Array.from(inputsWrap.querySelectorAll('.nameInput'))
@@ -304,9 +318,14 @@
         return;
       }
 
-      savePlayersEverywhere(names);
+      // ✅ نخزنها بأكثر من مفتاح (عشان أي صفحة قديمة/جديدة تقدر تقرأها)
+      sessionStorage.setItem('bara_players', JSON.stringify(names));
+      sessionStorage.setItem('players', JSON.stringify(names));
+      sessionStorage.setItem('baraPlayers', JSON.stringify(names));
 
-      // نوديه صفحة الكتاغوريات
+      // نبدأ جولة جديدة
+      sessionStorage.removeItem('singleState');
+
       window.location.href = 'categories.html';
     });
   </script>
