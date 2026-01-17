@@ -6,32 +6,19 @@
 <title>لعبة برا السالفة</title>
 
 <style>
-/* الخط المعتمد (نفس المشروع السابق) */
 @font-face{
-  font-family:'GameFont';
+  font-family:'AA';
   src:url('AA-GALAXY.ttf') format('truetype');
-}
-
-:root{
-  --bg:#eae3d3;
-  --frame:#5f6f2f;
-  --card:#7a8a4a;
-  --btn:#f1eee6;
-  --btn-active:#d9f1ff;
-  --start:#ffd400;
-  --text:#000;
-  --border:#000;
 }
 
 *{
   box-sizing:border-box;
-  font-family:'GameFont', Arial, sans-serif;
-  color:var(--text);
+  font-family:'AA', sans-serif;
 }
 
 body{
   margin:0;
-  background:var(--bg);
+  background:#e9e2d2;
   display:flex;
   justify-content:center;
   align-items:center;
@@ -42,107 +29,109 @@ body{
   width:100%;
   max-width:430px;
   min-height:94vh;
-  border:6px solid var(--frame);
-  border-radius:28px;
-  padding:18px 14px 26px;
+  background:#e9e2d2;
+  border:6px solid #5f6f2f;
+  border-radius:30px;
+  padding:22px 18px 26px;
   position:relative;
-  background:var(--bg);
 }
 
 /* الشعار */
 .logo{
   position:absolute;
-  top:16px;
-  left:16px;
+  top:18px;
+  left:18px;
 }
-.logo img{width:62px}
+.logo img{
+  width:64px;
+}
 
 /* العنوان */
 h1{
+  margin-top:78px;
+  margin-bottom:28px;
   text-align:center;
-  margin:70px 0 24px;
-  font-size:32px;
-  font-weight:bold;
+  font-size:30px;
+  color:#000;
 }
 
 /* الكرت */
 .card{
-  background:var(--card);
-  border-radius:26px;
-  padding:26px 18px;
+  background:#7a8a4a;
+  border-radius:28px;
+  padding:28px 20px;
   box-shadow:0 10px 0 rgba(0,0,0,.18);
 }
 
 .btn{
   width:100%;
-  background:var(--btn);
-  border:4px solid var(--border);
-  border-radius:26px;
-  padding:18px;
+  background:#f1eee6;
+  border:4px solid #000;
+  border-radius:30px;
+  padding:18px 0;
   font-size:22px;
-  font-weight:bold;
-  margin-bottom:18px;
+  margin-bottom:20px;
   cursor:pointer;
+  color:#000;
 }
 
 .btn.active{
-  background:var(--btn-active);
+  background:#d9f1ff;
 }
 
 .start{
-  margin-top:26px;
-  background:#ddd;
-}
-.start.enabled{
-  background:var(--start);
+  margin-top:28px;
+  background:#ffd400;
+  box-shadow:0 8px 0 rgba(0,0,0,.25);
 }
 
-.btn:disabled{
-  opacity:.6;
+.start:disabled{
+  background:#ddd;
+  box-shadow:none;
   cursor:not-allowed;
 }
 
-/* نافذة التعليمات */
+/* التعليمات */
 .modal{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.4);
+  background:rgba(0,0,0,.5);
   display:none;
-  align-items:center;
   justify-content:center;
-  z-index:10;
+  align-items:center;
 }
 
 .modal-content{
-  background:var(--card);
   width:90%;
-  max-width:380px;
-  border-radius:28px;
-  padding:24px 18px 28px;
+  max-width:400px;
+  background:#7a8a4a;
+  border-radius:30px;
+  padding:26px 22px;
 }
 
 .modal h2{
-  background:var(--bg);
+  background:#e9e2d2;
+  padding:14px;
+  border-radius:20px;
   text-align:center;
-  padding:12px;
-  border-radius:18px;
-  margin-bottom:18px;
+  margin-bottom:20px;
+  color:#000;
 }
 
 .modal p{
+  color:#fff;
   line-height:1.9;
   font-size:15px;
 }
 
 .back{
-  margin-top:20px;
+  margin-top:24px;
   width:100%;
-  background:var(--start);
-  border:4px solid var(--border);
-  border-radius:26px;
-  padding:16px;
+  background:#ffd400;
+  border:4px solid #000;
+  border-radius:30px;
+  padding:16px 0;
   font-size:22px;
-  font-weight:bold;
   cursor:pointer;
 }
 </style>
@@ -153,28 +142,27 @@ h1{
 <div class="app">
 
   <div class="logo">
-    <img src="logo.PNG" alt="صندوق المسابقات">
+    <img src="logo.PNG">
   </div>
 
   <h1>لعبة برا السالفة</h1>
 
   <div class="card">
-    <button id="singleBtn" class="btn">جهاز واحد</button>
-    <button id="multiBtn" class="btn">أجهزة متعددة</button>
-    <button id="rulesBtn" class="btn">تعليمات اللعبة</button>
+    <button class="btn" id="single">جهاز واحد</button>
+    <button class="btn" id="multi">أجهزة متعددة</button>
+    <button class="btn" id="rules">تعليمات اللعبة</button>
   </div>
 
-  <button id="startBtn" class="btn start" disabled>ابدأ اللعب</button>
-
+  <button class="btn start" id="start" disabled>ابدأ اللعب</button>
 </div>
 
 <!-- التعليمات -->
-<div id="rulesModal" class="modal">
+<div class="modal" id="modal">
   <div class="modal-content">
     <h2>التعليمات</h2>
 
     <p><strong>طريقة اللعب:</strong><br>
-    اللعبة تعتمد على سالفة/موضوع مخفي. لاعب واحد لا يعرف السالفة والباقين يعرفونها.</p>
+    تعتمد اللعبة على سالفة مخفية، لاعب واحد ما يعرفها والباقين يعرفونها.</p>
 
     <p><strong>الأدوار:</strong><br>
     كل لاعب يسأل أو يجاوب، واللي يعرف السالفة يجاوب بدون ما يفضحها.</p>
@@ -185,42 +173,41 @@ h1{
     <p><strong>طرق اللعب:</strong><br>
     جهاز واحد أو أجهزة متعددة.</p>
 
-    <button id="closeRules" class="back">رجوع</button>
+    <button class="back" id="close">رجوع</button>
   </div>
 </div>
 
 <script>
 let mode=null;
+const single=document.getElementById('single');
+const multi=document.getElementById('multi');
+const start=document.getElementById('start');
 
-const singleBtn=document.getElementById("singleBtn");
-const multiBtn=document.getElementById("multiBtn");
-const startBtn=document.getElementById("startBtn");
-
-singleBtn.onclick=()=>selectMode("single");
-multiBtn.onclick =()=>selectMode("multi");
-
-function selectMode(m){
-  mode=m;
-  singleBtn.classList.remove("active");
-  multiBtn.classList.remove("active");
-
-  if(m==="single") singleBtn.classList.add("active");
-  if(m==="multi")  multiBtn.classList.add("active");
-
-  startBtn.disabled=false;
-  startBtn.classList.add("enabled");
-}
-
-startBtn.onclick=()=>{
-  if(!mode) return;
-  if(mode==="single") location.href="single.html";
-  if(mode==="multi")  location.href="multi.html";
+single.onclick=()=>{
+  mode='single';
+  single.classList.add('active');
+  multi.classList.remove('active');
+  start.disabled=false;
 };
 
-// التعليمات
-const modal=document.getElementById("rulesModal");
-document.getElementById("rulesBtn").onclick=()=>modal.style.display="flex";
-document.getElementById("closeRules").onclick=()=>modal.style.display="none";
+multi.onclick=()=>{
+  mode='multi';
+  multi.classList.add('active');
+  single.classList.remove('active');
+  start.disabled=false;
+};
+
+start.onclick=()=>{
+  if(mode==='single') location.href='single.html';
+  if(mode==='multi') location.href='multi.html';
+};
+
+document.getElementById('rules').onclick=()=>{
+  document.getElementById('modal').style.display='flex';
+};
+document.getElementById('close').onclick=()=>{
+  document.getElementById('modal').style.display='none';
+};
 </script>
 
 </body>
