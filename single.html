@@ -125,15 +125,14 @@
       outline:none;
     }
 
-    /* ✅ المطلوب: placeholder أصغر وباهت */
+    /* placeholder أصغر وباهت */
     .name-input::placeholder{
       color:#111;
       opacity:.45;
       font-weight:800;
-      font-size:0.72em; /* أصغر من النص المكتوب */
+      font-size:0.72em;
     }
-
-    /* ✅ المطلوب: يختفي فور الضغط على المربع */
+    /* يختفي فور الضغط */
     .name-input:focus::placeholder{
       opacity:0;
       color:transparent;
@@ -223,6 +222,7 @@
       </div>
     </section>
 
+    <!-- زر المنزل: يرجع للرئيسية + يصفّر كل شيء ويرجع 3 مربعات -->
     <button class="home" id="homeBtn" type="button" aria-label="الصفحة الرئيسية">
       <svg width="52" height="52" viewBox="0 0 64 64" aria-hidden="true">
         <path d="M10 30 L32 12 L54 30" fill="none" stroke="#000" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
@@ -234,6 +234,7 @@
   </main>
 
   <script>
+    // حفظ الأسماء (بنحتاجها لاحقًا)
     const STORAGE_KEY = "bara_single_players";
 
     const namesBox = document.getElementById("namesBox");
@@ -313,6 +314,20 @@
       namesBox.appendChild(btn);
     }
 
+    function clearGameState(){
+      // يمسح كل شيء مرتبط باللعبة (أي مفتاح يبدأ بـ bara_) + أسماء اللاعبين
+      const keys = [];
+      for(let i=0; i<localStorage.length; i++){
+        const k = localStorage.key(i);
+        if(k) keys.push(k);
+      }
+      keys.forEach(k => {
+        if(k === STORAGE_KEY || k.startsWith("bara_")){
+          localStorage.removeItem(k);
+        }
+      });
+    }
+
     function init(){
       let saved = [];
       try{
@@ -335,10 +350,13 @@
       saveNames();
     }
 
+    // ✅ زر المنزل: تصفير كل شيء + رجوع للرئيسية (وبالتالي ترجع 3 مربعات فقط)
     homeBtn.addEventListener("click", () => {
+      clearGameState();
       window.location.href = "index.html";
     });
 
+    // ابدأ اللعب (الصفحة القادمة لاحقًا)
     startBtn.addEventListener("click", () => {
       saveNames();
       window.location.href = "single_game.html";
