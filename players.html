@@ -18,6 +18,7 @@
       --black:#111;
       --blue:#bfe4ff;
       --shadow:0 10px 0 rgba(0,0,0,.18);
+      --green:#27ae60;
     }
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);font-family:"Baloo Bhaijaan 2",Arial,sans-serif}
@@ -187,6 +188,29 @@
       color:#d00;
       cursor:pointer;
     }
+
+    /* ===== Toast ===== */
+    .toast{
+      position:fixed;
+      bottom:24px;
+      left:50%;
+      transform:translateX(-50%);
+      background:var(--green);
+      color:#fff;
+      padding:12px 22px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:20px;
+      box-shadow:0 10px 20px rgba(0,0,0,.25);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .3s ease, transform .3s ease;
+      z-index:200;
+    }
+    .toast.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(-6px);
+    }
   </style>
 </head>
 <body>
@@ -242,6 +266,8 @@
   </div>
 </div>
 
+<div id="toast" class="toast">✔ تم نسخ الرابط</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import { getFirestore, doc, setDoc, updateDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
@@ -249,7 +275,7 @@ import { getFirestore, doc, setDoc, updateDoc, onSnapshot, serverTimestamp } fro
 const firebaseConfig = {
   apiKey: "AIzaSyDQx4gJZMHNWQBeMYsU4fknZHG0WFJ_ckc",
   authDomain: "bara-alsalfah.firebaseapp.com",
-  projectId: "bara-alsalfah",
+  projectId: "bara-alsalfah.firebaseapp.com",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -306,6 +332,7 @@ startBtn.onclick=async()=>{
 const overlay=document.getElementById("overlay");
 const tabs=document.querySelectorAll(".tab");
 const boxes=document.querySelectorAll(".box");
+const toast=document.getElementById("toast");
 
 document.getElementById("shareBtn").onclick=()=>{
   const url=location.origin+"/join.html?room="+room;
@@ -329,6 +356,9 @@ window.copyText=()=>{
   const active=document.querySelector(".box.active");
   const text=active.innerText.trim();
   navigator.clipboard.writeText(text);
+
+  toast.classList.add("show");
+  setTimeout(()=>toast.classList.remove("show"),1200);
 };
 
 window.closeModal=()=>overlay.classList.remove("show");
