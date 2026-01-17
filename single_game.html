@@ -53,12 +53,11 @@
       color:var(--text);
     }
 
-    /* إطار اللعبة */
     .wrap{
       min-height:100vh;
       display:flex;
       justify-content:center;
-      padding:18px 14px 120px; /* مساحة للشريط السفلي */
+      padding:18px 14px 120px;
     }
     .frame{
       width:min(var(--containerMax), 100%);
@@ -69,7 +68,6 @@
       position:relative;
     }
 
-    /* رأس الصفحة (شعار + عنوان) */
     .topbar{
       display:flex;
       align-items:center;
@@ -87,7 +85,6 @@
       object-fit:contain;
     }
 
-    /* شارة/عنوان كبير */
     .badgeTitle{
       margin:14px auto 16px;
       width:fit-content;
@@ -102,7 +99,6 @@
       text-align:center;
     }
 
-    /* صندوق كبير */
     .bigCard{
       background:var(--card);
       color:var(--white);
@@ -117,7 +113,6 @@
       position:relative;
     }
 
-    /* صندوق داخلي للكلمة/السالفة */
     .innerCream{
       width:100%;
       border-radius: var(--radiusBig);
@@ -147,14 +142,13 @@
       line-height:1.6;
       padding: 0 10px;
     }
-    .msgTextSmall{
-      font-size: var(--subTextSizeSmall);
-      font-weight:800;
-      line-height:1.6;
-      padding: 0 10px;
+
+    .topicWord{
+      font-size: var(--bigWordSize);
+      font-weight:1000;
+      letter-spacing:.5px;
     }
 
-    /* صفحة وقت الأسئلة */
     .askLine{
       font-size: var(--askLineSize);
       font-weight:1000;
@@ -163,6 +157,7 @@
     }
     .askLine .who{ color: var(--yellow); }
     .askLine .mid{ color: #fff; margin:0 10px; }
+
     .askHelpBox{
       width:100%;
       max-width: 420px;
@@ -175,7 +170,6 @@
       line-height:1.6;
     }
 
-    /* الشريط السفلي: زر ثابت + زر الرئيسية */
     .bottomBar{
       position:fixed;
       left:0; right:0;
@@ -210,19 +204,19 @@
     .homeBtn svg{ width:34px;height:34px; }
 
     .cta{
-      height: var(--btnH);
-      border-radius: var(--btnRadius);
+      height: 56px;                 /* compact دائماً */
+      border-radius: 22px;
       background: var(--yellow);
       color: var(--yellowText);
       border:4px solid #000;
       box-shadow: var(--shadow);
-      font-size: 28px;
+      font-size: 26px;
       font-weight:1000;
       display:flex;
       align-items:center;
       justify-content:center;
-      width: 86%;
-      max-width: 420px;
+      width: 78%;
+      max-width: 360px;
       margin: 0 auto;
       pointer-events:auto;
       cursor:pointer;
@@ -231,29 +225,10 @@
       padding: 0 14px;
     }
 
-    @media (max-width: 420px){
-      .cta{ width: 88%; }
-    }
-    @media (max-width: 360px){
-      .cta{ width: 90%; font-size: 26px; }
-      .homeBtn{ width:56px;height:56px; }
-      .homeBtn svg{ width:30px;height:30px; }
-    }
-
-    /* زر تصويت */
     .cta.vote{
       background: var(--vote);
       color:#fff;
       max-width: 360px;
-    }
-
-    /* زر التالي الأصغر */
-    .cta.compact{
-      height: 56px;
-      border-radius: 22px;
-      max-width: 360px;
-      width: 78%;
-      font-size: 26px;
     }
 
     .spacerBottom{ height: 18px; }
@@ -285,13 +260,20 @@
         </svg>
       </button>
 
-      <button class="cta compact" id="ctaBtn">التالي</button>
+      <button class="cta" id="ctaBtn">التالي</button>
     </div>
   </div>
 
 <script>
 /* =========================
-   Session helpers
+   مفاتيح التخزين الصحيحة لمشروعك
+   ========================= */
+const PLAYERS_KEY = "bara_players";          // من single.html
+const CAT_ID_KEY  = "bara_category_id";      // من categories.html
+const STATE_KEY   = "bara_singleState";      // حالة اللعب (نسخة ثابتة)
+
+/* =========================
+   Helpers
    ========================= */
 function getSessionJSON(key){
   try{
@@ -302,31 +284,44 @@ function getSessionJSON(key){
 function setSessionJSON(key, val){
   sessionStorage.setItem(key, JSON.stringify(val));
 }
+function escapeHtml(str){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+function clearAllBaraState(){
+  // يمسح كل مفاتيح bara_ من sessionStorage/localStorage
+  const ssKeys = [];
+  for(let i=0;i<sessionStorage.length;i++){
+    const k = sessionStorage.key(i);
+    if(k) ssKeys.push(k);
+  }
+  ssKeys.forEach(k => { if(k.startsWith("bara_")) sessionStorage.removeItem(k); });
+
+  const lsKeys = [];
+  for(let i=0;i<localStorage.length;i++){
+    const k = localStorage.key(i);
+    if(k) lsKeys.push(k);
+  }
+  lsKeys.forEach(k => { if(k.startsWith("bara_")) localStorage.removeItem(k); });
+}
 
 /* =========================
-   ✅ التعديل المهم:
-   قراءة نفس مفاتيح الصفحات السابقة:
-   - الأسماء: bara_players
-   - الكتاغوري: bara_category_id
-   (مع دعم قديم احتياطي)
+   قراءة البيانات (مفاتيحك)
    ========================= */
-const players =
-  getSessionJSON("bara_players") ||
-  getSessionJSON("players") || [];
-
-const categoryKey = (
-  sessionStorage.getItem("bara_category_id") ||
-  sessionStorage.getItem("categoryKey") ||
-  "zoo"
-).trim();
+const players = getSessionJSON(PLAYERS_KEY) || [];  // ✅ صار يقرأ الصحيح
+const categoryKey = (sessionStorage.getItem(CAT_ID_KEY) || "zoo").trim(); // ✅ صار يقرأ الصحيح
 
 if(!players.length){
-  // إذا دخل هنا بدون أسماء، نرجعه للصفحة الرئيسية
+  // إذا دخل هنا بدون أسماء، نرجعه للرئيسية (هذا طبيعي)
   location.href = "index.html";
 }
 
 /* =========================
-   Topics
+   مواضيع حسب الكتاغوري
    ========================= */
 const TOPICS = {
   zoo:  ["زرافة","أسد","نمر","فيل","ذئب","غزال","قرد","حصان","ثعلب","دب"],
@@ -336,12 +331,9 @@ const TOPICS = {
   eat:  ["كبسة","مندي","بيتزا","شاورما","برجر","مكرونة","سمبوسة","جريش","مضغوط","فلافل"],
   play: ["كرة قدم","بلوت","شطرنج","فورتنايت","فيفا","ببجي","كود","مونوبولي","أونو","ليدو"]
 };
-
 function pickRandom(arr){
   return arr[Math.floor(Math.random()*arr.length)];
 }
-
-/* إذا كتاغوري غير موجود: نرجع للـ zoo كحل أخير */
 const topicList = TOPICS[categoryKey] || TOPICS.zoo;
 const topicWord = pickRandom(topicList);
 
@@ -350,12 +342,9 @@ const outsiderIndex = Math.floor(Math.random() * players.length);
 const outsiderName = players[outsiderIndex];
 
 /* =========================
-   State (بمفتاح ثابت خاص باللعبة)
+   Screens State
    ========================= */
-const STATE_KEY_NEW = "bara_single_state";
-const STATE_KEY_OLD = "singleState";
-
-let state = getSessionJSON(STATE_KEY_NEW) || getSessionJSON(STATE_KEY_OLD);
+let state = getSessionJSON(STATE_KEY);
 if(!state){
   state = {
     screen: 0,
@@ -366,16 +355,14 @@ if(!state){
 
   const n = players.length;
   for(let i=0;i<n;i++){
-    let asker = players[i];
     let targetIndex = i;
     while(targetIndex === i){
       targetIndex = Math.floor(Math.random()*n);
     }
-    state.pairings.push({ asker, target: players[targetIndex] });
+    state.pairings.push({ asker: players[i], target: players[targetIndex] });
   }
 
-  setSessionJSON(STATE_KEY_NEW, state);
-  sessionStorage.removeItem(STATE_KEY_OLD);
+  setSessionJSON(STATE_KEY, state);
 }
 
 /* DOM */
@@ -384,22 +371,13 @@ const content = document.getElementById("content");
 const ctaBtn = document.getElementById("ctaBtn");
 const homeBtn = document.getElementById("homeBtn");
 
-/* زر الرئيسية: يرجع للصفحة الرئيسية + يصفر بيانات الجلسة */
+/* Home */
 homeBtn.addEventListener("click", () => {
-  sessionStorage.removeItem("bara_players");
-  sessionStorage.removeItem("bara_category_id");
-  sessionStorage.removeItem("bara_category_label");
-  sessionStorage.removeItem("bara_step");
-  sessionStorage.removeItem(STATE_KEY_NEW);
-
-  // احتياط (لو فيه مفاتيح قديمة)
-  sessionStorage.removeItem("players");
-  sessionStorage.removeItem("categoryKey");
-  sessionStorage.removeItem(STATE_KEY_OLD);
-
+  clearAllBaraState();
   location.href = "index.html";
 });
 
+/* CTA */
 ctaBtn.addEventListener("click", () => next());
 
 render();
@@ -408,7 +386,6 @@ render();
    Render
    ========================= */
 function render(){
-  ctaBtn.classList.add("compact");
   ctaBtn.classList.remove("vote");
   ctaBtn.textContent = "التالي";
 
@@ -433,8 +410,8 @@ function render(){
   if(s === 1){
     const p = players[state.revealIndex];
     const isOut = (p === outsiderName);
-
     pageTitle.textContent = " ";
+
     if(isOut){
       content.innerHTML = `
         <div class="bigCard">
@@ -499,7 +476,6 @@ function render(){
     pageTitle.textContent = "ما تأكدت صح ؟";
     ctaBtn.textContent = "تصويت";
     ctaBtn.classList.add("vote");
-    ctaBtn.classList.add("compact");
 
     content.innerHTML = `
       <div class="bigCard" style="min-height:320px;">
@@ -521,11 +497,7 @@ function render(){
 function next(){
   const s = state.screen;
 
-  if(s === 0){
-    state.screen = 1;
-    saveAndRender();
-    return;
-  }
+  if(s === 0){ state.screen = 1; return saveAndRender(); }
 
   if(s === 1){
     state.revealIndex++;
@@ -534,15 +506,13 @@ function next(){
     }else{
       state.screen = 0;
     }
-    saveAndRender();
-    return;
+    return saveAndRender();
   }
 
   if(s === 2){
     state.screen = 3;
     state.askIndex = 0;
-    saveAndRender();
-    return;
+    return saveAndRender();
   }
 
   if(s === 3){
@@ -550,31 +520,18 @@ function next(){
     if(state.askIndex >= state.pairings.length){
       state.screen = 4;
     }
-    saveAndRender();
-    return;
+    return saveAndRender();
   }
 
   if(s === 4){
-    // بعد ضغط "تصويت" نوقف ولا نسوي شي
+    // حسب اتفاقك: بعد ضغط "تصويت" نوقف ولا نسوي شي
     return;
   }
 }
 
 function saveAndRender(){
-  setSessionJSON(STATE_KEY_NEW, state);
+  setSessionJSON(STATE_KEY, state);
   render();
-}
-
-/* =========================
-   Utils
-   ========================= */
-function escapeHtml(str){
-  return String(str)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
 }
 </script>
 
