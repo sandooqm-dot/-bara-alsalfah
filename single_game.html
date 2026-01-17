@@ -18,7 +18,7 @@
       --yellowText:#111;
 
       --purple:#7a44a3;
-      --vote:#7b1f1f;   /* أحمر داكن */
+      --vote:#7b1f1f;
       --shadow: 0 10px 0 rgba(0,0,0,.25);
 
       --containerMax: 520px;
@@ -276,9 +276,6 @@
   </div>
 
 <script>
-/* =========================
-   Session helpers
-   ========================= */
 function getSessionJSON(key){
   try{
     const v = sessionStorage.getItem(key);
@@ -296,18 +293,8 @@ function firstNonEmptySession(keys){
   return "";
 }
 
-/* =========================
-   Read players + category (supports old/new keys)
-   ========================= */
 function readPlayers(){
-  const keys = [
-    "players",
-    "bara_players",
-    "bara_players_list",
-    "baraPlayers",
-    "bara_players_names",
-    "bara_players_names_list"
-  ];
+  const keys = ["players","bara_players","bara_players_list","baraPlayers","bara_players_names","bara_players_names_list"];
   for(const k of keys){
     const arr = getSessionJSON(k);
     if(Array.isArray(arr) && arr.length) return arr;
@@ -315,90 +302,35 @@ function readPlayers(){
   return [];
 }
 function readCategoryKey(){
-  const v = firstNonEmptySession([
-    "bara_category_id",
-    "categoryKey",
-    "bara_selectedCategory",
-    "bara_category",
-    "selectedCategory"
-  ]);
+  const v = firstNonEmptySession(["bara_category_id","categoryKey","bara_selectedCategory","bara_category","selectedCategory"]);
   return (v || "zoo").toLowerCase();
 }
 
-/* =========================
-   Load words from /data/*.js (your repo format)
-   Supports:
-   - const car = ["..."]
-   - var car = ["..."]
-   - window.car = [...]
-   - export default [...]
-   - export const words = [...]
-   ========================= */
 async function loadWordsForCategory(key){
-  // 1) Try module import (if file is ES module)
+  // 1) Fetch and execute file to fill window.BARA_WORDS[key]
   try{
-    const mod = await import(`./data/${key}.js?v=${Date.now()}`);
-    const cand =
-      (mod && Array.isArray(mod.default) ? mod.default : null) ||
-      (mod && Array.isArray(mod.words) ? mod.words : null) ||
-      (mod && Array.isArray(mod.data) ? mod.data : null) ||
-      null;
-    if(cand && cand.length){
-      return cand.map(x => String(x).trim()).filter(Boolean);
-    }
-  }catch(e){}
+    // تأكد إن الوعاء موجود
+    window.BARA_WORDS = window.BARA_WORDS || {};
 
-  // 2) Fetch JS text and evaluate safely (works for const/var inside file)
-  try{
     const r = await fetch(`data/${key}.js?v=${Date.now()}`, { cache: "no-store" });
     if(r.ok){
-      let code = await r.text();
+      const code = await r.text();
 
-      // إذا فيه export نحوله لصيغة عادية
-      code = code
-        .replace(/export\s+default\s+/g, "const __default__ = ")
-        .replace(/export\s+const\s+/g, "const ")
-        .replace(/export\s+let\s+/g, "let ")
-        .replace(/export\s+var\s+/g, "var ")
-        .replace(/export\s*\{[^}]*\}\s*;?/g, "");
+      // تشغيل ملف الداتا (مصمم أصلاً للـwindow)
+      // إذا كان الملف فيه خطأ نحوي راح يطيح هنا
+      try{
+        (0, eval)(code);
+      }catch(e){
+        // نكمل للفallback بدل ما نكسر اللعبة
+      }
 
-      const safeKey = /^[a-zA-Z_$][\w$]*$/.test(key) ? key : null;
-
-      const fn = new Function("key", `
-        "use strict";
-        ${code}
-
-        // Common candidates
-        let cand =
-          (typeof __default__ !== "undefined" ? __default__ : undefined) ||
-          (typeof words !== "undefined" ? words : undefined) ||
-          (typeof data !== "undefined" ? data : undefined) ||
-          (typeof list !== "undefined" ? list : undefined);
-
-        // If variable name matches category key (car/frot/...)
-        ${safeKey ? `if(!cand && typeof ${safeKey} !== "undefined") cand = ${safeKey};` : ""}
-
-        // If attached to window (in non-module scripts)
-        if(!cand && typeof window !== "undefined"){
-          cand =
-            window[key] ||
-            window[key + "Words"] ||
-            window[key + "Data"] ||
-            window["DATA_" + key] ||
-            window["bara_" + key];
-        }
-
-        return cand;
-      `);
-
-      const out = fn(key);
-      if(Array.isArray(out) && out.length){
-        return out.map(x => String(x).trim()).filter(Boolean);
+      if(window.BARA_WORDS && Array.isArray(window.BARA_WORDS[key]) && window.BARA_WORDS[key].length){
+        return window.BARA_WORDS[key].map(x => String(x).trim()).filter(Boolean);
       }
     }
   }catch(e){}
 
-  // 3) Fallback (never crash)
+  // 2) Fallback احتياطي
   const FALLBACK = {
     zoo:  ["زرافة","أسد","نمر","فيل","ذئب","غزال","قرد","حصان","ثعلب","دب"],
     car:  ["تويوتا","مرسيدس","هوندا","هيونداي","نيسان","كيا","شفروليه","فورد","بي إم دبليو","أودي"],
@@ -414,9 +346,6 @@ function pickRandom(arr){
   return arr[Math.floor(Math.random()*arr.length)];
 }
 
-/* =========================
-   Boot
-   ========================= */
 (async function boot(){
   const players = readPlayers();
   const categoryKey = readCategoryKey();
@@ -426,12 +355,10 @@ function pickRandom(arr){
     return;
   }
 
-  // توحيد مفاتيح القراءة لباقي الصفحات
   sessionStorage.setItem("players", JSON.stringify(players));
   sessionStorage.setItem("bara_category_id", categoryKey);
   sessionStorage.setItem("categoryKey", categoryKey);
 
-  // حافظ على السالفة وبرا السالفة حتى لو صار Refresh
   let topicWord = firstNonEmptySession(["bara_topic_word","topicWord"]);
   let outsiderIndexStr = firstNonEmptySession(["bara_out_index","outsiderIndex"]);
   let outsiderIndex = outsiderIndexStr ? Number(outsiderIndexStr) : NaN;
@@ -472,7 +399,6 @@ function pickRandom(arr){
   const homeBtn = document.getElementById("homeBtn");
 
   homeBtn.addEventListener("click", () => {
-    // تصفير كل بيانات اللعبة عند الرجوع للرئيسية
     const keysToRemove = [
       "players","bara_players","bara_players_list","baraPlayers","bara_players_names","bara_players_names_list",
       "bara_category_id","categoryKey","bara_selectedCategory","bara_category","selectedCategory",
@@ -629,8 +555,7 @@ function pickRandom(arr){
     }
 
     if(s === 4){
-      // حسب اتفاقك: بعد ضغط "تصويت" نوقف
-      return;
+      return; // حسب اتفاقك
     }
   }
 
