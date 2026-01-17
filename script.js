@@ -1,10 +1,9 @@
 let selectedMode = "single";
 
-const modeButtons = document.querySelectorAll(".mode-btn");
-
-modeButtons.forEach(btn => {
+document.querySelectorAll(".mode-btn").forEach(btn => {
   btn.addEventListener("click", () => {
-    modeButtons.forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".mode-btn")
+      .forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     selectedMode = btn.dataset.mode;
   });
