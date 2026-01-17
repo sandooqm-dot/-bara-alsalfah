@@ -21,7 +21,6 @@
       --vote:#7b1f1f;   /* أحمر داكن */
       --shadow: 0 10px 0 rgba(0,0,0,.25);
 
-      /* مقاسات قابلة للتعديل بسرعة */
       --containerMax: 520px;
       --radiusBig: 26px;
       --radiusMid: 18px;
@@ -31,18 +30,18 @@
 
       --titleSize: 18px;
       --headerSize: 26px;
-      --bigWordSize: 54px;     /* كلمة السالفة */
-      --playerNameSize: 36px;  /* اسم اللاعب الكبير */
-      --askLineSize: 36px;     /* (أحمد اسأل طلال) */
-      --subTextSize: 22px;     /* نصوص التعليمات داخل المربعات */
+      --bigWordSize: 54px;
+      --playerNameSize: 36px;
+      --askLineSize: 36px;
+      --subTextSize: 22px;
       --subTextSizeSmall: 22px;
 
-      --btnH: 62px;            /* ارتفاع زر التالي/تصويت */
+      --btnH: 62px;
       --btnRadius: 26px;
 
-      --homeSize: 60px;        /* حجم زر الرئيسية */
-      --homeGap: 12px;         /* مسافة زر الرئيسية عن الحواف */
-      --bottomGap: 16px;       /* مسافة الشريط السفلي */
+      --homeSize: 60px;
+      --homeGap: 12px;
+      --bottomGap: 16px;
     }
 
     *{box-sizing:border-box}
@@ -53,12 +52,11 @@
       color:var(--text);
     }
 
-    /* إطار اللعبة */
     .wrap{
       min-height:100vh;
       display:flex;
       justify-content:center;
-      padding:18px 14px 120px; /* مساحة للشريط السفلي */
+      padding:18px 14px 120px;
     }
     .frame{
       width:min(var(--containerMax), 100%);
@@ -69,7 +67,6 @@
       position:relative;
     }
 
-    /* رأس الصفحة (شعار + عنوان) */
     .topbar{
       display:flex;
       align-items:center;
@@ -87,7 +84,6 @@
       object-fit:contain;
     }
 
-    /* شارة/عنوان كبير */
     .badgeTitle{
       margin:14px auto 16px;
       width:fit-content;
@@ -102,7 +98,6 @@
       text-align:center;
     }
 
-    /* صندوق كبير */
     .bigCard{
       background:var(--card);
       color:var(--white);
@@ -117,7 +112,6 @@
       position:relative;
     }
 
-    /* صندوق داخلي للكلمة/السالفة */
     .innerCream{
       width:100%;
       border-radius: var(--radiusBig);
@@ -147,21 +141,13 @@
       line-height:1.6;
       padding: 0 10px;
     }
-    .msgTextSmall{
-      font-size: var(--subTextSizeSmall);
-      font-weight:800;
-      line-height:1.6;
-      padding: 0 10px;
-    }
 
-    /* صفحة السالفة: كلمة كبيرة */
     .topicWord{
       font-size: var(--bigWordSize);
       font-weight:1000;
       letter-spacing:.5px;
     }
 
-    /* صفحة وقت الأسئلة */
     .askLine{
       font-size: var(--askLineSize);
       font-weight:1000;
@@ -182,7 +168,6 @@
       line-height:1.6;
     }
 
-    /* الشريط السفلي: زر ثابت + زر الرئيسية */
     .bottomBar{
       position:fixed;
       left:0; right:0;
@@ -238,23 +223,19 @@
       padding: 0 14px;
     }
 
-    @media (max-width: 420px){
-      .cta{ width: 88%; }
-    }
+    @media (max-width: 420px){ .cta{ width: 88%; } }
     @media (max-width: 360px){
       .cta{ width: 90%; font-size: 26px; }
       .homeBtn{ width:56px;height:56px; }
       .homeBtn svg{ width:30px;height:30px; }
     }
 
-    /* زر تصويت */
     .cta.vote{
       background: var(--vote);
       color:#fff;
       max-width: 360px;
     }
 
-    /* زر التالي الأصغر */
     .cta.compact{
       height: 56px;
       border-radius: 22px;
@@ -276,9 +257,7 @@
       </div>
 
       <div class="badgeTitle" id="pageTitle"> </div>
-
       <div id="content"></div>
-
       <div class="spacerBottom"></div>
     </div>
   </div>
@@ -298,7 +277,7 @@
 
 <script>
 /* =========================
-   Helpers
+   Session helpers
    ========================= */
 function getSessionJSON(key){
   try{
@@ -309,271 +288,368 @@ function getSessionJSON(key){
 function setSessionJSON(key, val){
   sessionStorage.setItem(key, JSON.stringify(val));
 }
-function escapeHtml(str){
-  return String(str)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-function clearBaraSession(){
-  const keys = [];
-  for(let i=0;i<sessionStorage.length;i++){
-    const k = sessionStorage.key(i);
-    if(k) keys.push(k);
+function firstNonEmptySession(keys){
+  for(const k of keys){
+    const v = sessionStorage.getItem(k);
+    if(v && String(v).trim()) return String(v).trim();
   }
-  keys.forEach(k=>{
-    if(k.startsWith("bara_")) sessionStorage.removeItem(k);
-  });
+  return "";
 }
 
 /* =========================
-   قراءة البيانات - حل جذري لتوحيد المفاتيح
-   =========================
-   الصحيح عندنا:
-   - الأسماء: bara_players
-   - الكتاغوري: bara_category_id
-   (ونخلي fallback لنسخ قديمة لو موجودة)
-*/
-const players =
-  getSessionJSON("bara_players") ||
-  getSessionJSON("players") || [];
-
-const categoryKey = String(
-  sessionStorage.getItem("bara_category_id") ||
-  sessionStorage.getItem("categoryKey") ||
-  "zoo"
-).trim();
-
-/* إذا ما فيه أسماء: نرجع لصفحة الأسماء (single.html) بدل الرئيسية */
-if(!players.length){
-  alert("الأسماء غير موجودة. رجّع لصفحة إدخال الأسماء ثم جرّب مرة ثانية.");
-  location.href = "single.html";
-}
-
-/* =========================
-   الداتا (مؤقتة الآن)
+   Read players + category (supports old/new keys)
    ========================= */
-const TOPICS = {
-  zoo:  ["زرافة","أسد","نمر","فيل","ذئب","غزال","قرد","حصان","ثعلب","دب"],
-  car:  ["تويوتا","مرسيدس","هوندا","هيونداي","نيسان","كيا","شفروليه","فورد","بي إم دبليو","أودي"],
-  frot: ["تفاح","موز","عنب","برتقال","فراولة","مانجو","رمان","خيار","طماطم","بطيخ"],
-  cola: ["كولا","بيبسي","سفن أب","ميرندا","عصير برتقال","عصير تفاح","شاي مثلج","قهوة","حليب","ماء غازي"],
-  eat:  ["كبسة","مندي","بيتزا","شاورما","برجر","مكرونة","سمبوسة","جريش","مضغوط","فلافل"],
-  play: ["كرة قدم","بلوت","شطرنج","فورتنايت","فيفا","ببجي","كود","مونوبولي","أونو","ليدو"]
-};
+function readPlayers(){
+  const keys = [
+    "players",
+    "bara_players",
+    "bara_players_list",
+    "baraPlayers",
+    "bara_players_names",
+    "bara_players_names_list"
+  ];
+  for(const k of keys){
+    const arr = getSessionJSON(k);
+    if(Array.isArray(arr) && arr.length) return arr;
+  }
+  return [];
+}
+function readCategoryKey(){
+  const v = firstNonEmptySession([
+    "bara_category_id",
+    "categoryKey",
+    "bara_selectedCategory",
+    "bara_category",
+    "selectedCategory"
+  ]);
+  return (v || "zoo").toLowerCase();
+}
+
+/* =========================
+   Load words from /data/*.js (your repo format)
+   Supports:
+   - const car = ["..."]
+   - var car = ["..."]
+   - window.car = [...]
+   - export default [...]
+   - export const words = [...]
+   ========================= */
+async function loadWordsForCategory(key){
+  // 1) Try module import (if file is ES module)
+  try{
+    const mod = await import(`./data/${key}.js?v=${Date.now()}`);
+    const cand =
+      (mod && Array.isArray(mod.default) ? mod.default : null) ||
+      (mod && Array.isArray(mod.words) ? mod.words : null) ||
+      (mod && Array.isArray(mod.data) ? mod.data : null) ||
+      null;
+    if(cand && cand.length){
+      return cand.map(x => String(x).trim()).filter(Boolean);
+    }
+  }catch(e){}
+
+  // 2) Fetch JS text and evaluate safely (works for const/var inside file)
+  try{
+    const r = await fetch(`data/${key}.js?v=${Date.now()}`, { cache: "no-store" });
+    if(r.ok){
+      let code = await r.text();
+
+      // إذا فيه export نحوله لصيغة عادية
+      code = code
+        .replace(/export\s+default\s+/g, "const __default__ = ")
+        .replace(/export\s+const\s+/g, "const ")
+        .replace(/export\s+let\s+/g, "let ")
+        .replace(/export\s+var\s+/g, "var ")
+        .replace(/export\s*\{[^}]*\}\s*;?/g, "");
+
+      const safeKey = /^[a-zA-Z_$][\w$]*$/.test(key) ? key : null;
+
+      const fn = new Function("key", `
+        "use strict";
+        ${code}
+
+        // Common candidates
+        let cand =
+          (typeof __default__ !== "undefined" ? __default__ : undefined) ||
+          (typeof words !== "undefined" ? words : undefined) ||
+          (typeof data !== "undefined" ? data : undefined) ||
+          (typeof list !== "undefined" ? list : undefined);
+
+        // If variable name matches category key (car/frot/...)
+        ${safeKey ? `if(!cand && typeof ${safeKey} !== "undefined") cand = ${safeKey};` : ""}
+
+        // If attached to window (in non-module scripts)
+        if(!cand && typeof window !== "undefined"){
+          cand =
+            window[key] ||
+            window[key + "Words"] ||
+            window[key + "Data"] ||
+            window["DATA_" + key] ||
+            window["bara_" + key];
+        }
+
+        return cand;
+      `);
+
+      const out = fn(key);
+      if(Array.isArray(out) && out.length){
+        return out.map(x => String(x).trim()).filter(Boolean);
+      }
+    }
+  }catch(e){}
+
+  // 3) Fallback (never crash)
+  const FALLBACK = {
+    zoo:  ["زرافة","أسد","نمر","فيل","ذئب","غزال","قرد","حصان","ثعلب","دب"],
+    car:  ["تويوتا","مرسيدس","هوندا","هيونداي","نيسان","كيا","شفروليه","فورد","بي إم دبليو","أودي"],
+    frot: ["تفاح","موز","عنب","برتقال","فراولة","مانجو","رمان","خيار","طماطم","بطيخ"],
+    cola: ["كولا","بيبسي","سفن أب","ميرندا","عصير برتقال","عصير تفاح","شاي مثلج","قهوة","حليب","ماء غازي"],
+    eat:  ["كبسة","مندي","بيتزا","شاورما","برجر","مكرونة","سمبوسة","جريش","مضغوط","فلافل"],
+    play: ["كرة قدم","بلوت","شطرنج","فورتنايت","فيفا","ببجي","كود","مونوبولي","أونو","ليدو"]
+  };
+  return FALLBACK[key] || FALLBACK.zoo;
+}
 
 function pickRandom(arr){
   return arr[Math.floor(Math.random()*arr.length)];
 }
 
-/* لا نطيح على zoo بالغلط إلا لو الكتاغوري فعلاً غير معروف */
-const topicList = TOPICS[categoryKey] || TOPICS.zoo;
-const topicWord = pickRandom(topicList);
-
-/* اختيار برا السالفة */
-const outsiderIndex = Math.floor(Math.random() * players.length);
-const outsiderName = players[outsiderIndex];
-
 /* =========================
-   State (بمفتاح bara_ عشان ما يصير تعارض)
+   Boot
    ========================= */
-let state = getSessionJSON("bara_singleState");
-if(!state){
-  state = {
-    screen: 0,
-    revealIndex: 0,
-    askIndex: 0,
-    pairings: []
-  };
+(async function boot(){
+  const players = readPlayers();
+  const categoryKey = readCategoryKey();
 
-  const n = players.length;
-  for(let i=0;i<n;i++){
-    let targetIndex = i;
-    while(targetIndex === i){
-      targetIndex = Math.floor(Math.random()*n);
+  if(!players.length){
+    location.href = "index.html";
+    return;
+  }
+
+  // توحيد مفاتيح القراءة لباقي الصفحات
+  sessionStorage.setItem("players", JSON.stringify(players));
+  sessionStorage.setItem("bara_category_id", categoryKey);
+  sessionStorage.setItem("categoryKey", categoryKey);
+
+  // حافظ على السالفة وبرا السالفة حتى لو صار Refresh
+  let topicWord = firstNonEmptySession(["bara_topic_word","topicWord"]);
+  let outsiderIndexStr = firstNonEmptySession(["bara_out_index","outsiderIndex"]);
+  let outsiderIndex = outsiderIndexStr ? Number(outsiderIndexStr) : NaN;
+
+  if(!topicWord){
+    const words = await loadWordsForCategory(categoryKey);
+    topicWord = pickRandom(words);
+    sessionStorage.setItem("bara_topic_word", topicWord);
+    sessionStorage.setItem("topicWord", topicWord);
+  }
+
+  if(!Number.isInteger(outsiderIndex) || outsiderIndex < 0 || outsiderIndex >= players.length){
+    outsiderIndex = Math.floor(Math.random() * players.length);
+    sessionStorage.setItem("bara_out_index", String(outsiderIndex));
+    sessionStorage.setItem("outsiderIndex", String(outsiderIndex));
+  }
+
+  const outsiderName = players[outsiderIndex];
+
+  let state = getSessionJSON("singleState");
+  if(!state){
+    state = { screen:0, revealIndex:0, askIndex:0, pairings:[] };
+
+    const n = players.length;
+    for(let i=0;i<n;i++){
+      let targetIndex = i;
+      while(targetIndex === i){
+        targetIndex = Math.floor(Math.random()*n);
+      }
+      state.pairings.push({ asker: players[i], target: players[targetIndex] });
     }
-    state.pairings.push({ asker: players[i], target: players[targetIndex] });
+    setSessionJSON("singleState", state);
   }
 
-  setSessionJSON("bara_singleState", state);
-}
+  const pageTitle = document.getElementById("pageTitle");
+  const content = document.getElementById("content");
+  const ctaBtn = document.getElementById("ctaBtn");
+  const homeBtn = document.getElementById("homeBtn");
 
-/* DOM */
-const pageTitle = document.getElementById("pageTitle");
-const content = document.getElementById("content");
-const ctaBtn = document.getElementById("ctaBtn");
-const homeBtn = document.getElementById("homeBtn");
+  homeBtn.addEventListener("click", () => {
+    // تصفير كل بيانات اللعبة عند الرجوع للرئيسية
+    const keysToRemove = [
+      "players","bara_players","bara_players_list","baraPlayers","bara_players_names","bara_players_names_list",
+      "bara_category_id","categoryKey","bara_selectedCategory","bara_category","selectedCategory",
+      "singleState","bara_topic_word","topicWord","bara_out_index","outsiderIndex"
+    ];
+    keysToRemove.forEach(k => sessionStorage.removeItem(k));
+    location.href = "index.html";
+  });
 
-/* الرئيسية: تصفير + رجوع */
-homeBtn.addEventListener("click", () => {
-  clearBaraSession();
-  location.href = "index.html";
-});
+  ctaBtn.addEventListener("click", () => next());
 
-/* زر CTA */
-ctaBtn.addEventListener("click", () => next());
-
-render();
-
-/* =========================
-   Render
-   ========================= */
-function render(){
-  ctaBtn.classList.add("compact");
-  ctaBtn.classList.remove("vote");
-  ctaBtn.textContent = "التالي";
-
-  const s = state.screen;
-
-  if(s === 0){
-    const p = players[state.revealIndex];
-    pageTitle.textContent = " ";
-    content.innerHTML = `
-      <div class="playerNameBox">${escapeHtml(p)}</div>
-      <div class="bigCard" style="min-height:260px;">
-        <div class="msgText">
-          اعطو الجوال لـ <span style="color:var(--yellow); font-weight:1000;">${escapeHtml(p)}</span><br/>
-          اضغط التالي حتى تعرف انت برا السالفة أو داخلها<br/>
-          ولا تخلي احد غيرك يشوف الشاشة!
-        </div>
-      </div>
-    `;
-    return;
-  }
-
-  if(s === 1){
-    const p = players[state.revealIndex];
-    const isOut = (p === outsiderName);
-
-    pageTitle.textContent = " ";
-    if(isOut){
-      content.innerHTML = `
-        <div class="bigCard">
-          <div>
-            <div class="innerCream" style="font-size:40px; font-weight:1000;">السالفة هي :</div>
-            <div class="topicWord" style="margin-top:20px;">أنت برا السالفة</div>
-          </div>
-        </div>
-      `;
-    }else{
-      content.innerHTML = `
-        <div class="bigCard">
-          <div>
-            <div class="innerCream" style="font-size:40px; font-weight:1000;">السالفة هي :</div>
-            <div class="topicWord" style="margin-top:20px;">${escapeHtml(topicWord)}</div>
-          </div>
-        </div>
-      `;
-    }
-    return;
-  }
-
-  if(s === 2){
-    pageTitle.textContent = "وقت الاسئلة";
-    content.innerHTML = `
-      <div class="bigCard" style="min-height:280px;">
-        <div class="msgText">
-          كل شخص راح يسأل شخص ثاني سؤال متعلق بالسالفة<br/>
-          اضغط التالي حتى تعرفون مين يسأل مين
-        </div>
-      </div>
-    `;
-    return;
-  }
-
-  if(s === 3){
-    pageTitle.textContent = "وقت الاسئلة";
-    const pair = state.pairings[state.askIndex];
-
-    content.innerHTML = `
-      <div class="bigCard" style="min-height:320px;">
-        <div style="width:100%;">
-          <div class="askLine">
-            <span class="who">${escapeHtml(pair.asker)}</span>
-            <span class="mid">يسأل</span>
-            <span class="who">${escapeHtml(pair.target)}</span>
-          </div>
-
-          <div class="msgText" style="margin-bottom:12px;">
-            سؤال متعلق بالسالفة!
-          </div>
-
-          <div class="askHelpBox">
-            اختر سؤالك بعناية حتى اللي برا السالفة ما يعرف عن ايش تتكلمون
-          </div>
-        </div>
-      </div>
-    `;
-    return;
-  }
-
-  if(s === 4){
-    pageTitle.textContent = "ما تأكدت صح ؟";
-    ctaBtn.textContent = "تصويت";
-    ctaBtn.classList.add("vote");
+  function render(){
     ctaBtn.classList.add("compact");
+    ctaBtn.classList.remove("vote");
+    ctaBtn.textContent = "التالي";
 
-    content.innerHTML = `
-      <div class="bigCard" style="min-height:320px;">
-        <div class="msgText">
-          الحين يقدر أي أحد يسأل شخص يشك إنه هو اللي برا السالفة<br/><br/>
-          <div style="font-size:22px; font-weight:1000; opacity:.95;">
-            بعد الانتهاء من الأسئلة اضغط <span style="color:var(--yellow);">تصويت</span>
+    const s = state.screen;
+
+    if(s === 0){
+      const p = players[state.revealIndex];
+      pageTitle.textContent = " ";
+      content.innerHTML = `
+        <div class="playerNameBox">${escapeHtml(p)}</div>
+        <div class="bigCard" style="min-height:260px;">
+          <div class="msgText">
+            اعطو الجوال لـ <span style="color:var(--yellow); font-weight:1000;">${escapeHtml(p)}</span><br/>
+            اضغط التالي حتى تعرف انت برا السالفة! أو داخلها<br/>
+            ولا تخلي احد غيرك يشوف الشاشة!
           </div>
         </div>
-      </div>
-    `;
-    return;
-  }
-}
-
-/* =========================
-   Next
-   ========================= */
-function next(){
-  const s = state.screen;
-
-  if(s === 0){
-    state.screen = 1;
-    return saveAndRender();
-  }
-
-  if(s === 1){
-    state.revealIndex++;
-    if(state.revealIndex >= players.length){
-      state.screen = 2;
-    }else{
-      state.screen = 0;
+      `;
+      return;
     }
-    return saveAndRender();
-  }
 
-  if(s === 2){
-    state.screen = 3;
-    state.askIndex = 0;
-    return saveAndRender();
-  }
+    if(s === 1){
+      const p = players[state.revealIndex];
+      const isOut = (p === outsiderName);
 
-  if(s === 3){
-    state.askIndex++;
-    if(state.askIndex >= state.pairings.length){
-      state.screen = 4;
+      pageTitle.textContent = " ";
+      if(isOut){
+        content.innerHTML = `
+          <div class="bigCard">
+            <div>
+              <div class="innerCream" style="font-size:40px; font-weight:1000;">السالفة هي :</div>
+              <div class="topicWord" style="margin-top:20px;">أنت برا السالفة 👀</div>
+            </div>
+          </div>
+        `;
+      }else{
+        content.innerHTML = `
+          <div class="bigCard">
+            <div>
+              <div class="innerCream" style="font-size:40px; font-weight:1000;">السالفة هي :</div>
+              <div class="topicWord" style="margin-top:20px;">${escapeHtml(topicWord)}</div>
+            </div>
+          </div>
+        `;
+      }
+      return;
     }
-    return saveAndRender();
+
+    if(s === 2){
+      pageTitle.textContent = "وقت الاسئلة";
+      content.innerHTML = `
+        <div class="bigCard" style="min-height:280px;">
+          <div class="msgText">
+            كل شخص راح يسأل شخص ثاني سؤال متعلق بالسالفة<br/>
+            اضغط التالي حتى تعرفون مين يسأل مين
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    if(s === 3){
+      pageTitle.textContent = "وقت الاسئلة";
+      const pair = state.pairings[state.askIndex];
+      content.innerHTML = `
+        <div class="bigCard" style="min-height:320px;">
+          <div style="width:100%;">
+            <div class="askLine">
+              <span class="who">${escapeHtml(pair.asker)}</span>
+              <span class="mid">يسأل</span>
+              <span class="who">${escapeHtml(pair.target)}</span>
+            </div>
+
+            <div class="msgText" style="margin-bottom:12px;">
+              سؤال متعلق بالسالفة!
+            </div>
+
+            <div class="askHelpBox">
+              اختر سؤالك بعناية حتى اللي برا السالفة ما يعرف عن إيش تتكلمون
+            </div>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    if(s === 4){
+      pageTitle.textContent = "ما تأكدت صح ؟";
+      ctaBtn.textContent = "تصويت";
+      ctaBtn.classList.add("vote");
+      ctaBtn.classList.add("compact");
+
+      content.innerHTML = `
+        <div class="bigCard" style="min-height:320px;">
+          <div class="msgText">
+            الحين يقدر أي أحد يسأل شخص يشك إنه هو اللي برا السالفة<br/><br/>
+            <div style="font-size:22px; font-weight:1000; opacity:.95;">
+              بعد الانتهاء من الأسئلة اضغط <span style="color:var(--yellow);">تصويت</span>
+            </div>
+          </div>
+        </div>
+      `;
+      return;
+    }
   }
 
-  if(s === 4){
-    // حسب اتفاقك: بعد ضغط "تصويت" نوقف
-    return;
-  }
-}
+  function next(){
+    const s = state.screen;
 
-function saveAndRender(){
-  setSessionJSON("bara_singleState", state);
+    if(s === 0){
+      state.screen = 1;
+      saveAndRender();
+      return;
+    }
+
+    if(s === 1){
+      state.revealIndex++;
+      if(state.revealIndex >= players.length){
+        state.screen = 2;
+      }else{
+        state.screen = 0;
+      }
+      saveAndRender();
+      return;
+    }
+
+    if(s === 2){
+      state.screen = 3;
+      state.askIndex = 0;
+      saveAndRender();
+      return;
+    }
+
+    if(s === 3){
+      state.askIndex++;
+      if(state.askIndex >= state.pairings.length){
+        state.screen = 4;
+      }
+      saveAndRender();
+      return;
+    }
+
+    if(s === 4){
+      // حسب اتفاقك: بعد ضغط "تصويت" نوقف
+      return;
+    }
+  }
+
+  function saveAndRender(){
+    setSessionJSON("singleState", state);
+    render();
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
   render();
-}
+})();
 </script>
 
 </body>
