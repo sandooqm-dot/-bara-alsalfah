@@ -81,211 +81,82 @@
     }
     .btnStart.enabled{opacity:1}
     .btnStart:active{transform:translateY(2px)}
-
-    .homeBtn{
-      position:fixed;left:16px;bottom:16px;
-      width:64px;height:64px;border-radius:999px;
-      border:4px solid var(--black);
-      background:#bfe1ff;
-      box-shadow:0 8px 0 rgba(0,0,0,.18);
-      display:flex;align-items:center;justify-content:center;
-      cursor:pointer;z-index:20;
-    }
-    .homeBtn:active{transform:translateY(2px)}
-    .homeIcon{width:34px;height:34px}
   </style>
 </head>
 <body>
 
-  <div class="wrap">
-    <div class="card">
-      <img class="logo" src="logo.PNG" alt="logo">
-      <h1>اختر نوع السالفة</h1>
+<div class="wrap">
+  <div class="card">
+    <img class="logo" src="logo.PNG">
+    <h1>اختر نوع السالفة</h1>
 
-      <div class="panel">
-        <div class="grid" id="grid"></div>
-
-        <div class="startWrap">
-          <button id="startBtn" class="btnStart" type="button">ابدأ اللعب</button>
-        </div>
+    <div class="panel">
+      <div id="grid" class="grid"></div>
+      <div class="startWrap">
+        <button id="startBtn" class="btnStart">ابدأ اللعب</button>
       </div>
     </div>
   </div>
-
-  <button class="homeBtn" type="button" onclick="location.href='index.html'" aria-label="الصفحة الرئيسية">
-    <svg class="homeIcon" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M3 10.5 12 3l9 7.5"></path>
-      <path d="M5 10v10h14V10"></path>
-      <path d="M9 20v-6h6v6"></path>
-    </svg>
-  </button>
+</div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-  import {
-    getFirestore, doc, setDoc, updateDoc, onSnapshot,
-    serverTimestamp
-  } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+import { getFirestore, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-  // ✅ Firebase Config (كما أرسلتها)
-  const firebaseConfig = {
-    apiKey: "AIzaSyDQx4gJZMHNWQBeMYsU4fknZHG0WFJ_ckc",
-    authDomain: "bara-alsalfah.firebaseapp.com",
-    projectId: "bara-alsalfah",
-    storageBucket: "bara-alsalfah.firebasestorage.app",
-    messagingSenderId: "658748312832",
-    appId: "1:658748312832:web:3e0c970ba54bb25c0437e5",
-    measurementId: "G-82ZV2RDDDP"
+const firebaseConfig = {
+  apiKey: "AIzaSyDQx4gJZMHNWQBeMYsU4fknZHG0WFJ_ckc",
+  authDomain: "bara-alsalfah.firebaseapp.com",
+  projectId: "bara-alsalfah",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const params = new URLSearchParams(location.search);
+const room = params.get("room");
+const role = params.get("role");
+
+if(role !== "host"){
+  location.replace("waiting.html?room=" + room);
+}
+
+const cats = [
+  { id:"eat", name:"مأكولات", img:"eat.PNG" },
+  { id:"zoo", name:"حيوانات", img:"zoo.PNG" },
+  { id:"play", name:"لاعبين", img:"play.PNG" },
+  { id:"car", name:"سيارات", img:"car.PNG" },
+  { id:"frot", name:"فواكة وخضار", img:"frot.PNG" },
+  { id:"cola", name:"مشروبات", img:"cola.PNG" }
+];
+
+let selected = "";
+const grid = document.getElementById("grid");
+const startBtn = document.getElementById("startBtn");
+
+cats.forEach(c=>{
+  const d=document.createElement("div");
+  d.className="cat";
+  d.innerHTML=`<div class="catTitle">${c.name}</div><div class="imgBox"><img src="${c.img}"></div>`;
+  d.onclick=()=>{
+    selected=c.id;
+    document.querySelectorAll(".cat").forEach(x=>x.classList.remove("active"));
+    d.classList.add("active");
+    startBtn.classList.add("enabled");
   };
+  grid.appendChild(d);
+});
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  // ---- Helpers ----
-  function getJSON(key, fallback){
-    try{ return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
-    catch(e){ return fallback; }
-  }
-
-  function pickRandom(arr){
-    if(!Array.isArray(arr) || arr.length===0) return '';
-    return arr[Math.floor(Math.random()*arr.length)];
-  }
-
-  function normPlayers(arr){
-    const out = [];
-    const seen = new Set();
-    (arr || []).forEach(x=>{
-      const n = String(x || "").trim();
-      if(!n) return;
-      if(seen.has(n)) return;
-      seen.add(n);
-      out.push(n);
-    });
-    return out;
-  }
-
-  // ---- Params ----
-  const params = new URLSearchParams(location.search);
-  const mode = (params.get('mode') || localStorage.getItem('bara_mode') || '').toLowerCase(); // single|multi
-  const room = params.get('room') || localStorage.getItem('bara_room') || '';
-  const role = (params.get('role') || '').toLowerCase(); // host فقط
-
-  // ✅ قفل صفحة الكتاغوري: للمقدم فقط في الأجهزة المتعددة
-  if(mode === 'multi'){
-    if(!room){
-      location.replace('index.html');
-      throw new Error('Missing room');
-    }
-    if(role !== 'host'){
-      location.replace('waiting.html?room=' + encodeURIComponent(room));
-      throw new Error('Players blocked from categories');
-    }
-  }
-
-  // ---- UI Data ----
-  const cats = [
-    { id:'eat',  name:'مأكولات',      img:'eat.PNG'  },
-    { id:'zoo',  name:'حيوانات',      img:'zoo.PNG'  },
-    { id:'play', name:'لاعبين',       img:'play.PNG' },
-    { id:'car',  name:'سيارات',       img:'car.PNG'  },
-    { id:'frot', name:'فواكة وخضار',  img:'frot.PNG' },
-    { id:'cola', name:'مشروبات',      img:'cola.PNG' },
-  ];
-
-  const grid = document.getElementById('grid');
-  const startBtn = document.getElementById('startBtn');
-  let selected = localStorage.getItem('bara_cat') || '';
-
-  // ---- Multi: Firestore room listener ----
-  let roomRef = null;
-  let currentPlayers = [];
-
-  if(mode === 'multi' && room){
-    roomRef = doc(db, "bara_rooms", room);
-
-    // تأكد أن وثيقة الغرفة موجودة
-    await setDoc(roomRef, {
-      room,
-      status: "lobby",
-      hostSeenAt: serverTimestamp()
-    }, { merge: true });
-
-    // استماع لاسماء اللاعبين من Firebase
-    onSnapshot(roomRef, (snap)=>{
-      const data = snap.data() || {};
-      currentPlayers = normPlayers(data.players || []);
-    });
-  }
-
-  function render(){
-    grid.innerHTML = '';
-    cats.forEach(c=>{
-      const el = document.createElement('div');
-      el.className = 'cat' + (selected===c.id ? ' active':'');
-      el.setAttribute('data-id', c.id);
-
-      el.innerHTML = `
-        <div class="catTitle">${c.name}</div>
-        <div class="imgBox">
-          <img src="${c.img}" alt="${c.name}">
-        </div>
-      `;
-
-      el.onclick = () => {
-        selected = c.id;
-        localStorage.setItem('bara_cat', selected);
-        render();
-      };
-      grid.appendChild(el);
-    });
-
-    if(selected){
-      startBtn.classList.add('enabled');
-      startBtn.style.opacity = '1';
-    }else{
-      startBtn.classList.remove('enabled');
-      startBtn.style.opacity = '.55';
-    }
-  }
-
-  startBtn.onclick = async () => {
-    if(!selected) return;
-
-    // نحفظ الكتاغوري المختار محلياً
-    localStorage.setItem('bara_cat', selected);
-
-    // ✅ أجهزة متعددة: نخزن الجولة في Firebase (عشان كل الأجهزة تتزامن)
-    if(mode === 'multi' && room && roomRef){
-      const wordsKey = 'bara_words_' + selected;   // نفس نظام كلماتك الحالي
-      const words = getJSON(wordsKey, []);
-      const topic = pickRandom(words) || 'السالفة';
-
-      const players = Array.isArray(currentPlayers) ? currentPlayers : [];
-      const outName = (players.length > 0) ? pickRandom(players) : '';
-
-      const roundId = String(Date.now());
-
-      await updateDoc(roomRef, {
-        status: "ready",
-        cat: selected,
-        topic,
-        outName,
-        roundId,
-        updatedAt: serverTimestamp(),
-        hostSeenAt: serverTimestamp()
-      });
-
-      // ملاحظة: بنغير هذا التحويل للصفحات اللي بالصور بالخطوة القادمة
-      location.href = `game.html?mode=multi&room=${encodeURIComponent(room)}&role=host`;
-      return;
-    }
-
-    // ✅ جهاز واحد
-    location.href = `single.html?mode=single&cat=${encodeURIComponent(selected)}`;
-  };
-
-  render();
+startBtn.onclick=async()=>{
+  if(!selected) return;
+  const roomRef = doc(db,"bara_rooms",room);
+  await updateDoc(roomRef,{
+    status:"playing",
+    cat:selected,
+    startedAt:serverTimestamp()
+  });
+  location.href="game.html?room="+room+"&role=host";
+};
 </script>
+
 </body>
 </html>
