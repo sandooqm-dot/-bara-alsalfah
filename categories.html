@@ -288,8 +288,14 @@
   </main>
 
   <script>
+    // مفاتيح مشروعك الجديدة
     const CAT_KEY_ID    = "bara_category_id";
     const CAT_KEY_LABEL = "bara_category_label";
+    const PLAYERS_KEY   = "bara_players";
+
+    // مفاتيح توافق (إصدارات قديمة)
+    const OLD_PLAYERS_KEY = "players";
+    const OLD_CAT_KEY     = "categoryKey";
 
     const cats = Array.from(document.querySelectorAll(".cat"));
     const startBtn = document.getElementById("startBtn");
@@ -297,22 +303,45 @@
 
     let selected = null;
 
+    function setBoth(store, key, value){
+      try { store.setItem(key, value); } catch(e) {}
+    }
+
     function setActive(btn){
       cats.forEach(c => c.classList.remove("active"));
       btn.classList.add("active");
+
       selected = {
         id: btn.getAttribute("data-id"),
         label: btn.getAttribute("data-label")
       };
-      sessionStorage.setItem(CAT_KEY_ID, selected.id);
-      sessionStorage.setItem(CAT_KEY_LABEL, selected.label);
-      sessionStorage.setItem("bara_step", "category");
+
+      // ✅ نحفظ (الجديد + التوافق) في sessionStorage + localStorage
+      setBoth(sessionStorage, CAT_KEY_ID, selected.id);
+      setBoth(sessionStorage, CAT_KEY_LABEL, selected.label);
+      setBoth(sessionStorage, OLD_CAT_KEY, selected.id);
+
+      setBoth(localStorage, CAT_KEY_ID, selected.id);
+      setBoth(localStorage, CAT_KEY_LABEL, selected.label);
+      setBoth(localStorage, OLD_CAT_KEY, selected.id);
+
       startBtn.disabled = false;
     }
 
-    cats.forEach(btn => {
-      btn.addEventListener("click", () => setActive(btn));
-    });
+    cats.forEach(btn => btn.addEventListener("click", () => setActive(btn)));
+
+    // ✅ استرجاع اختيار سابق إذا موجود (حتى ما يضيع)
+    (function restoreSelected(){
+      const savedId =
+        sessionStorage.getItem(CAT_KEY_ID) ||
+        localStorage.getItem(CAT_KEY_ID) ||
+        sessionStorage.getItem(OLD_CAT_KEY) ||
+        localStorage.getItem(OLD_CAT_KEY);
+
+      if(!savedId) return;
+      const btn = cats.find(b => b.getAttribute("data-id") === savedId);
+      if(btn) setActive(btn);
+    })();
 
     function clearAllGameState(){
       const ssKeys = [];
@@ -339,11 +368,40 @@
       window.location.href = "index.html";
     });
 
+    // ✅ حل جذري: قبل الانتقال نعمل "جسر تخزين" للأسماء والكتاغوري
     startBtn.addEventListener("click", () => {
       if(!selected) return;
 
-      // ✅ كسر الكاش عشان ما يفتح نسخة قديمة من single_game.html
-      window.location.href = "single_game.html?v=3";
+      // نجيب الأسماء من أي مكان (الجديد أو القديم) + نخزنها في كل المفاتيح
+      const playersJson =
+        sessionStorage.getItem(PLAYERS_KEY) ||
+        localStorage.getItem(PLAYERS_KEY) ||
+        sessionStorage.getItem(OLD_PLAYERS_KEY) ||
+        localStorage.getItem(OLD_PLAYERS_KEY);
+
+      if(!playersJson){
+        alert("الأسماء غير موجودة. رجّع للصفحة السابقة وأدخل الأسماء ثم جرّب مرة ثانية.");
+        window.location.href = "single.html";
+        return;
+      }
+
+      // ✅ نخزن الأسماء في الجديد + القديم (session + local)
+      setBoth(sessionStorage, PLAYERS_KEY, playersJson);
+      setBoth(sessionStorage, OLD_PLAYERS_KEY, playersJson);
+      setBoth(localStorage, PLAYERS_KEY, playersJson);
+      setBoth(localStorage, OLD_PLAYERS_KEY, playersJson);
+
+      // ✅ نخزن الكتاغوري في الجديد + القديم (session + local)
+      setBoth(sessionStorage, CAT_KEY_ID, selected.id);
+      setBoth(sessionStorage, CAT_KEY_LABEL, selected.label);
+      setBoth(sessionStorage, OLD_CAT_KEY, selected.id);
+
+      setBoth(localStorage, CAT_KEY_ID, selected.id);
+      setBoth(localStorage, CAT_KEY_LABEL, selected.label);
+      setBoth(localStorage, OLD_CAT_KEY, selected.id);
+
+      // ثم ننتقل
+      window.location.href = "single_game.html";
     });
   </script>
 </body>
