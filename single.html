@@ -8,19 +8,15 @@
   <style>
     :root{
       --bg:#e9e3d6;
-      --frame:#e9e3d6;
       --green:#3f5b2a;
       --green2:#6e8554;
       --yellow:#f2c300;
       --purple:#8b49b9;
       --text:#1a1a1a;
       --muted:#9a9a9a;
+
       --shadow: 0 10px 0 rgba(0,0,0,0.18);
       --shadowSmall: 0 8px 0 rgba(0,0,0,0.18);
-
-      /* ✅ تحكم سريع */
-      --plus-size: 52px;        /* صغّر/كبّر علامة + */
-      --start-bottom-gap: 130px;/* كل ما زاد الرقم يرتفع زر ابدأ اللعب أكثر */
     }
 
     *{ box-sizing:border-box; }
@@ -41,7 +37,7 @@
 
     .frame{
       width: min(520px, 100%);
-      background: var(--frame);
+      background: var(--bg);
       border: 6px solid var(--green);
       border-radius: 26px;
       padding: 18px 16px 18px;
@@ -52,12 +48,15 @@
       flex-direction:column;
     }
 
+    /* ✅ رأس الصفحة */
     .topRow{
+      position: relative;
+      min-height: 86px;      /* مساحة تكفي اللوجو الكبير */
+      margin-bottom: 10px;
+      padding-left: 118px;   /* مساحة محجوزة لليسار (مكان اللوجو) */
       display:flex;
       align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom: 10px;
+      justify-content:flex-end;
     }
 
     .title{
@@ -65,15 +64,20 @@
       color: var(--green);
       font-size: 16px;
       line-height: 1.2;
-      margin-top: 4px;
+      margin-top: 6px;
       text-align:right;
     }
 
+    /* ✅ تكبير اللوجو + تثبيت مكانه مثل الدائرة الحمراء */
     .logo{
-      width: 70px;
-      height: 36px;
+      position:absolute;
+      left: 10px;
+      top: 2px;
+      width: 98px;     /* ✅ أكبر */
+      height: 98px;    /* ✅ أكبر */
       object-fit: contain;
-      opacity: 0.95;
+      opacity: 0.98;
+      pointer-events:none;
     }
 
     h2{
@@ -110,42 +114,38 @@
       opacity: 0.75;
     }
 
-    /* ✅ زر + (أصغر) */
     .plusWrap{
       display:flex;
       justify-content:center;
       margin: 18px 0 6px;
     }
     .plusBtn{
-      width: calc(var(--plus-size) + 10px);
-      height: calc(var(--plus-size) + 10px);
-      padding: 0;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
+      width: 58px;
+      height: 58px;
+      border-radius: 14px;
+      border: 4px solid #000;
+      background: var(--purple);
       display:flex;
-      align-items:center;
       justify-content:center;
+      align-items:center;
+      box-shadow: var(--shadowSmall);
+      cursor:pointer;
       user-select:none;
     }
-    .plusBtn svg{
-      width: var(--plus-size);
-      height: var(--plus-size);
-      display:block;
-      filter: drop-shadow(0 8px 0 rgba(0,0,0,0.22));
-    }
-    .plusBtn:active svg{
-      transform: translateY(1px);
-      filter: drop-shadow(0 7px 0 rgba(0,0,0,0.22));
+    .plusBtn span{
+      color:#fff;
+      font-size: 36px;
+      font-weight: 900;
+      line-height: 1;
+      transform: translateY(-1px);
     }
 
-    /* ✅ زر ابدأ اللعب (مرفوع أكثر) */
+    /* زر ابدأ اللعب */
     .actionArea{
       margin-top: auto;
       display:flex;
       justify-content:center;
-      padding: 12px 0 calc(var(--start-bottom-gap) + env(safe-area-inset-bottom));
+      padding: 18px 0 calc(18px + env(safe-area-inset-bottom));
     }
 
     .startBtn{
@@ -162,6 +162,7 @@
       cursor:pointer;
     }
 
+    /* ✅ زر الرئيسية (SVG عشان ما يطلع ? أبداً) */
     .homeBtn{
       position: fixed;
       left: 18px;
@@ -185,11 +186,13 @@
     }
 
     @media (max-width: 360px){
+      .topRow{ min-height: 78px; padding-left: 108px; }
+      .logo{ width: 90px; height: 90px; left: 10px; top: 2px; }
       h2{ font-size: 20px; }
       .nameInput{ font-size: 18px; }
       .startBtn{ font-size: 22px; min-width: 200px; }
-      .homeBtn{ width:60px;height:60px; }
-      .homeBtn svg{ width:32px;height:32px; }
+      .plusBtn{ width: 54px; height: 54px; }
+      .plusBtn span{ font-size: 34px; }
     }
   </style>
 </head>
@@ -211,28 +214,13 @@
       </div>
 
       <div class="plusWrap">
-        <button class="plusBtn" id="addBtn" type="button" aria-label="إضافة لاعب">
-          <svg viewBox="0 0 100 100" aria-hidden="true">
-            <path
-              d="M41 10h18c6 0 11 5 11 11v20h20c6 0 11 5 11 11v18c0 6-5 11-11 11H70v20c0 6-5 11-11 11H41c-6 0-11-5-11-11V81H10C4 81-1 76-1 70V52c0-6 5-11 11-11h20V21c0-6 5-11 11-11z"
-              fill="var(--purple)"
-              stroke="#000"
-              stroke-width="8"
-              stroke-linejoin="round"
-            />
-            <path
-              d="M45 16h10c4 0 7 3 7 7v19h19c4 0 7 3 7 7v10"
-              fill="none"
-              stroke="rgba(255,255,255,0.25)"
-              stroke-width="6"
-              stroke-linecap="round"
-            />
-          </svg>
-        </button>
+        <div class="plusBtn" id="addBtn" aria-label="إضافة لاعب">
+          <span>+</span>
+        </div>
       </div>
 
       <div class="actionArea">
-        <button class="startBtn" id="startBtn" type="button">ابدأ اللعب</button>
+        <button class="startBtn" id="startBtn">ابدأ اللعب</button>
       </div>
     </div>
   </div>
