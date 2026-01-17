@@ -151,7 +151,6 @@
       margin-bottom:10px;
     }
 
-    /* الصور داخل المربعات */
     .cat img{
       object-fit:contain;
       display:block;
@@ -159,7 +158,6 @@
       user-select:none;
     }
 
-    /* ربط كل صورة بمتغيراتها */
     .img-eat  { width:var(--img-eat-w);  height:var(--img-eat-h); }
     .img-zoo  { width:var(--img-zoo-w);  height:var(--img-zoo-h); }
     .img-play { width:var(--img-play-w); height:var(--img-play-h); }
@@ -290,8 +288,13 @@
   </main>
 
   <script>
+    // مفاتيحك القديمة (نخليها شغالة)
     const CAT_KEY_ID    = "bara_category_id";
     const CAT_KEY_LABEL = "bara_category_label";
+
+    // ✅ مفاتيح جديدة يحتاجها ملف single_gamev1.html
+    const CATEGORY_KEY  = "categoryKey";
+    const CATEGORY_LABEL_KEY = "categoryLabel";
 
     const cats = Array.from(document.querySelectorAll(".cat"));
     const startBtn = document.getElementById("startBtn");
@@ -302,13 +305,21 @@
     function setActive(btn){
       cats.forEach(c => c.classList.remove("active"));
       btn.classList.add("active");
+
       selected = {
         id: btn.getAttribute("data-id"),
         label: btn.getAttribute("data-label")
       };
+
+      // تخزين قديم
       sessionStorage.setItem(CAT_KEY_ID, selected.id);
       sessionStorage.setItem(CAT_KEY_LABEL, selected.label);
       sessionStorage.setItem("bara_step", "category");
+
+      // ✅ تخزين جديد للعبة (هذا اللي كان ناقص)
+      sessionStorage.setItem(CATEGORY_KEY, selected.id);
+      sessionStorage.setItem(CATEGORY_LABEL_KEY, selected.label);
+
       startBtn.disabled = false;
     }
 
@@ -316,7 +327,16 @@
       btn.addEventListener("click", () => setActive(btn));
     });
 
+    // ✅ لو رجع اللاعب للصفحة وكانت هناك كتاغوري مختارة سابقاً نفعّلها تلقائياً
+    (function restoreSelection(){
+      const saved = sessionStorage.getItem(CATEGORY_KEY) || sessionStorage.getItem(CAT_KEY_ID);
+      if(!saved) return;
+      const found = cats.find(b => b.getAttribute("data-id") === saved);
+      if(found) setActive(found);
+    })();
+
     function clearAllGameState(){
+      // نحذف bara_ keys
       const ssKeys = [];
       for(let i=0; i<sessionStorage.length; i++){
         const k = sessionStorage.key(i);
@@ -326,6 +346,13 @@
         if(k.startsWith("bara_")) sessionStorage.removeItem(k);
       });
 
+      // ✅ نحذف مفاتيح اللعبة الجديدة أيضاً
+      sessionStorage.removeItem(CATEGORY_KEY);
+      sessionStorage.removeItem(CATEGORY_LABEL_KEY);
+      sessionStorage.removeItem("players");
+      sessionStorage.removeItem("singleState");
+
+      // localStorage bara_ (احتياط)
       const lsKeys = [];
       for(let i=0; i<localStorage.length; i++){
         const k = localStorage.key(i);
@@ -343,7 +370,10 @@
 
     startBtn.addEventListener("click", () => {
       if(!selected) return;
-      window.location.href = "single_game.html";
+
+      // ✅ مهم: ما نروح للعبة مباشرة
+      // نروح لصفحة إدخال الأسماء أولاً
+      window.location.href = "single.html";
     });
   </script>
 </body>
