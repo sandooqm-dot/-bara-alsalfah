@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>اللعب من اجهزة متعددة</title>
+  <title>اللعب من أجهزة متعددة</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,522 +14,214 @@
       --bg:#e9e4d6;
       --olive:#3f4a1f;
       --panel:#6e7b46;
-      --btn:#e9e4d6;
       --yellow:#ffd21a;
       --black:#111;
       --blue:#bfe4ff;
-      --shadow: 0 10px 0 rgba(0,0,0,.18);
+      --shadow:0 10px 0 rgba(0,0,0,.18);
     }
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);font-family:"Baloo Bhaijaan 2",Arial,sans-serif;color:#111}
-    .wrap{min-height:100svh;display:flex;justify-content:center;padding:18px 14px 22px}
-    .card{width:min(560px,100%);position:relative}
+    .wrap{min-height:100svh;display:flex;justify-content:center;padding:18px}
+    .card{width:min(560px,100%)}
 
-    .top{position:relative;padding:8px 6px 0;min-height:96px}
-    .logo{
-      position:absolute;left:6px;top:6px;
-      width:78px;height:78px;object-fit:contain;pointer-events:none;user-select:none;
-    }
-    h1{
-      margin:78px 0 12px;
-      text-align:center;
-      color:var(--olive);
-      font-weight:900;
-      font-size:44px;
-      letter-spacing:.2px;
-      padding:0 86px;
-    }
+    h1{text-align:center;color:var(--olive);font-size:44px;font-weight:900;margin-bottom:14px}
 
     .panel{
       background:var(--panel);
-      border-radius:28px;
-      padding:18px 16px 16px;
-      margin:0 6px 18px;
-      min-height:62svh;
+      border-radius:26px;
+      padding:16px;
       display:flex;
       flex-direction:column;
       gap:14px;
     }
 
-    /* ✅ صندوق اسم المقدم */
     .hostBox{
-      background:rgba(0,0,0,.08);
-      border-radius:22px;
+      background:rgba(0,0,0,.1);
+      border-radius:20px;
       padding:12px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
     }
-    .hostLabel{
+    .hostBox label{
+      display:block;
       color:#fff;
+      font-size:22px;
       font-weight:900;
       text-align:center;
+      margin-bottom:8px;
+    }
+    .hostBox input{
+      width:100%;
+      border-radius:999px;
+      border:5px solid var(--black);
+      padding:12px;
       font-size:24px;
-      line-height:1.3;
-    }
-    .hostInput{
-      width:100%;
-      background:#fff;
-      border-radius:999px;
-      border:5px solid var(--black);
-      padding:12px 14px;
       font-weight:900;
-      font-size:26px;
       text-align:center;
-      outline:none;
-      box-shadow:0 8px 0 rgba(0,0,0,.18);
     }
 
-    .panelTitle{
+    .playersTitle{
+      text-align:center;
       color:#fff;
+      font-size:30px;
       font-weight:900;
-      text-align:center;
-      font-size:34px;
-      margin-top:2px;
     }
 
-    .listBox{
-      flex:1;
-      background:rgba(0,0,0,.08);
-      border-radius:22px;
-      padding:14px 14px;
+    .list{
+      background:rgba(0,0,0,.1);
+      border-radius:20px;
+      padding:12px;
+      min-height:160px;
       display:flex;
       flex-direction:column;
-      gap:10px;
-      justify-content:flex-start;
-      align-items:stretch;
+      gap:8px;
     }
 
-    .nameItem{
+    .player{
       background:var(--bg);
-      border:5px solid var(--black);
-      border-radius:999px;
-      padding:12px 14px;
-      font-weight:900;
-      font-size:28px;
-      text-align:center;
-      box-shadow:0 8px 0 rgba(0,0,0,.18);
-    }
-
-    .emptyHint{
-      text-align:center;color:rgba(255,255,255,.75);font-weight:900;font-size:22px;margin-top:auto;margin-bottom:auto;
-    }
-
-    .btn{
-      width:100%;
-      border:5px solid var(--black);
-      border-radius:999px;
-      padding:16px 14px;
-      font-weight:900;
-      font-size:34px;
-      cursor:pointer;
-      box-shadow:var(--shadow);
-      transition:transform .08s ease, opacity .12s ease;
-      color:#000;
-    }
-    .btn:active{transform:translateY(2px)}
-    .btnShare{background:var(--blue)}
-    .btnStart{background:var(--yellow)}
-    .btn:disabled{opacity:.55;cursor:not-allowed}
-
-    .homeBtn{
-      position:fixed;
-      left:14px;
-      bottom:14px;
-      width:64px;height:64px;
-      border-radius:18px;
-      border:5px solid var(--black);
-      background:var(--blue);
-      box-shadow:0 10px 0 rgba(0,0,0,.18);
-      display:grid;place-items:center;
-      z-index:40;
-      cursor:pointer;
-    }
-    .homeBtn:active{transform:translateY(2px)}
-    .homeBtn svg{width:34px;height:34px}
-
-    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;justify-content:center;align-items:center;padding:16px;z-index:50}
-    .overlay.show{display:flex}
-    .modal{
-      width:min(640px,100%);
-      background:#fff;
-      border-radius:22px;
-      box-shadow:0 18px 40px rgba(0,0,0,.25);
-      overflow:hidden;
-      border:3px solid rgba(0,0,0,.08);
-    }
-    .modalHeader{padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
-    .modalTitle{font-weight:900;font-size:26px}
-    .closeX{
-      width:40px;height:40px;border-radius:12px;
-      border:3px solid rgba(0,0,0,.18);
-      background:#fff;color:#d40000;
-      font-size:24px;font-weight:900;cursor:pointer;
-    }
-    .tabs{display:flex;gap:10px;justify-content:center;padding:0 16px 10px}
-    .tabBtn{
-      border:0;cursor:pointer;
-      padding:10px 16px;border-radius:14px;
-      font-weight:900;font-size:20px;
-      box-shadow:0 8px 0 rgba(0,0,0,.18);
-      border:3px solid rgba(0,0,0,.18);
-      background:#f0f0f0;
-    }
-    .tabBtn.active{filter:saturate(1.2);transform:translateY(1px)}
-    .tabLink{background:var(--yellow)}
-    .tabCode{background:#4caf50;color:#fff}
-    .tabQR{background:#f0a92a;color:#fff}
-
-    .modalBody{padding:12px 16px 18px}
-    .box{
-      background:#f7f7f7;border:3px solid rgba(0,0,0,.12);
-      border-radius:18px;padding:14px;
-      text-align:center;
-    }
-    .bigText{font-weight:900;font-size:18px;margin-bottom:10px}
-    .url{
-      direction:ltr;
-      font-weight:900;
-      font-size:14px;
-      background:#fff;
-      border:2px dashed rgba(0,0,0,.18);
-      border-radius:14px;
-      padding:10px 12px;
-      word-break:break-all;
-      user-select:text;
-      margin:8px 0 12px;
-    }
-    .copyBtn{
-      width:min(320px,100%);
-      background:var(--blue);
       border:4px solid var(--black);
       border-radius:999px;
-      padding:12px 12px;
-      font-weight:900;font-size:22px;
-      cursor:pointer;
-      box-shadow:0 8px 0 rgba(0,0,0,.18);
-      color:#000;
-    }
-    .qrImg{width:240px;height:240px;object-fit:contain;margin:10px auto 0;display:block;background:#fff;border-radius:18px;border:2px solid rgba(0,0,0,.12);padding:10px}
-    .roomCode{
-      font-weight:900;font-size:46px;letter-spacing:2px;
-      background:#fff;border-radius:18px;border:2px solid rgba(0,0,0,.12);
-      padding:12px 12px;margin-top:10px;
+      padding:10px;
+      text-align:center;
+      font-size:24px;
+      font-weight:900;
     }
 
-    .toast{
-      position:fixed;left:50%;bottom:92px;transform:translateX(-50%);
-      background:#111;color:#fff;
-      padding:10px 14px;border-radius:14px;
-      font-weight:900;font-size:18px;
-      opacity:0;pointer-events:none;
-      transition:opacity .18s ease, transform .18s ease;
-      z-index:60;
+    .empty{
+      text-align:center;
+      color:#fff;
+      font-weight:900;
+      font-size:20px;
+      margin:auto;
     }
-    .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
+
+    button{
+      width:100%;
+      border-radius:999px;
+      border:5px solid var(--black);
+      padding:14px;
+      font-size:32px;
+      font-weight:900;
+      cursor:pointer;
+      box-shadow:var(--shadow);
+    }
+
+    .share{background:var(--blue)}
+    .start{background:var(--yellow)}
+    button:disabled{opacity:.5;cursor:not-allowed}
   </style>
 </head>
 <body>
 
-  <div class="wrap">
-    <div class="card">
-      <div class="top">
-        <img class="logo" src="logo.PNG" alt="logo">
-        <h1>اللعب من اجهزة متعددة</h1>
+<div class="wrap">
+  <div class="card">
+    <h1>مشاركة اللاعبين</h1>
+
+    <div class="panel">
+
+      <!-- اسم المقدم -->
+      <div class="hostBox">
+        <label>اسم المقدم</label>
+        <input id="hostName" placeholder="اكتب اسمك">
       </div>
 
-      <div class="panel">
+      <div class="playersTitle">اللاعبون</div>
 
-        <!-- ✅ خانة اسم المقدم -->
-        <div class="hostBox">
-          <div class="hostLabel">اسم المقدم</div>
-          <input id="hostName" class="hostInput" placeholder="اكتب اسمك" autocomplete="off" />
-        </div>
-
-        <div class="panelTitle">اسماء اللاعبين</div>
-
-        <div id="listBox" class="listBox">
-          <div id="emptyHint" class="emptyHint">بانتظار اللاعبين...</div>
-        </div>
-
-        <button id="shareBtn" class="btn btnShare" type="button">مشاركة اللاعبين</button>
-        <button id="startBtn" class="btn btnStart" type="button" disabled>ابدأ اللعب</button>
+      <div id="playersList" class="list">
+        <div id="empty" class="empty">بانتظار اللاعبين...</div>
       </div>
+
+      <button id="shareBtn" class="share">مشاركة الرابط</button>
+      <button id="startBtn" class="start" disabled>ابدأ اللعب</button>
+
     </div>
   </div>
+</div>
 
-  <button class="homeBtn" type="button" onclick="location.href='index.html'" aria-label="الرئيسية">
-    <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M3 10.5L12 3l9 7.5"></path>
-      <path d="M5 10v10h14V10"></path>
-      <path d="M9 20v-7h6v7"></path>
-    </svg>
-  </button>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+import {
+  getFirestore, doc, setDoc, updateDoc, onSnapshot, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-  <div id="overlay" class="overlay" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true">
-      <div class="modalHeader">
-        <div class="modalTitle">مشاركة اللعبة</div>
-        <button id="closeBtn" class="closeX" type="button">×</button>
-      </div>
+const firebaseConfig = {
+  apiKey: "AIzaSyDQx4gJZMHNWQBeMYsU4fknZHG0WFJ_ckc",
+  authDomain: "bara-alsalfah.firebaseapp.com",
+  projectId: "bara-alsalfah",
+  storageBucket: "bara-alsalfah.firebasestorage.app",
+  messagingSenderId: "658748312832",
+  appId: "1:658748312832:web:3e0c970ba54bb25c0437e5"
+};
 
-      <div class="tabs">
-        <button id="tabLink" class="tabBtn tabLink active" type="button">رابط</button>
-        <button id="tabCode" class="tabBtn tabCode" type="button">رمز</button>
-        <button id="tabQR" class="tabBtn tabQR" type="button">باركود</button>
-      </div>
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-      <div class="modalBody">
-        <div id="boxLink" class="box">
-          <div class="bigText">رابط اللعبة</div>
-          <div id="joinUrl" class="url">...</div>
-          <button id="copyLinkBtn" class="copyBtn" type="button">انسخ الرابط</button>
-        </div>
+function genRoom(){
+  return String(Math.floor(100000 + Math.random()*900000));
+}
 
-        <div id="boxCode" class="box" style="display:none">
-          <div class="bigText">رمز الغرفة</div>
-          <div id="roomCode" class="roomCode">000000</div>
-          <button id="copyCodeBtn" class="copyBtn" type="button">انسخ الرمز</button>
-        </div>
+let room = new URLSearchParams(location.search).get("room");
+if(!room){
+  room = genRoom();
+  location.replace("players.html?room=" + room);
+}
 
-        <div id="boxQR" class="box" style="display:none">
-          <div class="bigText">باركود QR</div>
-          <img id="qrImg" class="qrImg" alt="QR">
-          <div style="margin-top:10px;font-weight:900;color:#333;direction:ltr;font-size:12px" id="qrUrlSmall"></div>
-        </div>
-      </div>
-    </div>
-  </div>
+const roomRef = doc(db,"bara_rooms",room);
 
-  <div id="toast" class="toast">تم النسخ ✅</div>
+await setDoc(roomRef,{
+  room,
+  players:[],
+  hostName:"",
+  status:"lobby",
+  createdAt:serverTimestamp()
+},{merge:true});
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-    import {
-      getFirestore, doc, setDoc, updateDoc, onSnapshot,
-      serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+const hostInput = document.getElementById("hostName");
+const list = document.getElementById("playersList");
+const empty = document.getElementById("empty");
+const startBtn = document.getElementById("startBtn");
 
-    // ✅ Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyDQx4gJZMHNWQBeMYsU4fknZHG0WFJ_ckc",
-      authDomain: "bara-alsalfah.firebaseapp.com",
-      projectId: "bara-alsalfah",
-      storageBucket: "bara-alsalfah.firebasestorage.app",
-      messagingSenderId: "658748312832",
-      appId: "1:658748312832:web:3e0c970ba54bb25c0437e5",
-      measurementId: "G-82ZV2RDDDP"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    const listBox = document.getElementById('listBox');
-    const emptyHint = document.getElementById('emptyHint');
-    const startBtn = document.getElementById('startBtn');
-
-    // ✅ host input
-    const hostInput = document.getElementById('hostName');
-
-    function genRoom(){
-      return String(Math.floor(100000 + Math.random()*900000));
-    }
-
-    let room = new URLSearchParams(location.search).get('room');
-    if(!room){
-      room = genRoom();
-      location.replace('players.html?room=' + room);
-    }
-
-    const roomRef = doc(db, "bara_rooms", room);
-
-    await setDoc(roomRef, {
-      room,
-      status: "lobby",
-      players: [],
-      hostName: "",
-      createdAt: serverTimestamp(),
-      hostSeenAt: serverTimestamp()
-    }, { merge: true });
-
-    // ---- Helpers ----
-    function norm(arr){
-      const out = [];
-      const seen = new Set();
-      (arr || []).forEach(x=>{
-        const n = String(x || "").trim();
-        if(!n) return;
-        if(seen.has(n)) return;
-        seen.add(n);
-        out.push(n);
-      });
-      return out;
-    }
-
-    // ---- Render ----
-    let currentPlayers = [];
-    function render(){
-      listBox.innerHTML = '';
-      if(currentPlayers.length === 0){
-        listBox.appendChild(emptyHint);
-        emptyHint.style.display = 'block';
-      }else{
-        emptyHint.style.display = 'none';
-        currentPlayers.forEach(name=>{
-          const div = document.createElement('div');
-          div.className = 'nameItem';
-          div.textContent = name;
-          listBox.appendChild(div);
-        });
-      }
-
-      // ✅ لا يبدأ إلا إذا فيه مقدم + 3 لاعبين (تقدر تغير الشرط لاحقًا)
-      const hostOk = (hostInput.value || '').trim().length > 0;
-      startBtn.disabled = !(hostOk && currentPlayers.length >= 3);
-    }
-
-    // ---- Host name save (local + firebase) ----
-    const hostLocalKey = `bara_room_${room}_hostName`;
-    hostInput.value = localStorage.getItem(hostLocalKey) || '';
-
-    let hostSaveTimer = null;
-    async function saveHostName(){
-      const name = (hostInput.value || '').trim();
-      localStorage.setItem(hostLocalKey, name);
-      try{
-        await updateDoc(roomRef, {
-          hostName: name,
-          hostSeenAt: serverTimestamp()
-        });
-      }catch(e){}
-      render();
-    }
-
-    hostInput.addEventListener('input', ()=>{
-      clearTimeout(hostSaveTimer);
-      hostSaveTimer = setTimeout(saveHostName, 250);
+function render(players){
+  list.innerHTML="";
+  if(players.length===0){
+    list.appendChild(empty);
+    empty.style.display="block";
+  }else{
+    empty.style.display="none";
+    players.forEach(p=>{
+      const d=document.createElement("div");
+      d.className="player";
+      d.textContent=p;
+      list.appendChild(d);
     });
-    hostInput.addEventListener('blur', saveHostName);
+  }
+  startBtn.disabled = !(hostInput.value.trim() && players.length>=2);
+}
 
-    // ---- Live listener ----
-    onSnapshot(roomRef, (snap)=>{
-      const data = snap.data() || {};
-      currentPlayers = norm(data.players || []);
-      // إذا ما كتب المقدم اسمه هنا لكن موجود في Firebase (فتح من جهاز ثاني) نعرضه
-      const fbHost = String(data.hostName || '').trim();
-      if(!hostInput.value.trim() && fbHost){
-        hostInput.value = fbHost;
-        localStorage.setItem(hostLocalKey, fbHost);
-      }
-      render();
-    });
+hostInput.addEventListener("input",()=>{
+  updateDoc(roomRef,{hostName:hostInput.value.trim()});
+});
 
-    // ---- Start ----
-    startBtn.addEventListener('click', async ()=>{
-      const hostName = (hostInput.value || '').trim();
-      if(!hostName) return;
-      if(currentPlayers.length < 3) return;
+onSnapshot(roomRef,(snap)=>{
+  const data=snap.data()||{};
+  render(data.players||[]);
+  if(!hostInput.value && data.hostName){
+    hostInput.value=data.hostName;
+  }
+});
 
-      localStorage.setItem('bara_mode', 'multi');
-      localStorage.setItem('bara_room', room);
+document.getElementById("startBtn").onclick=async()=>{
+  await updateDoc(roomRef,{
+    status:"start",
+    startedAt:serverTimestamp()
+  });
+  location.href="categories.html?mode=multi&room="+room;
+};
 
-      await updateDoc(roomRef, {
-        status: "playing",
-        hostName,
-        startedAt: serverTimestamp(),
-        hostSeenAt: serverTimestamp()
-      });
+document.getElementById("shareBtn").onclick=()=>{
+  const url = location.origin + location.pathname.replace("players.html","join.html?room="+room);
+  navigator.clipboard.writeText(url);
+  alert("تم نسخ الرابط");
+};
+</script>
 
-      location.href = 'categories.html?room=' + room + '&mode=multi';
-    });
-
-    // ---- Share modal ----
-    const overlay = document.getElementById('overlay');
-    const shareBtn = document.getElementById('shareBtn');
-    const closeBtn = document.getElementById('closeBtn');
-
-    const tabLink = document.getElementById('tabLink');
-    const tabCode = document.getElementById('tabCode');
-    const tabQR   = document.getElementById('tabQR');
-
-    const boxLink = document.getElementById('boxLink');
-    const boxCode = document.getElementById('boxCode');
-    const boxQR   = document.getElementById('boxQR');
-
-    const joinUrlEl = document.getElementById('joinUrl');
-    const roomCodeEl = document.getElementById('roomCode');
-    const qrImg = document.getElementById('qrImg');
-    const qrUrlSmall = document.getElementById('qrUrlSmall');
-
-    const copyLinkBtn = document.getElementById('copyLinkBtn');
-    const copyCodeBtn = document.getElementById('copyCodeBtn');
-
-    const toast = document.getElementById('toast');
-    let toastTimer = null;
-    function showToast(msg){
-      toast.textContent = msg || 'تم النسخ ✅';
-      toast.classList.add('show');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(()=>toast.classList.remove('show'), 1400);
-    }
-
-    function joinUrl(){
-      const base = location.origin + location.pathname.replace(/\/[^\/]*$/, '/');
-      return base + 'join.html?room=' + room;
-    }
-
-    function setTab(which){
-      tabLink.classList.toggle('active', which==='link');
-      tabCode.classList.toggle('active', which==='code');
-      tabQR.classList.toggle('active', which==='qr');
-      boxLink.style.display = (which==='link') ? 'block' : 'none';
-      boxCode.style.display = (which==='code') ? 'block' : 'none';
-      boxQR.style.display   = (which==='qr')   ? 'block' : 'none';
-    }
-
-    function openModal(){
-      const url = joinUrl();
-      joinUrlEl.textContent = url;
-      roomCodeEl.textContent = room;
-
-      const qrURL = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' + encodeURIComponent(url);
-      qrImg.src = qrURL;
-      qrUrlSmall.textContent = url;
-
-      overlay.classList.add('show');
-      overlay.setAttribute('aria-hidden','false');
-      setTab('link');
-    }
-    function closeModal(){
-      overlay.classList.remove('show');
-      overlay.setAttribute('aria-hidden','true');
-    }
-
-    shareBtn.addEventListener('click', openModal);
-    closeBtn.addEventListener('click', closeModal);
-    overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeModal(); });
-
-    tabLink.addEventListener('click', ()=>setTab('link'));
-    tabCode.addEventListener('click', ()=>setTab('code'));
-    tabQR.addEventListener('click', ()=>setTab('qr'));
-
-    async function copyText(text){
-      try{
-        await navigator.clipboard.writeText(text);
-        showToast('تم النسخ ✅');
-      }catch(e){
-        const ta = document.createElement('textarea');
-        ta.value = text; document.body.appendChild(ta);
-        ta.select(); document.execCommand('copy');
-        document.body.removeChild(ta);
-        showToast('تم النسخ ✅');
-      }
-    }
-
-    copyLinkBtn.addEventListener('click', ()=>copyText(joinUrl()));
-    copyCodeBtn.addEventListener('click', ()=>copyText(room));
-
-    render();
-  </script>
 </body>
 </html>
