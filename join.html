@@ -72,7 +72,7 @@
       serverTimestamp, arrayUnion
     } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-    // ✅ بيانات مشروعك
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDQx4gJZMHNWQBeMYsU4fknZHG0WFJ_ckc",
       authDomain: "bara-alsalfah.firebaseapp.com",
@@ -92,21 +92,18 @@
     const nameInput = document.getElementById('name');
     const joinBtn = document.getElementById('joinBtn');
 
-    function safeName(raw){
-      // تنظيف بسيط (بدون تغيير الشكل العام)
-      return String(raw || '')
-        .replace(/\s+/g,' ')
-        .trim();
+    function cleanName(v){
+      return String(v || '').replace(/\s+/g,' ').trim();
     }
 
-    async function doJoin(){
-      const n = safeName(nameInput.value);
+    async function joinRoom(){
+      const playerName = cleanName(nameInput.value);
 
       if(!room){
-        alert('رمز الغرفة غير موجود.');
+        alert('رمز الغرفة غير موجود');
         return;
       }
-      if(!n){
+      if(!playerName){
         nameInput.focus();
         return;
       }
@@ -116,40 +113,37 @@
       try{
         const roomRef = doc(db, "bara_rooms", room);
 
-        // تأكد أن الوثيقة موجودة (merge)
+        // إنشاء الغرفة إن لم تكن موجودة
         await setDoc(roomRef, {
           room,
           status: "lobby",
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        }, { merge: true });
+          createdAt: serverTimestamp()
+        }, { merge:true });
 
-        // إضافة الاسم لقائمة اللاعبين بدون تكرار (arrayUnion)
+        // إضافة اللاعب (بدون تكرار)
         await updateDoc(roomRef, {
-          players: arrayUnion(n),
+          players: arrayUnion(playerName),
           updatedAt: serverTimestamp()
         });
 
-        // ✅ كل لاعب يشوف اسمه في جهازه (متطلبك)
-        localStorage.setItem(`bara_room_${room}_myname`, n);
+        // حفظ اسم اللاعب محلياً (كل جهاز باسمه)
+        localStorage.setItem(`bara_room_${room}_myname`, playerName);
 
-        // انتقال لصفحة الانتظار
+        // الانتقال لصفحة الانتظار
         location.href = `waiting.html?room=${encodeURIComponent(room)}`;
 
-      }catch(err){
-        console.error(err);
-        alert('صار خطأ في الانضمام. حاول مرة ثانية.');
+      }catch(e){
+        console.error(e);
+        alert('حصل خطأ، حاول مرة ثانية');
         joinBtn.disabled = false;
       }
     }
 
-    joinBtn.addEventListener('click', doJoin);
-
-    // ✅ Enter = انضمام
-    nameInput.addEventListener('keydown', (e)=>{
+    joinBtn.addEventListener('click', joinRoom);
+    nameInput.addEventListener('keydown', e=>{
       if(e.key === 'Enter'){
         e.preventDefault();
-        doJoin();
+        joinRoom();
       }
     });
   </script>
