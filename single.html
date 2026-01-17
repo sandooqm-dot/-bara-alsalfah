@@ -1,1 +1,351 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>اللعب من جهاز واحد</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --beige:#e9e1cf;     /* لون الفراغ */
+      --olive:#6f7a52;     /* أخضر البطاقة */
+      --olive-dark:#3f4e2c;/* إطار الصفحة */
+      --cream:#efe7d7;     /* خلفية داخلية فاتحة */
+      --yellow:#f3c515;    /* زر ابدأ اللعب */
+      --black:#111;
+      --input-border:#4f6a2a;
+      --plus:#b46ac6;
+      --home-blue:#86c9ff;
+      --roof:#ff5b6a;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+
+    body{
+      margin:0;
+      background:var(--beige);
+      font-family:"Baloo Bhaijaan 2", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+      display:flex;
+      justify-content:center;
+      align-items:stretch;
+      padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom);
+      color:#111;
+    }
+
+    .page{
+      width:min(560px, 100%);
+      min-height:calc(100vh - (env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+      margin:auto;
+      border:6px solid var(--olive-dark);
+      border-radius:22px;
+      background:var(--beige);
+      padding:22px 18px 24px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .logo{
+      position:absolute;
+      left:18px;
+      top:22px;
+      width:78px;
+      height:auto;
+      object-fit:contain;
+      pointer-events:none;
+      user-select:none;
+    }
+
+    h1{
+      margin:58px 0 14px;
+      text-align:center;
+      color:var(--olive-dark);
+      font-weight:900;
+      font-size:clamp(32px, 5.8vw, 48px);
+      line-height:1.05;
+    }
+
+    .card{
+      background:var(--olive);
+      border-radius:22px;
+      padding:18px 16px 18px;
+      width:min(470px, 100%);
+      margin:0 auto;
+      position:relative;
+      box-shadow:0 18px 0 rgba(0,0,0,.10);
+    }
+
+    .card::after{
+      content:"";
+      position:absolute;
+      left:16px;
+      right:16px;
+      bottom:-22px;
+      height:28px;
+      background:rgba(0,0,0,.18);
+      border-radius:999px;
+      opacity:.25;
+    }
+
+    .card-title{
+      text-align:center;
+      color:#fff;
+      font-weight:900;
+      font-size:clamp(26px, 5.4vw, 42px);
+      margin:4px 0 14px;
+    }
+
+    /* إطار المدخلات الكبير */
+    .names-box{
+      background:var(--cream);
+      border:6px solid #000;
+      border-radius:28px;
+      padding:18px 16px 16px;
+      box-shadow:0 14px 0 rgba(0,0,0,.12);
+      min-height:clamp(430px, 52vh, 560px); /* عشان يطلع نفس الفراغ بالصورة */
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:14px;
+    }
+
+    .name-input{
+      width:min(360px, 100%);
+      border:5px solid var(--input-border);
+      border-radius:26px;
+      background:#fff;
+      height:clamp(58px, 7.3vh, 74px);
+      font-size:clamp(24px, 5.2vw, 36px);
+      font-weight:900;
+      text-align:center;
+      padding:0 14px;
+      outline:none;
+    }
+    .name-input::placeholder{
+      color:#111;
+      opacity:1;
+      font-weight:900;
+    }
+
+    .plus-btn{
+      margin-top:6px;
+      width:78px;
+      height:78px;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .plus-btn:active{transform:translateY(1px)}
+
+    .start-wrap{
+      display:flex;
+      justify-content:center;
+      margin-top:16px;
+      position:relative;
+    }
+
+    .start{
+      width:min(420px, 100%);
+      border:4px solid var(--black);
+      border-radius:30px;
+      padding:18px 16px;
+      font-size:clamp(30px, 6vw, 46px);
+      font-weight:900;
+      background:var(--yellow);
+      color:#111;
+      cursor:pointer;
+      box-shadow:0 12px 0 rgba(0,0,0,.22);
+      -webkit-tap-highlight-color:transparent;
+      transition:transform .05s ease, opacity .2s ease, filter .2s ease;
+    }
+    .start:active{transform:translateY(1px)}
+    .start[disabled]{
+      opacity:.55;
+      filter:saturate(.6);
+      cursor:not-allowed;
+      transform:none;
+    }
+
+    /* زر المنزل */
+    .home{
+      position:absolute;
+      left:22px;
+      bottom:22px;
+      width:88px;
+      height:88px;
+      border-radius:999px;
+      border:6px solid #000;
+      background:var(--home-blue);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      box-shadow:0 10px 0 rgba(0,0,0,.18);
+    }
+    .home:active{transform:translateY(1px)}
+
+    @media (min-width: 900px){
+      body{align-items:center}
+      .page{min-height:800px}
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <img class="logo" src="logo.PNG" alt="شعار صندوق المسابقات">
+
+    <h1>اللعب من جهاز واحد</h1>
+
+    <section class="card">
+      <div class="card-title">ادخل اسماء اللاعبين :</div>
+
+      <div class="names-box" id="namesBox">
+        <!-- inputs تُبنى بالـ JS عشان + يضيف -->
+      </div>
+
+      <div class="start-wrap">
+        <button id="startBtn" class="start" type="button" disabled>ابدأ اللعب</button>
+      </div>
+    </section>
+
+    <!-- زر المنزل (يرجع للصفحة الرئيسية index.html) -->
+    <button class="home" id="homeBtn" type="button" aria-label="الصفحة الرئيسية">
+      <!-- أيقونة منزل بنفس شكل الصورة (SVG) -->
+      <svg width="52" height="52" viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M10 30 L32 12 L54 30" fill="none" stroke="#000" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M18 28 V54 H46 V28" fill="#fff" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
+        <path d="M28 54 V38 H36 V54" fill="#86c9ff" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
+        <path d="M21 26 L32 17 L43 26" fill="none" stroke="var(--roof)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </main>
+
+  <script>
+    // حفظ الأسماء (بنحتاجها لاحقًا)
+    const STORAGE_KEY = "bara_single_players";
+
+    const namesBox = document.getElementById("namesBox");
+    const startBtn = document.getElementById("startBtn");
+    const homeBtn  = document.getElementById("homeBtn");
+
+    function createInput(index, value=""){
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "name-input";
+      input.placeholder = `اللاعب رقم ${index}`;
+      input.autocomplete = "off";
+      input.inputMode = "text";
+      input.value = value;
+
+      input.addEventListener("input", () => {
+        saveNames();
+        updateStartState();
+      });
+
+      return input;
+    }
+
+    function getAllInputs(){
+      return Array.from(namesBox.querySelectorAll("input.name-input"));
+    }
+
+    function getNamesTrimmed(){
+      return getAllInputs().map(i => (i.value || "").trim());
+    }
+
+    function saveNames(){
+      const names = getNamesTrimmed();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(names));
+      localStorage.setItem("bara_mode", "single");
+    }
+
+    function updateStartState(){
+      const names = getNamesTrimmed().filter(n => n.length > 0);
+      startBtn.disabled = names.length < 3;
+    }
+
+    function rebuildPlaceholders(){
+      const inputs = getAllInputs();
+      inputs.forEach((inp, idx) => {
+        inp.placeholder = `اللاعب رقم ${idx + 1}`;
+      });
+    }
+
+    function addPlusButton(){
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "plus-btn";
+      btn.id = "plusBtn";
+      btn.setAttribute("aria-label", "إضافة لاعب");
+
+      btn.innerHTML = `
+        <svg width="70" height="70" viewBox="0 0 72 72" aria-hidden="true">
+          <path d="M30 14 H42 V30 H58 V42 H42 V58 H30 V42 H14 V30 H30 Z"
+                fill="${getComputedStyle(document.documentElement).getPropertyValue('--plus').trim() || '#b46ac6'}"
+                stroke="#000" stroke-width="3" stroke-linejoin="round"/>
+        </svg>
+      `;
+
+      btn.addEventListener("click", () => {
+        const inputs = getAllInputs();
+        if(inputs.length >= 12) return; // حد أعلى
+        // أضف حقل جديد قبل زر +
+        const plus = document.getElementById("plusBtn");
+        const newInput = createInput(inputs.length + 1, "");
+        namesBox.insertBefore(newInput, plus);
+        rebuildPlaceholders();
+        saveNames();
+        updateStartState();
+      });
+
+      namesBox.appendChild(btn);
+    }
+
+    function init(){
+      let saved = [];
+      try{
+        saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        if(!Array.isArray(saved)) saved = [];
+      }catch(e){
+        saved = [];
+      }
+
+      const initialCount = Math.max(3, saved.length);
+
+      for(let i=1; i<=initialCount; i++){
+        const val = (saved[i-1] || "");
+        namesBox.appendChild(createInput(i, val));
+      }
+
+      addPlusButton();
+      rebuildPlaceholders();
+      updateStartState();
+      saveNames(); // توحيد التخزين
+    }
+
+    // رجوع للرئيسية
+    homeBtn.addEventListener("click", () => {
+      window.location.href = "index.html";
+    });
+
+    // ابدأ اللعب (ينتقل للصفحة القادمة لاحقًا)
+    startBtn.addEventListener("click", () => {
+      saveNames();
+      // الصفحة القادمة بنسويها بعدين
+      window.location.href = "single_game.html";
+    });
+
+    init();
+  </script>
+</body>
+</html>
