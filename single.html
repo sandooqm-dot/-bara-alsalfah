@@ -21,6 +21,7 @@
       --plus:#b46ac6;
       --home-blue:#86c9ff;
       --roof:#ff5b6a;
+      --placeholder: rgba(0,0,0,.35);
     }
 
     *{box-sizing:border-box}
@@ -61,123 +62,101 @@
     }
 
     h1{
-      margin:58px 0 14px;
+      margin:62px 0 10px;
       text-align:center;
       color:var(--olive-dark);
       font-weight:900;
-      font-size:clamp(32px, 5.8vw, 48px);
-      line-height:1.05;
+      font-size:clamp(34px, 7vw, 54px);
+      letter-spacing:.2px;
     }
 
-    .card{
+    .panel{
+      width:min(520px, 100%);
+      margin:10px auto 0;
       background:var(--olive);
-      border-radius:22px;
-      padding:18px 16px 18px;
-      width:min(470px, 100%);
-      margin:0 auto;
-      position:relative;
-      box-shadow:0 18px 0 rgba(0,0,0,.10);
+      border-radius:18px;
+      padding:18px 16px 20px;
+      box-shadow:0 14px 0 rgba(0,0,0,.10);
     }
 
-    .card::after{
-      content:"";
-      position:absolute;
-      left:16px;
-      right:16px;
-      bottom:-22px;
-      height:28px;
-      background:rgba(0,0,0,.18);
-      border-radius:999px;
-      opacity:.25;
-    }
-
-    .card-title{
+    .panel-title{
       text-align:center;
       color:#fff;
       font-weight:900;
       font-size:clamp(26px, 5.4vw, 42px);
-      margin:4px 0 14px;
+      margin:6px 0 12px;
     }
 
-    .names-box{
-      background:var(--cream);
-      border:6px solid #000;
-      border-radius:28px;
-      padding:18px 16px 16px;
-      box-shadow:0 14px 0 rgba(0,0,0,.12);
-      min-height:clamp(430px, 52vh, 560px);
+    .inner{
+      background:var(--beige);
+      border-radius:18px;
+      border:8px solid #111;
+      padding:18px 14px 16px;
+      min-height:420px;
+    }
+
+    .inputs{
       display:flex;
       flex-direction:column;
-      align-items:center;
       gap:14px;
+      align-items:center;
     }
 
-    .name-input{
-      width:min(360px, 100%);
-      border:5px solid var(--input-border);
-      border-radius:26px;
+    .player-input{
+      width:min(420px, 100%);
+      height:68px;
+      border-radius:22px;
+      border:4px solid var(--input-border);
       background:#fff;
-      height:clamp(58px, 7.3vh, 74px);
-      font-size:clamp(24px, 5.2vw, 36px);
+      outline:none;
+      padding:0 18px;
+      font-size:clamp(22px, 5vw, 34px);
       font-weight:900;
       text-align:center;
-      padding:0 14px;
-      outline:none;
     }
 
-    .name-input::placeholder{
-      color:#111;
-      opacity:.45;
+    .player-input::placeholder{
+      color:var(--placeholder);
       font-weight:800;
-      font-size:0.72em;
-    }
-    .name-input:focus::placeholder{
-      opacity:0;
-      color:transparent;
+      font-size:0.78em; /* أصغر */
     }
 
-    .plus-btn{
-      margin-top:6px;
-      width:78px;
-      height:78px;
+    .plus-wrap{
+      width:min(420px, 100%);
+      display:flex;
+      justify-content:center;
+      padding-top:6px;
+    }
+
+    .plus{
+      width:74px;height:74px;
       border:none;
       background:transparent;
       cursor:pointer;
       -webkit-tap-highlight-color:transparent;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .plus-btn:active{transform:translateY(1px)}
-
-    .start-wrap{
-      display:flex;
-      justify-content:center;
-      margin-top:16px;
-      position:relative;
     }
 
-    .start{
+    .plus svg{filter: drop-shadow(0 6px 0 rgba(0,0,0,.18));}
+
+    .btn{
+      display:block;
       width:min(420px, 100%);
+      margin:16px auto 0;
       border:4px solid var(--black);
       border-radius:30px;
-      padding:18px 16px;
-      font-size:clamp(30px, 6vw, 46px);
+      padding:16px 16px;
+      font-size:clamp(30px, 6.2vw, 48px);
       font-weight:900;
       background:var(--yellow);
       color:#111;
       cursor:pointer;
       box-shadow:0 12px 0 rgba(0,0,0,.22);
       -webkit-tap-highlight-color:transparent;
-      transition:transform .05s ease, opacity .2s ease, filter .2s ease;
+      transition:transform .05s ease, opacity .15s ease;
+      text-align:center;
     }
-    .start:active{transform:translateY(1px)}
-    .start[disabled]{
-      opacity:.55;
-      filter:saturate(.6);
-      cursor:not-allowed;
-      transform:none;
-    }
+    .btn:active{transform:translateY(1px)}
+    .btn[disabled]{opacity:.45; cursor:not-allowed; box-shadow:none}
 
     .home{
       position:absolute;
@@ -196,31 +175,33 @@
       box-shadow:0 10px 0 rgba(0,0,0,.18);
     }
     .home:active{transform:translateY(1px)}
-
-    @media (min-width: 900px){
-      body{align-items:center}
-      .page{min-height:800px}
-    }
   </style>
 </head>
 
 <body>
   <main class="page">
     <img class="logo" src="logo.PNG" alt="شعار صندوق المسابقات">
-
     <h1>اللعب من جهاز واحد</h1>
 
-    <section class="card">
-      <div class="card-title">ادخل اسماء اللاعبين :</div>
+    <section class="panel">
+      <div class="panel-title">ادخل اسماء اللاعبين :</div>
 
-      <div class="names-box" id="namesBox"></div>
+      <div class="inner">
+        <div id="inputs" class="inputs"></div>
 
-      <div class="start-wrap">
-        <button id="startBtn" class="start" type="button" disabled>ابدأ اللعب</button>
+        <div class="plus-wrap">
+          <button id="addBtn" class="plus" type="button" aria-label="إضافة لاعب">
+            <svg width="74" height="74" viewBox="0 0 64 64" aria-hidden="true">
+              <path d="M30 10h4v44h-4z" fill="var(--plus)" stroke="#000" stroke-width="2" />
+              <path d="M10 30h44v4H10z" fill="var(--plus)" stroke="#000" stroke-width="2" />
+            </svg>
+          </button>
+        </div>
       </div>
+
+      <button id="startBtn" class="btn" type="button" disabled>ابدأ اللعب</button>
     </section>
 
-    <!-- زر المنزل: تصفير كامل + رجوع للرئيسية -->
     <button class="home" id="homeBtn" type="button" aria-label="الصفحة الرئيسية">
       <svg width="52" height="52" viewBox="0 0 64 64" aria-hidden="true">
         <path d="M10 30 L32 12 L54 30" fill="none" stroke="#000" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
@@ -232,168 +213,101 @@
   </main>
 
   <script>
-    // ✅ نحفظ فقط داخل الجلسة الحالية + نخليه ينتهي تلقائيًا إذا تغير اليوم
-    const SS_PLAYERS = "bara_single_players";
-    const SS_COUNT   = "bara_single_count";
-    const SS_DATE    = "bara_single_date";
-
-    const namesBox = document.getElementById("namesBox");
-    const startBtn = document.getElementById("startBtn");
-    const homeBtn  = document.getElementById("homeBtn");
-
-    function todayKey(){
-      const d = new Date();
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth()+1).padStart(2,"0");
-      const dd = String(d.getDate()).padStart(2,"0");
-      return `${yyyy}-${mm}-${dd}`;
-    }
-
-    function createInput(index, value=""){
-      const input = document.createElement("input");
-      input.type = "text";
-      input.className = "name-input";
-      input.placeholder = `اللاعب رقم ${index}`;
-      input.autocomplete = "off";
-      input.inputMode = "text";
-      input.value = value;
-
-      input.addEventListener("input", () => {
-        saveToSession();
-        updateStartState();
-      });
-
-      return input;
-    }
-
-    function getAllInputs(){
-      return Array.from(namesBox.querySelectorAll("input.name-input"));
-    }
-
-    function getNamesTrimmed(){
-      return getAllInputs().map(i => (i.value || "").trim());
-    }
-
-    function updateStartState(){
-      const filled = getNamesTrimmed().filter(n => n.length > 0);
-      startBtn.disabled = filled.length < 3;
-    }
-
-    function rebuildPlaceholders(){
-      const inputs = getAllInputs();
-      inputs.forEach((inp, idx) => {
-        inp.placeholder = `اللاعب رقم ${idx + 1}`;
-      });
-    }
-
-    function saveToSession(){
-      sessionStorage.setItem(SS_DATE, todayKey());
-      sessionStorage.setItem(SS_COUNT, String(getAllInputs().length));
-      sessionStorage.setItem(SS_PLAYERS, JSON.stringify(getNamesTrimmed()));
-      sessionStorage.setItem("bara_mode", "single");
-    }
+    const STORE_PREFIX = "bara_";
 
     function clearAllGameState(){
-      // يمسح كل مفاتيح bara_ من sessionStorage + localStorage احتياط
+      // امسح أي شيء قديم حتى تبدأ دايم من جديد
       const ssKeys = [];
       for(let i=0; i<sessionStorage.length; i++){
         const k = sessionStorage.key(i);
         if(k) ssKeys.push(k);
       }
-      ssKeys.forEach(k => {
-        if(k.startsWith("bara_") || k === SS_PLAYERS || k === SS_COUNT || k === SS_DATE){
-          sessionStorage.removeItem(k);
-        }
-      });
+      ssKeys.forEach(k => { if(k.startsWith(STORE_PREFIX)) sessionStorage.removeItem(k); });
 
       const lsKeys = [];
       for(let i=0; i<localStorage.length; i++){
         const k = localStorage.key(i);
         if(k) lsKeys.push(k);
       }
-      lsKeys.forEach(k => {
-        if(k.startsWith("bara_")){
-          localStorage.removeItem(k);
+      lsKeys.forEach(k => { if(k.startsWith(STORE_PREFIX)) localStorage.removeItem(k); });
+    }
+
+    // هذه الصفحة لازم تكون جديدة كل مرة
+    clearAllGameState();
+
+    const inputsWrap = document.getElementById("inputs");
+    const addBtn = document.getElementById("addBtn");
+    const startBtn = document.getElementById("startBtn");
+    const homeBtn = document.getElementById("homeBtn");
+
+    let count = 3;
+
+    function makeInput(i){
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "player-input";
+      input.autocomplete = "off";
+      input.spellcheck = false;
+
+      const ph = `اللاعب رقم ${i}`;
+      input.placeholder = ph;
+
+      // ✅ يختفي فور الضغط (فوكس)
+      input.addEventListener("focus", () => {
+        input.dataset.ph = input.placeholder;
+        input.placeholder = "";
+      });
+      input.addEventListener("blur", () => {
+        if(!input.value.trim()){
+          input.placeholder = input.dataset.ph || ph;
         }
       });
+
+      input.addEventListener("input", validate);
+      return input;
     }
 
-    function addPlusButton(){
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "plus-btn";
-      btn.id = "plusBtn";
-      btn.setAttribute("aria-label", "إضافة لاعب");
-
-      const plusColor = getComputedStyle(document.documentElement).getPropertyValue('--plus').trim() || '#b46ac6';
-      btn.innerHTML = `
-        <svg width="70" height="70" viewBox="0 0 72 72" aria-hidden="true">
-          <path d="M30 14 H42 V30 H58 V42 H42 V58 H30 V42 H14 V30 H30 Z"
-                fill="${plusColor}"
-                stroke="#000" stroke-width="3" stroke-linejoin="round"/>
-        </svg>
-      `;
-
-      btn.addEventListener("click", () => {
-        const inputs = getAllInputs();
-        if(inputs.length >= 12) return;
-        const plus = document.getElementById("plusBtn");
-        const newInput = createInput(inputs.length + 1, "");
-        namesBox.insertBefore(newInput, plus);
-        rebuildPlaceholders();
-        saveToSession();
-        updateStartState();
-      });
-
-      namesBox.appendChild(btn);
+    function render(){
+      inputsWrap.innerHTML = "";
+      for(let i=1;i<=count;i++){
+        inputsWrap.appendChild(makeInput(i));
+      }
+      validate();
     }
 
-    function init(){
-      // ✅ إذا تغير اليوم: نبدأ من الصفر (3 مربعات فاضية)
-      const savedDate = sessionStorage.getItem(SS_DATE);
-      if(savedDate && savedDate !== todayKey()){
-        clearAllGameState();
-      }
+    function validate(){
+      const values = [...document.querySelectorAll(".player-input")]
+        .map(i => i.value.trim())
+        .filter(Boolean);
 
-      let savedNames = [];
-      let savedCount = 0;
-
-      try{
-        savedNames = JSON.parse(sessionStorage.getItem(SS_PLAYERS) || "[]");
-        if(!Array.isArray(savedNames)) savedNames = [];
-      }catch(e){
-        savedNames = [];
-      }
-
-      savedCount = parseInt(sessionStorage.getItem(SS_COUNT) || "0", 10);
-      if(!Number.isFinite(savedCount) || savedCount < 3) savedCount = 0;
-
-      const count = Math.max(3, savedCount || savedNames.length || 3);
-
-      for(let i=1; i<=count; i++){
-        const val = (savedNames[i-1] || "");
-        namesBox.appendChild(createInput(i, val));
-      }
-
-      addPlusButton();
-      rebuildPlaceholders();
-      updateStartState();
-      saveToSession();
+      startBtn.disabled = values.length < 3;
     }
 
-    // ✅ زر المنزل: تصفير كامل + رجوع للرئيسية
+    addBtn.addEventListener("click", () => {
+      count++;
+      render();
+    });
+
+    startBtn.addEventListener("click", () => {
+      const names = [...document.querySelectorAll(".player-input")]
+        .map(i => i.value.trim())
+        .filter(Boolean);
+
+      if(names.length < 3) return;
+
+      // ✅ نحفظ الأسماء (للجولة الحالية فقط)
+      sessionStorage.setItem("bara_players", JSON.stringify(names));
+
+      // نروح للكتاغوريات
+      window.location.href = "categories.html";
+    });
+
     homeBtn.addEventListener("click", () => {
       clearAllGameState();
       window.location.href = "index.html";
     });
 
-    // ✅ ابدأ اللعب: يحفظ الأسماء عشان نحتاجها داخل اللعبة
-    startBtn.addEventListener("click", () => {
-      saveToSession();
-      window.location.href = "categories.html";
-    });
-
-    init();
+    render();
   </script>
 </body>
 </html>
