@@ -18,21 +18,22 @@
 
 body{
   margin:0;
-  background:#e9e2d2;
+  background:#efe7d6;
   display:flex;
   justify-content:center;
   align-items:center;
   min-height:100vh;
 }
 
-.app{
+/* الإطار الخارجي */
+.wrapper{
   width:100%;
   max-width:430px;
-  min-height:94vh;
-  background:#e9e2d2;
-  border:6px solid #5f6f2f;
-  border-radius:30px;
-  padding:22px 18px 26px;
+  min-height:95vh;
+  background:#efe7d6;
+  border:6px solid #6b7a3a;
+  border-radius:34px;
+  padding:22px 18px;
   position:relative;
 }
 
@@ -43,94 +44,103 @@ body{
   left:18px;
 }
 .logo img{
-  width:64px;
+  width:58px;
 }
 
 /* العنوان */
 h1{
-  margin-top:78px;
-  margin-bottom:28px;
+  margin-top:86px;
+  margin-bottom:26px;
   text-align:center;
-  font-size:30px;
+  font-size:26px;
+  font-weight:normal;
   color:#000;
 }
 
-/* الكرت */
+/* الكرت الأخضر */
 .card{
-  background:#7a8a4a;
-  border-radius:28px;
-  padding:28px 20px;
+  background:#7b8b4b;
+  border-radius:26px;
+  padding:22px 18px;
   box-shadow:0 10px 0 rgba(0,0,0,.18);
 }
 
+/* الأزرار */
 .btn{
   width:100%;
-  background:#f1eee6;
-  border:4px solid #000;
+  background:#f3efe5;
+  border:3px solid #000;
   border-radius:30px;
-  padding:18px 0;
-  font-size:22px;
-  margin-bottom:20px;
-  cursor:pointer;
+  padding:16px 0;
+  font-size:20px;
+  margin-bottom:16px;
   color:#000;
+  cursor:pointer;
 }
 
+/* تحديد النمط */
 .btn.active{
-  background:#d9f1ff;
+  background:#dff2ff;
 }
 
+/* زر ابدأ */
 .start{
-  margin-top:28px;
+  margin-top:26px;
   background:#ffd400;
   box-shadow:0 8px 0 rgba(0,0,0,.25);
 }
 
 .start:disabled{
-  background:#ddd;
+  background:#e0e0e0;
   box-shadow:none;
   cursor:not-allowed;
 }
 
-/* التعليمات */
+/* نافذة التعليمات */
 .modal{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.5);
+  background:rgba(0,0,0,.55);
   display:none;
   justify-content:center;
   align-items:center;
 }
 
-.modal-content{
+.modal-box{
   width:90%;
   max-width:400px;
-  background:#7a8a4a;
+  background:#7b8b4b;
   border-radius:30px;
   padding:26px 22px;
 }
 
-.modal h2{
-  background:#e9e2d2;
-  padding:14px;
-  border-radius:20px;
+/* عنوان التعليمات */
+.modal-box h2{
+  background:#efe7d6;
+  border-radius:22px;
+  padding:12px;
   text-align:center;
   margin-bottom:20px;
+  font-size:22px;
   color:#000;
 }
 
-.modal p{
+/* نص التعليمات */
+.modal-box p{
   color:#fff;
-  line-height:1.9;
   font-size:15px;
+  line-height:1.9;
+  margin-bottom:14px;
 }
 
+/* زر رجوع */
 .back{
-  margin-top:24px;
+  margin-top:18px;
   width:100%;
   background:#ffd400;
-  border:4px solid #000;
+  border:3px solid #000;
   border-radius:30px;
-  padding:16px 0;
+  padding:14px 0;
   font-size:22px;
   cursor:pointer;
 }
@@ -139,10 +149,10 @@ h1{
 
 <body>
 
-<div class="app">
+<div class="wrapper">
 
   <div class="logo">
-    <img src="logo.PNG">
+    <img src="logo.PNG" alt="">
   </div>
 
   <h1>لعبة برا السالفة</h1>
@@ -154,24 +164,26 @@ h1{
   </div>
 
   <button class="btn start" id="start" disabled>ابدأ اللعب</button>
+
 </div>
 
 <!-- التعليمات -->
 <div class="modal" id="modal">
-  <div class="modal-content">
+  <div class="modal-box">
     <h2>التعليمات</h2>
 
     <p><strong>طريقة اللعب:</strong><br>
-    تعتمد اللعبة على سالفة مخفية، لاعب واحد ما يعرفها والباقين يعرفونها.</p>
+    تعتمد اللعبة على “سالفة/موضوع” مخفي، لاعب واحد ما يعرفه والباقين يعرفونه.</p>
 
     <p><strong>الأدوار:</strong><br>
     كل لاعب يسأل أو يجاوب، واللي يعرف السالفة يجاوب بدون ما يفضحها.</p>
 
     <p><strong>التصويت:</strong><br>
-    بعد انتهاء الجولة يتم التصويت: من برا السالفة؟</p>
+    بعد انتهاء الجولة يبدأ التصويت: من برا السالفة؟</p>
 
     <p><strong>طرق اللعب:</strong><br>
-    جهاز واحد أو أجهزة متعددة.</p>
+    1) جهاز واحد – تمرير الجوال.<br>
+    2) أجهزة متعددة – كل لاعب من جهازه.</p>
 
     <button class="back" id="close">رجوع</button>
   </div>
@@ -179,6 +191,7 @@ h1{
 
 <script>
 let mode=null;
+
 const single=document.getElementById('single');
 const multi=document.getElementById('multi');
 const start=document.getElementById('start');
@@ -199,7 +212,7 @@ multi.onclick=()=>{
 
 start.onclick=()=>{
   if(mode==='single') location.href='single.html';
-  if(mode==='multi') location.href='multi.html';
+  if(mode==='multi')  location.href='multi.html';
 };
 
 document.getElementById('rules').onclick=()=>{
