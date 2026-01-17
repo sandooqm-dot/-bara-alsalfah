@@ -99,14 +99,13 @@
       margin:4px 0 14px;
     }
 
-    /* إطار المدخلات الكبير */
     .names-box{
       background:var(--cream);
       border:6px solid #000;
       border-radius:28px;
       padding:18px 16px 16px;
       box-shadow:0 14px 0 rgba(0,0,0,.12);
-      min-height:clamp(430px, 52vh, 560px); /* عشان يطلع نفس الفراغ بالصورة */
+      min-height:clamp(430px, 52vh, 560px);
       display:flex;
       flex-direction:column;
       align-items:center;
@@ -125,10 +124,19 @@
       padding:0 14px;
       outline:none;
     }
+
+    /* ✅ المطلوب: placeholder أصغر وباهت */
     .name-input::placeholder{
       color:#111;
-      opacity:1;
-      font-weight:900;
+      opacity:.45;
+      font-weight:800;
+      font-size:0.72em; /* أصغر من النص المكتوب */
+    }
+
+    /* ✅ المطلوب: يختفي فور الضغط على المربع */
+    .name-input:focus::placeholder{
+      opacity:0;
+      color:transparent;
     }
 
     .plus-btn{
@@ -174,7 +182,6 @@
       transform:none;
     }
 
-    /* زر المنزل */
     .home{
       position:absolute;
       left:22px;
@@ -209,18 +216,14 @@
     <section class="card">
       <div class="card-title">ادخل اسماء اللاعبين :</div>
 
-      <div class="names-box" id="namesBox">
-        <!-- inputs تُبنى بالـ JS عشان + يضيف -->
-      </div>
+      <div class="names-box" id="namesBox"></div>
 
       <div class="start-wrap">
         <button id="startBtn" class="start" type="button" disabled>ابدأ اللعب</button>
       </div>
     </section>
 
-    <!-- زر المنزل (يرجع للصفحة الرئيسية index.html) -->
     <button class="home" id="homeBtn" type="button" aria-label="الصفحة الرئيسية">
-      <!-- أيقونة منزل بنفس شكل الصورة (SVG) -->
       <svg width="52" height="52" viewBox="0 0 64 64" aria-hidden="true">
         <path d="M10 30 L32 12 L54 30" fill="none" stroke="#000" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M18 28 V54 H46 V28" fill="#fff" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
@@ -231,7 +234,6 @@
   </main>
 
   <script>
-    // حفظ الأسماء (بنحتاجها لاحقًا)
     const STORAGE_KEY = "bara_single_players";
 
     const namesBox = document.getElementById("namesBox");
@@ -288,18 +290,18 @@
       btn.id = "plusBtn";
       btn.setAttribute("aria-label", "إضافة لاعب");
 
+      const plusColor = getComputedStyle(document.documentElement).getPropertyValue('--plus').trim() || '#b46ac6';
       btn.innerHTML = `
         <svg width="70" height="70" viewBox="0 0 72 72" aria-hidden="true">
           <path d="M30 14 H42 V30 H58 V42 H42 V58 H30 V42 H14 V30 H30 Z"
-                fill="${getComputedStyle(document.documentElement).getPropertyValue('--plus').trim() || '#b46ac6'}"
+                fill="${plusColor}"
                 stroke="#000" stroke-width="3" stroke-linejoin="round"/>
         </svg>
       `;
 
       btn.addEventListener("click", () => {
         const inputs = getAllInputs();
-        if(inputs.length >= 12) return; // حد أعلى
-        // أضف حقل جديد قبل زر +
+        if(inputs.length >= 12) return;
         const plus = document.getElementById("plusBtn");
         const newInput = createInput(inputs.length + 1, "");
         namesBox.insertBefore(newInput, plus);
@@ -330,18 +332,15 @@
       addPlusButton();
       rebuildPlaceholders();
       updateStartState();
-      saveNames(); // توحيد التخزين
+      saveNames();
     }
 
-    // رجوع للرئيسية
     homeBtn.addEventListener("click", () => {
       window.location.href = "index.html";
     });
 
-    // ابدأ اللعب (ينتقل للصفحة القادمة لاحقًا)
     startBtn.addEventListener("click", () => {
       saveNames();
-      // الصفحة القادمة بنسويها بعدين
       window.location.href = "single_game.html";
     });
 
