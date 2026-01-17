@@ -64,7 +64,6 @@
       letter-spacing:.5px;
     }
 
-    /* الصندوق الزيتوني الكبير */
     .panel{
       margin:0 auto;
       width:92%;
@@ -74,7 +73,6 @@
       box-shadow:0 12px 0 rgba(0,0,0,.14);
     }
 
-    /* صندوق عبارة الانتظار */
     .waitBox{
       background:rgba(0,0,0,.10);
       border:4px solid rgba(0,0,0,.18);
@@ -92,7 +90,6 @@
       gap:10px;
     }
 
-    /* سطر اسم اللاعب */
     .myName{
       font-size:30px;
       font-weight:900;
@@ -100,7 +97,6 @@
       opacity:.95;
     }
 
-    /* نخلي زر الشراء في أسفل الإطار */
     .col{
       display:flex;
       flex-direction:column;
@@ -130,13 +126,9 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      transition:transform .05s ease, filter .15s ease;
     }
     .buyBtn:active{transform:translateY(2px)}
-    .buyBtn:hover{filter:brightness(1.02)}
-    .buyBtn:focus{outline:none}
 
-    /* زر الرئيسية (لللاعب يرجعه لصفحة الانضمام) */
     .homeBtn{
       position:fixed;
       left:14px;
@@ -152,14 +144,6 @@
     }
     .homeBtn:active{transform:translateY(2px)}
     .homeBtn svg{width:34px;height:34px}
-
-    @media (max-width:430px){
-      h1{font-size:40px}
-      .waitBox{font-size:34px; min-height:84px}
-      .buyBtn{font-size:34px}
-      .logo{width:84px}
-      .myName{font-size:26px}
-    }
   </style>
 </head>
 
@@ -172,7 +156,7 @@
         <h1>لعبة برا السالفة</h1>
 
         <div class="panel">
-          <div id="waitText" class="waitBox">
+          <div class="waitBox">
             <div id="waitLine">بانتظار</div>
             <div id="myNameLine" class="myName"></div>
           </div>
@@ -180,9 +164,8 @@
 
         <div class="spacer"></div>
 
-        <!-- ✅ زر الشراء (أسفل الصفحة مثل مكان زر التالي) -->
         <div class="buyWrap">
-          <a class="buyBtn" href="https://sandooq-m.com/" target="_blank" rel="noopener noreferrer">
+          <a class="buyBtn" href="https://sandooq-m.com/" target="_blank">
             لشراء اللعبة اضغط هنا
           </a>
         </div>
@@ -190,9 +173,8 @@
     </div>
   </div>
 
-  <!-- ✅ الرئيسية: للاعب ترجع لصفحة join.html (صفحة كتابة الاسم والانضمام) -->
-  <button id="homeBtn" class="homeBtn" type="button" aria-label="الرئيسية">
-    <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+  <button id="homeBtn" class="homeBtn" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5">
       <path d="M3 10.5L12 3l9 7.5"></path>
       <path d="M5 10v10h14V10"></path>
       <path d="M9 20v-7h6v7"></path>
@@ -201,39 +183,25 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-    import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-    // ✅ بيانات مشروعك
     const firebaseConfig = {
       apiKey: "AIzaSyDQx4gJZMHNWQBeMYsU4fknZHG0WFJ_ckc",
       authDomain: "bara-alsalfah.firebaseapp.com",
-      projectId: "bara-alsalfah",
-      storageBucket: "bara-alsalfah.firebasestorage.app",
-      messagingSenderId: "658748312832",
-      appId: "1:658748312832:web:3e0c970ba54bb25c0437e5",
-      measurementId: "G-82ZV2RDDDP"
+      projectId: "bara-alsalfah"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    initializeApp(firebaseConfig);
+    getFirestore();
 
-    // ---- Room ----
     const params = new URLSearchParams(location.search);
-    const room = (params.get('room') || '').trim();
+    const room = params.get('room') || '';
 
-    // ---- UI ----
-    const waitLine = document.getElementById('waitLine');
-    const myNameLine = document.getElementById('myNameLine');
-
-    // ✅ اسم اللاعب يظهر عنده فقط
-    const myName = (localStorage.getItem(`bara_room_${room}_myname`) || '').trim();
+    const myName = localStorage.getItem(`bara_room_${room}_myname`) || '';
     if(myName){
-      myNameLine.textContent = `اسمك: ${myName}`;
-    }else{
-      myNameLine.textContent = '';
+      document.getElementById('myNameLine').textContent = `اسمك: ${myName}`;
     }
 
-    // ✅ حركة النص: بانتظار -> بانتظار مقدم -> بانتظار مقدم اللعبة -> . .. ... -> اختفاء -> تكرار
     const steps = [
       'بانتظار',
       'بانتظار مقدم',
@@ -244,31 +212,14 @@
       ''
     ];
     let i = 0;
-    setInterval(() => {
-      waitLine.textContent = steps[i];
-      i = (i + 1) % steps.length;
+    setInterval(()=>{
+      document.getElementById('waitLine').textContent = steps[i];
+      i = (i+1) % steps.length;
     }, 450);
 
-    // ✅ زر الرئيسية للاعب: يرجع لصفحة join.html
-    document.getElementById('homeBtn').onclick = () => {
-      if(room) location.href = 'join.html?room=' + encodeURIComponent(room);
-      else location.href = 'join.html';
+    document.getElementById('homeBtn').onclick = ()=>{
+      location.href = room ? `join.html?room=${room}` : 'join.html';
     };
-
-    // ---- Firebase listen: إذا المقدم بدأ اللعب ----
-    if(room){
-      const roomRef = doc(db, "bara_rooms", room);
-
-      onSnapshot(roomRef, (snap)=>{
-        const data = snap.data() || {};
-        const status = String(data.status || '').toLowerCase();
-
-        if(status === 'playing'){
-          // ✅ انتقال تلقائي عند بدء اللعب
-          location.href = 'categories.html?room=' + encodeURIComponent(room) + '&mode=multi';
-        }
-      });
-    }
   </script>
 </body>
 </html>
