@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>اللعب من أجهزة متعددة</title>
+  <title>مشاركة اللاعبين</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,7 +20,7 @@
       --shadow:0 10px 0 rgba(0,0,0,.18);
     }
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);font-family:"Baloo Bhaijaan 2",Arial,sans-serif;color:#111}
+    body{margin:0;background:var(--bg);font-family:"Baloo Bhaijaan 2",Arial,sans-serif}
     .wrap{min-height:100svh;display:flex;justify-content:center;padding:18px}
     .card{width:min(560px,100%)}
 
@@ -117,7 +117,6 @@
 
     <div class="panel">
 
-      <!-- اسم المقدم -->
       <div class="hostBox">
         <label>اسم المقدم</label>
         <input id="hostName" placeholder="اكتب اسمك">
@@ -193,11 +192,11 @@ function render(players){
       list.appendChild(d);
     });
   }
-  startBtn.disabled = !(hostInput.value.trim() && players.length>=2);
+  startBtn.disabled = !(hostInput.value.trim() && players.length >= 1);
 }
 
 hostInput.addEventListener("input",()=>{
-  updateDoc(roomRef,{hostName:hostInput.value.trim()});
+  updateDoc(roomRef,{ hostName: hostInput.value.trim() });
 });
 
 onSnapshot(roomRef,(snap)=>{
@@ -209,15 +208,20 @@ onSnapshot(roomRef,(snap)=>{
 });
 
 document.getElementById("startBtn").onclick=async()=>{
+  // ❗ لا نغيّر إلى playing
   await updateDoc(roomRef,{
-    status:"start",
-    startedAt:serverTimestamp()
+    status:"categories",
+    hostEnteredCategoriesAt:serverTimestamp()
   });
+
   location.href="categories.html?mode=multi&room="+room;
 };
 
 document.getElementById("shareBtn").onclick=()=>{
-  const url = location.origin + location.pathname.replace("players.html","join.html?room="+room);
+  const url = location.origin + location.pathname.replace(
+    "players.html",
+    "join.html?room="+room
+  );
   navigator.clipboard.writeText(url);
   alert("تم نسخ الرابط");
 };
