@@ -45,6 +45,11 @@
 
       /* ✅ رفع شريط زر الرئيسية فقط (زر التالي لم يعد هنا) */
       --bottomGap: 34px;
+
+      /* ✅ ألوان إضافية للتصويت */
+      --pickBlue:#8fd6ff;
+      --good:#2ecc71;
+      --bad:#e74c3c;
     }
 
     *{box-sizing:border-box}
@@ -187,13 +192,14 @@
       line-height:1.6;
     }
 
-    /* ✅ (التعديل المطلوب) مكان زر التالي/تصويت داخل الصفحة تحت المربع */
+    /* ✅ مكان زر التالي/تصويت داخل الصفحة تحت المربع */
     .ctaArea{
       width:100%;
       display:flex;
       justify-content:center;
       margin-top: 14px; /* تحت المربع مباشرة */
     }
+    .ctaArea.hidden{ display:none; }
 
     .cta{
       height: var(--btnH);
@@ -214,6 +220,11 @@
       user-select:none;
       text-align:center;
       padding: 0 14px;
+    }
+    .cta:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      filter: grayscale(.15);
     }
 
     @media (max-width: 420px){
@@ -279,6 +290,111 @@
       .homeBtn{ width:56px;height:56px; }
       .homeBtn svg{ width:30px;height:30px; }
     }
+
+    /* ✅ أزرار خيارات التصويت/الاختيار */
+    .optionList{
+      width:100%;
+      max-width: 420px;
+      margin: 10px auto 0;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .optBtn{
+      width:100%;
+      height: 64px;
+      border-radius: 22px;
+      background:#fff;
+      border:4px solid #000;
+      box-shadow: var(--shadow);
+      font-size: 30px;
+      font-weight:1000;
+      color:#111;
+      cursor:pointer;
+      user-select:none;
+    }
+    .optBtn.selected{
+      background: var(--pickBlue);
+    }
+    .optBtn.good{
+      background: var(--good);
+      color:#fff;
+    }
+    .optBtn.bad{
+      background: var(--bad);
+      color:#fff;
+    }
+
+    /* ✅ نتائج */
+    .resultRow{
+      width:100%;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      margin: 14px auto 0;
+      max-width: 420px;
+      justify-content:center;
+    }
+    .scoreBubble{
+      width:74px;
+      height:74px;
+      border-radius:50%;
+      background:#fff;
+      border:4px solid #000;
+      box-shadow: var(--shadow);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 34px;
+      font-weight:1000;
+      color:#111;
+      flex:0 0 auto;
+    }
+    .namePill{
+      flex:1;
+      height: 74px;
+      border-radius: 28px;
+      background:#fff;
+      border:4px solid #000;
+      box-shadow: var(--shadow);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 34px;
+      font-weight:1000;
+      color:#111;
+      padding: 0 14px;
+    }
+
+    /* ✅ أزرار نهاية الجولة */
+    .endBtns{
+      width:100%;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      align-items:center;
+      margin-top: 16px;
+    }
+    .endBtn{
+      width: 88%;
+      max-width: 420px;
+      height: 74px;
+      border-radius: 28px;
+      border:4px solid #000;
+      box-shadow: var(--shadow);
+      font-size: 34px;
+      font-weight:1000;
+      cursor:pointer;
+      user-select:none;
+    }
+    .endBtn.blue{
+      background:#8fd6ff;
+      color:#111;
+    }
+    .endBtn.yellow{
+      background: var(--yellow);
+      color: var(--yellowText);
+    }
   </style>
 </head>
 <body>
@@ -294,8 +410,8 @@
 
       <div id="content"></div>
 
-      <!-- ✅ زر التالي/تصويت صار هنا (تحت المربع مباشرة) -->
-      <div class="ctaArea">
+      <!-- ✅ زر التالي/تصويت (ثابت تحت المربع) -->
+      <div class="ctaArea" id="ctaArea">
         <button class="cta compact" id="ctaBtn">التالي</button>
       </div>
 
@@ -317,11 +433,12 @@
 
 <script>
 /* =========================================================
-   ✅ حل جذري لمشكلة "أكثر من واحد برا السالفة"
-   - نحدد برا السالفة بالـ index (رقم اللاعب) وليس بالاسم
-   - نحفظ outsiderIndex + topicWord داخل state في sessionStorage
-   - نقرأ مفاتيح التخزين القديمة/الجديدة
-   - نحمّل كلمات الداتا من data/<key>.js عبر <script>
+   ✅ إصدار 3 (مرجعي) + إضافة صفحات بعد التصويت:
+   5) صفحات التصويت (كل لاعب يصوت)
+   6) كشف اللي برا السالفة (حركة 2 ثانية)
+   7) برا السالفة يختار السالفة الصحيحة (صح أخضر / غلط أحمر)
+   8) النتائج (100/0 حسب القواعد)
+   9) نهاية الجولة (تغيير اللاعبين / كمل لعب) مع حفظ الأسماء والنتائج
    ========================================================= */
 
 function getSessionJSON(key){
@@ -391,20 +508,94 @@ function loadCategoryWords(key){
 function pickRandom(arr){
   return arr[Math.floor(Math.random()*arr.length)];
 }
+function shuffle(a){
+  const arr = a.slice();
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+function uniq(arr){
+  const s = new Set();
+  const out = [];
+  for(const x of arr){
+    if(!s.has(x)){
+      s.add(x);
+      out.push(x);
+    }
+  }
+  return out;
+}
 
+/* ✅ حفظ/تحميل النتائج التراكمية */
+const SCORE_KEY = "bara_single_scores";
+function loadScores(){
+  const data = getSessionJSON(SCORE_KEY);
+  if(!data || !Array.isArray(data.players) || !Array.isArray(data.scores)) return null;
+  return data;
+}
+function initScores(){
+  return { players: players.slice(), scores: players.map(()=>0) };
+}
+function ensureScores(){
+  const data = loadScores();
+  if(!data) {
+    const s = initScores();
+    setSessionJSON(SCORE_KEY, s);
+    return s;
+  }
+  // إذا نفس اللاعبين بنفس الترتيب -> استخدمها
+  if(data.players.length === players.length && data.players.every((p,i)=>p===players[i])){
+    return data;
+  }
+  // إذا تغيّر شيء: حاول تطابق بالأسماء (مع الاحتفاظ بالموجود قدر الإمكان)
+  const out = initScores();
+  for(let i=0;i<players.length;i++){
+    const idx = data.players.indexOf(players[i]);
+    if(idx !== -1){
+      out.scores[i] = Number(data.scores[idx] || 0);
+    }
+  }
+  setSessionJSON(SCORE_KEY, out);
+  return out;
+}
+
+/* ---------- State ---------- */
 let state = getSessionJSON("singleState");
+let categoryWordsList = [];
 
+/* لو ما فيه state -> ننشئه/نكمله ونثبت السالفة + برا السالفة */
 async function ensureState(){
   if(!state){
     state = {
       screen: 0,
+
       revealIndex: 0,
       askIndex: 0,
       pairings: [],
       outsiderIndex: -1,
-      topicWord: ""
+      topicWord: "",
+
+      // ✅ التصويت
+      voteIndex: 0,
+      votes: [],               // votes[voterIndex] = targetIndex
+      currentPick: -1,         // اختيار مؤقت للصفحة الحالية
+
+      // ✅ كشف برا السالفة
+      revealDone: false,
+
+      // ✅ اختيار السالفة
+      guessOptions: [],
+      guessPicked: "",
+      outsiderGuessedCorrect: false,
+
+      // ✅ النتائج
+      roundScoresApplied: false,
+      lastRoundScores: []
     };
 
+    // توليد أزواج عشوائية (كل واحد يسأل واحد مختلف)
     const n = players.length;
     for(let i=0;i<n;i++){
       let targetIndex = i;
@@ -414,21 +605,23 @@ async function ensureState(){
       state.pairings.push({ asker: players[i], target: players[targetIndex] });
     }
 
+    // تثبيت برا السالفة بالـ index
     state.outsiderIndex = Math.floor(Math.random() * players.length);
 
-    const words = await loadCategoryWords(categoryKey);
-    state.topicWord = (words && words.length) ? pickRandom(words) : "سالفة";
+    // تثبيت السالفة من الداتا
+    state.topicWord = (categoryWordsList && categoryWordsList.length) ? pickRandom(categoryWordsList) : "سالفة";
+
     setSessionJSON("singleState", state);
     return;
   }
 
+  // احتياط
   if(typeof state.outsiderIndex !== "number" || state.outsiderIndex < 0 || state.outsiderIndex >= players.length){
     state.outsiderIndex = Math.floor(Math.random() * players.length);
   }
 
   if(!state.topicWord || typeof state.topicWord !== "string"){
-    const words = await loadCategoryWords(categoryKey);
-    state.topicWord = (words && words.length) ? pickRandom(words) : "سالفة";
+    state.topicWord = (categoryWordsList && categoryWordsList.length) ? pickRandom(categoryWordsList) : "سالفة";
   }
 
   if(!Array.isArray(state.pairings) || !state.pairings.length){
@@ -443,14 +636,24 @@ async function ensureState(){
     }
   }
 
+  // تجهيز حقول التصويت إن كانت ناقصة
+  if(!Array.isArray(state.votes) || state.votes.length !== players.length){
+    state.votes = players.map(()=>-1);
+  }
+  if(typeof state.voteIndex !== "number") state.voteIndex = 0;
+  if(typeof state.currentPick !== "number") state.currentPick = -1;
+
   setSessionJSON("singleState", state);
 }
 
+/* عناصر DOM */
 const pageTitle = document.getElementById("pageTitle");
 const content = document.getElementById("content");
 const ctaBtn = document.getElementById("ctaBtn");
+const ctaArea = document.getElementById("ctaArea");
 const homeBtn = document.getElementById("homeBtn");
 
+/* عنوان الصفحة */
 function setPageTitle(text){
   const t = (text || "").trim();
   if(!t){
@@ -462,6 +665,7 @@ function setPageTitle(text){
   pageTitle.classList.add("show");
 }
 
+/* زر الرئيسية: يرجع للرئيسية + يصفر بيانات الجلسة */
 homeBtn.addEventListener("click", () => {
   sessionStorage.removeItem("bara_players");
   sessionStorage.removeItem("players");
@@ -472,11 +676,14 @@ homeBtn.addEventListener("click", () => {
   sessionStorage.removeItem("bara_selectedCategory");
 
   sessionStorage.removeItem("singleState");
+  sessionStorage.removeItem(SCORE_KEY);
   location.href = "index.html";
 });
 
+/* زر CTA */
 ctaBtn.addEventListener("click", () => next());
 
+/* ابدأ */
 (async function boot(){
   setPageTitle("");
   content.innerHTML = `
@@ -485,17 +692,68 @@ ctaBtn.addEventListener("click", () => next());
     </div>
   `;
 
+  // حمّل كلمات الكتاغوري لاستخدامها لاحقاً
+  categoryWordsList = await loadCategoryWords(categoryKey);
+
   await ensureState();
   render();
 })();
 
+/* =========================
+   Helpers للخيارات
+   ========================= */
+function makeOptionsButtons(names, selectedIndex, onPick, mode){
+  // mode: "vote" | "guess"
+  const list = document.createElement("div");
+  list.className = "optionList";
+
+  names.forEach((name, idx) => {
+    const b = document.createElement("button");
+    b.className = "optBtn";
+    b.type = "button";
+    b.textContent = name;
+
+    if(mode === "vote"){
+      if(idx === selectedIndex) b.classList.add("selected");
+      b.addEventListener("click", () => onPick(idx));
+    }else{
+      // guess mode uses string equality outside
+      b.addEventListener("click", () => onPick(name, b));
+    }
+
+    list.appendChild(b);
+  });
+
+  return list;
+}
+
+function buildGuessOptions(){
+  const correct = state.topicWord || "سالفة";
+  const words = Array.isArray(categoryWordsList) ? categoryWordsList.slice() : [];
+  const pool = uniq(words.filter(w => (w || "").trim() && w !== correct));
+  const pick = shuffle(pool).slice(0, 6);
+  const options = shuffle([correct, ...pick]);
+  state.guessOptions = options;
+  state.guessPicked = "";
+  state.outsiderGuessedCorrect = false;
+}
+
+/* =========================
+   Render Screens
+   ========================= */
 function render(){
+  // افتراضياً نظهر CTA
+  ctaArea.classList.remove("hidden");
+  ctaBtn.disabled = false;
+
+  // افتراضياً: التالي (أصفر)
   ctaBtn.classList.add("compact");
   ctaBtn.classList.remove("vote");
   ctaBtn.textContent = "التالي";
 
   const s = state.screen;
 
+  /* 0: اعطو الجوال */
   if(s === 0){
     const p = players[state.revealIndex];
     setPageTitle("");
@@ -512,6 +770,7 @@ function render(){
     return;
   }
 
+  /* 1: عرض السالفة/برا السالفة */
   if(s === 1){
     const isOut = (state.revealIndex === state.outsiderIndex);
 
@@ -538,6 +797,7 @@ function render(){
     return;
   }
 
+  /* 2: وقت الاسئلة (مقدمة) */
   if(s === 2){
     setPageTitle("وقت الاسئلة");
     content.innerHTML = `
@@ -551,6 +811,7 @@ function render(){
     return;
   }
 
+  /* 3: مين يسأل مين */
   if(s === 3){
     setPageTitle("وقت الاسئلة");
     const pair = state.pairings[state.askIndex];
@@ -576,6 +837,7 @@ function render(){
     return;
   }
 
+  /* 4: قبل التصويت (زر تصويت أحمر) */
   if(s === 4){
     setPageTitle("ما تأكدت صح ؟");
     ctaBtn.textContent = "تصويت";
@@ -594,8 +856,303 @@ function render(){
     `;
     return;
   }
+
+  /* 5: صفحات التصويت (كل لاعب يصوّت على لاعب) */
+  if(s === 5){
+    setPageTitle("");
+    const voter = players[state.voteIndex];
+
+    // زر آخر صفحة يصير "التالي" أصفر
+    const isLast = (state.voteIndex === players.length - 1);
+    if(isLast){
+      ctaBtn.textContent = "التالي";
+      ctaBtn.classList.remove("vote");
+    }else{
+      ctaBtn.textContent = "تصويت";
+      ctaBtn.classList.add("vote");
+    }
+
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = `
+      <div class="playerNameBox">${escapeHtml(voter)}</div>
+      <div class="bigCard" style="min-height:420px;">
+        <div style="width:100%;">
+          <div class="msgText" style="font-size:34px; font-weight:1000; line-height:1.35;">
+            اختر الشخص الي تشك انه برا السالفة!
+          </div>
+          <div id="voteList"></div>
+        </div>
+      </div>
+    `;
+
+    content.innerHTML = "";
+    content.appendChild(wrapper);
+
+    const listHost = wrapper.querySelector("#voteList");
+
+    // الخيارات: كل اللاعبين ما عدا المصوّت نفسه
+    const choices = players
+      .map((name, idx) => ({name, idx}))
+      .filter(x => x.idx !== state.voteIndex);
+
+    // selectedIndex داخل choices
+    const currentTarget = state.currentPick;
+    let selectedChoicePos = -1;
+    if(typeof currentTarget === "number" && currentTarget >= 0){
+      selectedChoicePos = choices.findIndex(c => c.idx === currentTarget);
+    }
+
+    const list = document.createElement("div");
+    list.className = "optionList";
+
+    choices.forEach((c, pos) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "optBtn";
+      b.textContent = c.name;
+      if(pos === selectedChoicePos) b.classList.add("selected");
+      b.addEventListener("click", () => {
+        state.currentPick = c.idx;
+        saveOnly();
+        render();
+      });
+      list.appendChild(b);
+    });
+
+    listHost.appendChild(list);
+    return;
+  }
+
+  /* 6: كشف اللي برا السالفة مع حركة */
+  if(s === 6){
+    setPageTitle("");
+    ctaBtn.textContent = "التالي";
+    ctaBtn.classList.remove("vote");
+    ctaBtn.disabled = true;
+
+    content.innerHTML = `
+      <div class="bigCard" style="min-height:420px;">
+        <div style="width:100%;">
+          <div class="msgText" style="font-size:34px; font-weight:1000; margin-bottom:10px;">
+            الي برا السالفة هو :
+          </div>
+          <div id="revealName" class="topicWord" style="font-size:64px; margin-top:30px;">...</div>
+        </div>
+      </div>
+    `;
+
+    // شغّل الحركة مرة واحدة فقط
+    if(!state.revealDone){
+      state.revealDone = true;
+      saveOnly();
+
+      const el = document.getElementById("revealName");
+      const seq = shuffle(players.slice());
+      let i = 0;
+      const start = Date.now();
+      const timer = setInterval(() => {
+        el.textContent = seq[i % seq.length];
+        i++;
+        if(Date.now() - start >= 2000){
+          clearInterval(timer);
+          el.textContent = players[state.outsiderIndex];
+          ctaBtn.disabled = false;
+        }
+      }, 70);
+    }else{
+      // إذا رجعنا للصفحة بسبب تحديث
+      const el = document.getElementById("revealName");
+      if(el) el.textContent = players[state.outsiderIndex];
+      ctaBtn.disabled = false;
+    }
+    return;
+  }
+
+  /* 7: برا السالفة يختار السالفة الصحيحة */
+  if(s === 7){
+    setPageTitle("");
+    ctaBtn.textContent = "التالي";
+    ctaBtn.classList.remove("vote");
+
+    // إذا الخيارات غير جاهزة -> ابنِها
+    if(!Array.isArray(state.guessOptions) || state.guessOptions.length < 2){
+      buildGuessOptions();
+      saveOnly();
+    }
+
+    // إذا ما اختار لسه -> عطّل التالي
+    ctaBtn.disabled = !state.guessPicked;
+
+    const outsiderName = players[state.outsiderIndex];
+
+    // عنوان داخل البطاقة مثل الصورة
+    content.innerHTML = `
+      <div class="playerNameBox">${escapeHtml(outsiderName)}</div>
+      <div class="bigCard" style="min-height:520px;">
+        <div style="width:100%;">
+          <div class="msgText" style="font-size:34px; font-weight:1000; margin-bottom:8px;">
+            ايش هي السالفة ؟
+          </div>
+          <div id="guessList"></div>
+        </div>
+      </div>
+    `;
+
+    const host = document.getElementById("guessList");
+    const list = document.createElement("div");
+    list.className = "optionList";
+
+    state.guessOptions.forEach((w) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "optBtn";
+      b.textContent = w;
+
+      // لو فيه اختيار سابق، لوّن مباشرة
+      if(state.guessPicked){
+        if(w === state.topicWord) b.classList.add("good");
+        else b.classList.add("bad");
+      }
+
+      b.addEventListener("click", () => {
+        // إذا اختار قبل، لا تغيّر (حسب الصورة: يكشف الصح/الغلط مباشرة)
+        if(state.guessPicked) return;
+
+        state.guessPicked = w;
+        state.outsiderGuessedCorrect = (w === state.topicWord);
+        saveOnly();
+        render();
+      });
+
+      list.appendChild(b);
+    });
+
+    host.appendChild(list);
+    return;
+  }
+
+  /* 8: النتائج */
+  if(s === 8){
+    setPageTitle("النتائج");
+    ctaBtn.textContent = "التالي";
+    ctaBtn.classList.remove("vote");
+
+    // طبق نتائج الجولة مرة واحدة فقط
+    if(!state.roundScoresApplied){
+      const n = players.length;
+      if(!Array.isArray(state.votes) || state.votes.length !== n){
+        state.votes = players.map(()=>-1);
+      }
+
+      const votedOutsider = [];
+      for(let i=0;i<n;i++){
+        if(state.votes[i] === state.outsiderIndex) votedOutsider.push(i);
+      }
+
+      const roundScores = players.map(()=>0);
+
+      // نقاط اللاعبين: اللي صوّت على برا السالفة = 100، غيره = 0
+      for(const i of votedOutsider){
+        roundScores[i] = 100;
+      }
+
+      // نقاط برا السالفة:
+      // - إذا ما أحد صوّت عليه: 100
+      // - إذا صوّتوا عليه: 100 فقط إذا اختار السالفة صح، وإلا 0
+      if(votedOutsider.length === 0){
+        roundScores[state.outsiderIndex] = 100;
+      }else{
+        roundScores[state.outsiderIndex] = state.outsiderGuessedCorrect ? 100 : 0;
+      }
+
+      state.lastRoundScores = roundScores.slice();
+      state.roundScoresApplied = true;
+
+      // تحديث النتائج التراكمية في التخزين
+      const totals = ensureScores();
+      for(let i=0;i<n;i++){
+        totals.scores[i] = Number(totals.scores[i] || 0) + Number(roundScores[i] || 0);
+      }
+      setSessionJSON(SCORE_KEY, totals);
+
+      saveOnly();
+    }
+
+    const totals = ensureScores();
+    const rows = players.map((name, i) => ({
+      name,
+      score: Number(totals.scores[i] || 0)
+    }));
+
+    // عرض مثل الصورة: الأعلى أولاً
+    const sorted = rows.slice().sort((a,b)=>b.score - a.score);
+
+    let html = `
+      <div class="bigCard" style="min-height:520px;">
+        <div style="width:100%;">
+    `;
+
+    for(const r of sorted){
+      html += `
+        <div class="resultRow">
+          <div class="scoreBubble">${r.score}</div>
+          <div class="namePill">${escapeHtml(r.name)}</div>
+        </div>
+      `;
+    }
+
+    html += `
+        </div>
+      </div>
+    `;
+
+    content.innerHTML = html;
+    return;
+  }
+
+  /* 9: نهاية الجولة (آخر صفحة) */
+  if(s === 9){
+    setPageTitle("نهاية الجولة");
+    ctaArea.classList.add("hidden");
+
+    content.innerHTML = `
+      <div class="bigCard" style="min-height:520px;">
+        <div class="msgText" style="font-size:34px; font-weight:1000; line-height:1.45;">
+          تقدرون تكملون لعب أو تغيرون لاعب أو ترجعون للشاشة اختيار الأسئلة
+          <br/><br/>
+          <div style="font-size:22px; font-weight:900; opacity:.95;">
+            أرهب شعور لما تكون برا السالفة وتنسأل أول سؤال ومع ذلك مع ما يكشفونك !!
+          </div>
+        </div>
+      </div>
+
+      <div class="endBtns">
+        <button class="endBtn blue" id="changePlayersBtn">تغيير اللاعبين</button>
+        <button class="endBtn yellow" id="continueBtn">كمل لعب</button>
+      </div>
+    `;
+
+    // تغيير اللاعبين: يرجع لصفحة إضافة اللاعبين مع بقاء الأسماء والنتيجة (ما نمسح شيء)
+    document.getElementById("changePlayersBtn").addEventListener("click", () => {
+      // نترك bara_players و SCORE_KEY كما هي (عشان يحتفظ)
+      // فقط نمسح حالة الجولة الحالية عشان تبدأ بشكل نظيف
+      sessionStorage.removeItem("singleState");
+      location.href = "single.html";
+    });
+
+    // كمل لعب: يرجع لاختيار الكتاغوري مع بقاء الأسماء والنتيجة
+    document.getElementById("continueBtn").addEventListener("click", () => {
+      sessionStorage.removeItem("singleState");
+      location.href = "categories.html";
+    });
+
+    return;
+  }
 }
 
+/* =========================
+   Next Logic
+   ========================= */
 function next(){
   const s = state.screen;
 
@@ -633,12 +1190,79 @@ function next(){
   }
 
   if(s === 4){
+    // ✅ الانتقال لصفحات التصويت
+    state.screen = 5;
+    state.voteIndex = 0;
+    state.votes = players.map(()=>-1);
+    state.currentPick = -1;
+    state.revealDone = false;
+    state.guessOptions = [];
+    state.guessPicked = "";
+    state.outsiderGuessedCorrect = false;
+    state.roundScoresApplied = false;
+    state.lastRoundScores = [];
+    saveAndRender();
+    return;
+  }
+
+  if(s === 5){
+    // لازم يختار
+    if(state.currentPick === -1){
+      alert("اختر لاعب قبل المتابعة");
+      return;
+    }
+
+    // حفظ التصويت
+    state.votes[state.voteIndex] = state.currentPick;
+
+    const isLast = (state.voteIndex === players.length - 1);
+    if(!isLast){
+      state.voteIndex++;
+      state.currentPick = -1; // تصفير اختيار الصفحة التالية
+      saveAndRender();
+      return;
+    }
+
+    // آخر مصوّت -> نروح للكشف
+    state.screen = 6;
+    state.currentPick = -1;
+    saveAndRender();
+    return;
+  }
+
+  if(s === 6){
+    state.screen = 7;
+    saveAndRender();
+    return;
+  }
+
+  if(s === 7){
+    // ما يسمح إلا بعد اختيار
+    if(!state.guessPicked){
+      alert("اختر كلمة قبل المتابعة");
+      return;
+    }
+    state.screen = 8;
+    saveAndRender();
+    return;
+  }
+
+  if(s === 8){
+    state.screen = 9;
+    saveAndRender();
+    return;
+  }
+
+  if(s === 9){
     return;
   }
 }
 
-function saveAndRender(){
+function saveOnly(){
   setSessionJSON("singleState", state);
+}
+function saveAndRender(){
+  saveOnly();
   render();
 }
 
@@ -655,4 +1279,4 @@ function escapeHtml(str){
 </body>
 </html>
 
-<!-- single_game.html برا السالفة – إصدار 3 -->
+<!-- single_game.html برا السالفة – إصدار 4 -->
