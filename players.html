@@ -11,8 +11,8 @@
       --green:#3f5b2a;
       --green2:#6e8554;
       --yellow:#f2c300;
-      --orange:#f0a11a;
       --blue:#bfe3ff;
+      --orange:#f3a11b;
       --text:#1a1a1a;
       --muted:#9a9a9a;
 
@@ -50,13 +50,12 @@
       min-height: calc(100vh - 28px);
       display:flex;
       flex-direction:column;
-      gap: 14px;
     }
 
     .topRow{
       position: relative;
-      min-height: 86px;
-      margin-bottom: 6px;
+      min-height: 96px;
+      margin-bottom: 10px;
       padding-left: 118px;
     }
 
@@ -64,9 +63,9 @@
       position:absolute;
       right: 18px;
       top: 18px;
-      font-weight: 900;
+      font-weight: 1000;
       color: var(--green);
-      font-size: 22px;
+      font-size: 34px;
       line-height: 1.1;
       text-align:right;
       white-space:nowrap;
@@ -83,342 +82,365 @@
       pointer-events:none;
     }
 
-    /* مربع اسم المقدم */
-    .hostInput{
+    /* شاشة */
+    .screen{ display:none; }
+    .screen.show{ display:block; }
+
+    /* ====== عناصر مشتركة ====== */
+    .nameInput{
       width: 100%;
       padding: 14px 14px;
       border: 4px solid var(--green2);
       border-radius: 18px;
       background:#fff;
-      font-size: 20px;
-      font-weight: 800;
+      font-size: 22px;
+      font-weight: 900;
       color:#111;
       outline:none;
       text-align:center;
     }
-    .hostInput::placeholder{
+    .nameInput::placeholder{
       color: var(--muted);
       font-weight: 900;
       font-size: 18px;
       opacity: 0.75;
     }
 
-    /* لوحة أسماء اللاعبين */
-    .board{
-      background: rgba(63,91,42,0.85);
-      border-radius: 18px;
-      border: 4px solid rgba(0,0,0,0.0);
-      padding: 16px 14px;
-      min-height: 290px;
-      box-shadow: inset 0 0 0 0 rgba(0,0,0,0);
+    .panel{
+      margin-top: 14px;
+      background: rgba(63,91,42,0.75);
+      border-radius: 22px;
+      padding: 18px 14px 16px;
+      border: 6px solid rgba(63,91,42,0.0);
+      min-height: 260px;
     }
-
-    .boardTitle{
+    .panelTitle{
       text-align:center;
       color:#fff;
-      font-size: 34px;
-      font-weight: 900;
-      margin: 4px 0 12px;
-      opacity: 0.78;
+      font-size: 36px;
+      font-weight: 1000;
+      margin: 4px 0 10px;
     }
 
-    .boardHint{
+    .hint{
       text-align:center;
-      color:#fff;
-      opacity:0.55;
-      font-weight:800;
+      color: rgba(255,255,255,0.75);
       font-size: 16px;
+      font-weight: 800;
+      line-height: 1.35;
       margin: 0 0 10px;
-      line-height:1.5;
     }
 
-    .playersList{
-      margin-top: 8px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      padding: 0 6px;
+    .list{
+      background: rgba(255,255,255,0.12);
+      border-radius: 18px;
+      padding: 10px 10px;
+      min-height: 170px;
+      border: 3px solid rgba(0,0,0,0.18);
     }
 
-    .pItem{
-      background: rgba(255,255,255,0.20);
-      border: 3px solid rgba(0,0,0,0.0);
+    .playerItem{
+      background: rgba(255,255,255,0.92);
+      border: 3px solid rgba(0,0,0,0.35);
       border-radius: 14px;
-      padding: 12px 10px;
+      padding: 10px 10px;
       text-align:center;
-      color:#fff;
-      font-weight: 900;
-      font-size: 22px;
+      font-weight: 1000;
+      font-size: 20px;
+      margin: 8px 0;
     }
 
-    /* أزرار أسفل */
-    .btnWrap{
+    .btnRow{
+      margin-top: auto;
+      padding-top: 16px;
       display:flex;
       flex-direction:column;
-      gap: 14px;
-      padding-bottom: calc(12px + env(safe-area-inset-bottom));
+      gap: 12px;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom));
     }
 
     .btn{
-      width: min(320px, 80%);
-      margin: 0 auto;
-      border: 4px solid #000;
-      border-radius: 22px;
-      font-weight: 900;
-      font-size: 28px;
-      padding: 12px 18px;
-      box-shadow: var(--shadow);
+      border: 5px solid #000;
+      border-radius: 26px;
+      padding: 14px 18px;
+      font-weight: 1000;
       cursor:pointer;
+      box-shadow: var(--shadow);
       -webkit-tap-highlight-color:transparent;
-      background: #fff;
-      color:#111;
+      font-size: 34px;
+    }
+    .btn:active{ transform: translateY(1px); box-shadow: 0 9px 0 rgba(0,0,0,0.18); }
+
+    .btnBlue{ background: var(--blue); color:#111; }
+    .btnYellow{ background: var(--yellow); color:#111; } /* ✅ النص أسود */
+    .btn:disabled{
+      opacity: .55;
+      cursor:not-allowed;
+      transform:none;
     }
 
-    .btnShare{
-      background: var(--blue);
-    }
-    .btnStart{
-      background: var(--yellow);
-    }
-
-    /* زر الرئيسية ثابت */
+    /* زر الرئيسية */
     .homeBtn{
       position:absolute;
       left: var(--homeSide);
       bottom: var(--homeBottom);
-      width: 64px;
-      height: 64px;
-      border-radius: 18px;
-      border: 4px solid #000;
+      width: 70px;
+      height: 70px;
+      border-radius: 22px;
+      border: 5px solid #000;
       background: #bfe3ff;
       box-shadow: var(--shadowSmall);
       display:flex;
       justify-content:center;
       align-items:center;
       cursor:pointer;
-      z-index: 30;
+      z-index: 60;
       -webkit-tap-highlight-color:transparent;
     }
-    .homeBtn svg{ width:34px; height:34px; fill:#111; }
+    .homeBtn svg{ width:38px; height:38px; fill:#111; }
 
-    /* ===== نافذة المشاركة ===== */
+    /* ====== نافذة مشاركة اللاعبين ====== */
     .overlay{
       position:fixed;
       inset:0;
-      background: rgba(0,0,0,0.35);
+      background: rgba(0,0,0,0.25);
       display:none;
       align-items:center;
       justify-content:center;
-      padding: 18px 12px;
-      z-index: 999;
+      padding: 18px 14px;
+      z-index: 9999;
     }
     .overlay.show{ display:flex; }
 
     .modal{
-      width: min(520px, 96%);
+      width: min(520px, 96vw);
       background:#fff;
-      border: 4px solid #000;
-      border-radius: 18px;
+      border: 6px solid #000;
+      border-radius: 22px;
       box-shadow: 0 16px 0 rgba(0,0,0,0.25);
-      overflow:hidden;
-      position:relative;
-    }
-
-    .modalHead{
-      padding: 14px 14px 10px;
-      text-align:center;
-      font-weight: 900;
-      font-size: 26px;
-      color:#111;
-      position:relative;
+      padding: 14px 14px 16px;
+      position: relative;
     }
 
     .closeX{
       position:absolute;
-      left: 12px;
+      left: 14px;
       top: 10px;
-      width: 38px;
-      height: 38px;
-      border: 0;
+      font-size: 34px;
+      font-weight: 1000;
+      color:#1d4aa7;
       background: transparent;
-      font-size: 32px;
-      font-weight: 900;
-      line-height: 1;
+      border: none;
       cursor:pointer;
-      color:#1b3f7a;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    .modalTitle{
+      text-align:center;
+      font-weight: 1000;
+      font-size: 34px;
+      margin: 8px 0 12px;
     }
 
     .tabs{
       display:flex;
       justify-content:center;
       gap: 10px;
-      padding: 0 14px 12px;
-    }
-
-    .tabBtn{
-      border: 4px solid #000;
-      border-radius: 14px;
-      padding: 10px 14px;
-      font-weight: 900;
-      font-size: 22px;
-      cursor:pointer;
-      box-shadow: var(--shadowSmall);
-      background:#fff;
-      -webkit-tap-highlight-color:transparent;
-      min-width: 92px;
-    }
-    .tab-link{ background: var(--yellow); }
-    .tab-code{ background: #2aa552; color:#fff; }
-    .tab-qr{ background: var(--orange); color:#111; }
-
-    .tabBtn.active{
-      transform: translateY(1px);
-      box-shadow: 0 7px 0 rgba(0,0,0,0.18);
-      filter: saturate(1.15);
-    }
-
-    .modalBody{
-      padding: 0 14px 16px;
-    }
-
-    .box{
-      background: #f4f4f4;
-      border: 3px solid rgba(0,0,0,0.18);
-      border-radius: 14px;
-      padding: 12px;
-    }
-
-    .boxTitle{
-      text-align:center;
-      font-weight: 900;
-      font-size: 18px;
-      color:#333;
-      margin-bottom: 8px;
-    }
-
-    .linkText{
-      direction:ltr;
-      text-align:center;
-      font-weight: 800;
-      font-size: 16px;
-      line-height: 1.35;
-      word-break: break-all;
-      color:#111;
-      background:#fff;
-      border: 2px solid rgba(0,0,0,0.18);
-      border-radius: 12px;
-      padding: 10px 10px;
       margin-bottom: 12px;
     }
-
-    .rowBtns{
-      display:flex;
-      gap: 12px;
-      justify-content:center;
-      flex-wrap:wrap;
-    }
-
-    .miniBtn{
+    .tab{
       border: 4px solid #000;
       border-radius: 16px;
       padding: 10px 16px;
-      font-weight: 900;
-      font-size: 20px;
-      cursor:pointer;
-      background: #fff;
-      color:#1b3f7a;
-      box-shadow: var(--shadowSmall);
-      -webkit-tap-highlight-color:transparent;
-      min-width: 150px;
-    }
-
-    .toast{
-      position:fixed;
-      top: 14px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #111;
-      color:#fff;
-      padding: 10px 14px;
-      border-radius: 999px;
-      font-weight: 900;
-      font-size: 16px;
-      z-index: 2000;
-      opacity:0;
-      pointer-events:none;
-      transition: opacity .18s ease, transform .18s ease;
-    }
-    .toast.show{
-      opacity:1;
-      transform: translateX(-50%) translateY(2px);
-    }
-
-    .codeBig{
-      font-size: 46px;
       font-weight: 1000;
+      font-size: 22px;
+      cursor:pointer;
+      box-shadow: 0 8px 0 rgba(0,0,0,0.18);
+      -webkit-tap-highlight-color:transparent;
+    }
+    .tab:active{ transform: translateY(1px); box-shadow: 0 7px 0 rgba(0,0,0,0.18); }
+
+    .tabLink{ background: var(--yellow); }
+    .tabCode{ background: #2fa24a; color:#fff; }
+    .tabQR{ background: var(--orange); }
+
+    .tab.active{
+      filter: brightness(0.98);
+      outline: 4px solid rgba(0,0,0,0.15);
+    }
+
+    .shareBox{
+      border: 3px solid rgba(0,0,0,0.25);
+      border-radius: 18px;
+      padding: 12px 12px 12px;
+      background: #f7f7f7;
+    }
+
+    .shareLabel{
       text-align:center;
-      letter-spacing: 2px;
-      color:#111;
-      background:#fff;
-      border: 2px solid rgba(0,0,0,0.18);
+      font-weight: 1000;
+      font-size: 22px;
+      margin: 2px 0 8px;
+      color:#333;
+    }
+
+    .bigCode{
+      text-align:center;
+      font-weight: 1000;
+      font-size: 44px;
+      margin: 6px 0 10px;
+      letter-spacing: 1px;
+    }
+
+    .linkText{
+      width:100%;
+      border: 3px solid rgba(0,0,0,0.18);
       border-radius: 14px;
-      padding: 16px 10px;
-      margin-top: 6px;
+      padding: 10px 10px;
+      background: #fff;
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1.4;
+      word-break: break-all;
+      text-align:left;
+      direction:ltr;
     }
 
     .qrWrap{
       display:flex;
-      flex-direction:column;
+      justify-content:center;
       align-items:center;
-      gap: 10px;
-      padding-top: 2px;
+      padding: 10px 0 8px;
     }
     .qrImg{
       width: 220px;
       height: 220px;
-      border-radius: 14px;
+      border-radius: 16px;
+      border: 4px solid #000;
       background:#fff;
-      border: 2px solid rgba(0,0,0,0.18);
-      display:block;
+      object-fit: contain;
+      box-shadow: 0 10px 0 rgba(0,0,0,0.18);
     }
 
-    .section{ display:none; }
-    .section.show{ display:block; }
+    .copyRow{
+      display:flex;
+      justify-content:center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .copyBtn{
+      border: 4px solid #000;
+      border-radius: 18px;
+      padding: 10px 14px;
+      background:#fff;
+      font-weight: 1000;
+      font-size: 20px;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      min-width: 160px;
+      box-shadow: 0 8px 0 rgba(0,0,0,0.15);
+    }
+    .copyBtn:active{ transform: translateY(1px); box-shadow: 0 7px 0 rgba(0,0,0,0.15); }
+
+    .copyBtn.copied{
+      background: #dff7df;
+    }
+
+    /* ====== شاشة اللاعب (join) ====== */
+    .joinTitle{
+      margin: 8px 0 14px;
+      text-align:center;
+      color: var(--green);
+      font-size: 44px;
+      font-weight: 1000;
+    }
+
+    .readyBtn{
+      width: min(320px, 85%);
+      margin: 0 auto;
+      display:block;
+      border: 5px solid #000;
+      background: var(--yellow);
+      color:#111;
+      font-weight: 1000;
+      font-size: 44px;
+      border-radius: 26px;
+      padding: 12px 26px;
+      box-shadow: var(--shadow);
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .readyBtn:active{ transform: translateY(1px); box-shadow: 0 9px 0 rgba(0,0,0,0.18); }
+
+    .buyBtn{
+      width: min(360px, 92%);
+      margin: 14px auto 0;
+      display:block;
+      border: 5px solid #000;
+      background: var(--blue);
+      color:#111;
+      font-weight: 1000;
+      font-size: 28px;
+      border-radius: 22px;
+      padding: 12px 22px;
+      box-shadow: var(--shadowSmall);
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .buyBtn:active{ transform: translateY(1px); box-shadow: 0 7px 0 rgba(0,0,0,0.18); }
+
+    .waitBox{
+      margin-top: 14px;
+      width: 100%;
+      padding: 20px 14px;
+      border: 6px solid var(--green);
+      border-radius: 22px;
+      background: rgba(63,91,42,0.75);
+      color:#fff;
+      text-align:center;
+      font-weight: 1000;
+      font-size: 30px;
+      min-height: 92px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
 
     @media (max-width: 360px){
-      .title{ font-size: 20px; }
-      .boardTitle{ font-size: 30px; }
-      .btn{ font-size: 26px; }
-      .tabBtn{ font-size: 20px; }
-      .miniBtn{ font-size: 18px; min-width: 140px; }
-      .qrImg{ width: 200px; height: 200px; }
+      .title{ font-size: 30px; top: 18px; }
+      .joinTitle{ font-size: 40px; }
+      .btn{ font-size: 32px; }
+      .readyBtn{ font-size: 40px; }
+      .panelTitle{ font-size: 34px; }
+      .homeBtn{ width: 66px; height: 66px; }
+      .homeBtn svg{ width: 36px; height: 36px; }
     }
   </style>
 </head>
 
 <body>
-  <div class="page">
+  <!-- Host Screen -->
+  <div class="page screen" id="screenHost">
     <div class="frame">
       <div class="topRow">
-        <div class="title">اللعب من أجهزة متعددة</div>
+        <div class="title">اللعب من اجهزة متعددة</div>
         <img class="logo" src="logo.PNG" alt="logo">
       </div>
 
-      <input id="hostName" class="hostInput" type="text" placeholder="اكتب اسمك هنا" />
+      <input id="hostName" class="nameInput" type="text" placeholder="اكتب اسمك هنا" />
 
-      <div class="board">
-        <div class="boardTitle">اسماء اللاعبين</div>
-        <div class="boardHint">شارك الرابط مع اللاعبين<br>وأسماء اللاعبين راح تظهر هنا</div>
-
-        <div class="playersList" id="playersList"></div>
+      <div class="panel">
+        <div class="panelTitle">اسماء اللاعبين</div>
+        <div class="hint" id="hintHost">شارك الرابط مع اللاعبين وأسماء اللاعبين راح تظهر هنا</div>
+        <div class="list" id="playersList"></div>
       </div>
 
-      <div class="btnWrap">
-        <button class="btn btnShare" id="shareBtn">مشاركة اللاعبين</button>
-        <button class="btn btnStart" id="startBtn">ابدأ اللعب</button>
+      <div class="btnRow">
+        <button class="btn btnBlue" id="shareBtn">مشاركة اللاعبين</button>
+        <button class="btn btnYellow" id="startBtn" disabled>ابدأ اللعب</button>
       </div>
 
-      <div class="homeBtn" id="homeBtn" title="الرئيسية" aria-label="الرئيسية">
+      <div class="homeBtn" id="homeBtnHost" title="الرئيسية" aria-label="الرئيسية">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
         </svg>
@@ -426,264 +448,373 @@
     </div>
   </div>
 
-  <!-- Toast -->
-  <div class="toast" id="toast">تم نسخ الرابط ✔</div>
-
-  <!-- Modal -->
-  <div class="overlay" id="overlay" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-label="مشاركة اللعبة">
-      <div class="modalHead">
-        <button class="closeX" id="closeModal" aria-label="إغلاق">×</button>
-        مشاركة اللعبة
+  <!-- Join Screen -->
+  <div class="page screen" id="screenJoin">
+    <div class="frame">
+      <div class="topRow">
+        <img class="logo" src="logo.PNG" alt="logo">
       </div>
 
-      <div class="tabs">
-        <!-- ✅ ترتيب صحيح -->
-        <button class="tabBtn tab-link active" data-tab="link" id="tabLink">رابط</button>
-        <button class="tabBtn tab-code" data-tab="code" id="tabCode">رمز</button>
-        <button class="tabBtn tab-qr" data-tab="qr" id="tabQr">باركود</button>
-      </div>
+      <div class="joinTitle">لعبة برا السالفة</div>
 
-      <div class="modalBody">
-        <!-- رابط -->
-        <div class="section show" id="sec-link">
-          <div class="box">
-            <div class="boxTitle">رابط الدخول</div>
-            <div class="linkText" id="joinLinkText">...</div>
+      <input id="playerName" class="nameInput" type="text" placeholder="اكتب اسمك هنا" />
 
-            <div class="rowBtns">
-              <!-- ✅ فقط نسخ الرابط (حذف فتح المتجر) -->
-              <button class="miniBtn" id="copyLinkBtn">نسخ الرابط</button>
-            </div>
-          </div>
-        </div>
+      <button class="readyBtn" id="readyBtn">جاهز</button>
+      <button class="buyBtn" id="buyBtn">للشراء اللعبة اضغط هنا</button>
 
-        <!-- رمز -->
-        <div class="section" id="sec-code">
-          <div class="box">
-            <div class="boxTitle">رمز الغرفة</div>
-            <div class="codeBig" id="roomCodeText">------</div>
-          </div>
-        </div>
-
-        <!-- باركود -->
-        <div class="section" id="sec-qr">
-          <div class="box">
-            <div class="boxTitle">امسح الباركود للدخول</div>
-            <div class="qrWrap">
-              <img class="qrImg" id="qrImg" alt="QR" />
-              <div style="font-weight:900;color:#555;text-align:center;font-size:14px;opacity:.9">
-                إذا ما ظهر الباركود، انتظر ثانية أو افتح تبويب (رابط) وانسخه.
-              </div>
-            </div>
-
-            <div class="rowBtns" style="margin-top:12px">
-              <button class="miniBtn" id="copyLinkBtn2">نسخ الرابط</button>
-            </div>
-          </div>
-        </div>
-
+      <div class="homeBtn" id="homeBtnJoin" title="الرئيسية" aria-label="الرئيسية">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
+        </svg>
       </div>
     </div>
   </div>
 
-  <script>
-    // ====== Placeholder behavior (مثل جهاز واحد) ======
-    const hostInput = document.getElementById('hostName');
-    document.addEventListener('focusin', (e) => {
-      if (e.target === hostInput) {
-        e.target.dataset.ph = e.target.placeholder;
-        e.target.placeholder = '';
-      }
-    });
-    document.addEventListener('focusout', (e) => {
-      if (e.target === hostInput) {
-        if (!e.target.value.trim()) {
-          e.target.placeholder = e.target.dataset.ph || '';
-        }
-      }
-    });
+  <!-- Wait Screen -->
+  <div class="page screen" id="screenWait">
+    <div class="frame">
+      <div class="topRow">
+        <img class="logo" src="logo.PNG" alt="logo">
+      </div>
 
-    // ====== عناصر ======
-    const playersList = document.getElementById('playersList');
-    const shareBtn = document.getElementById('shareBtn');
-    const startBtn = document.getElementById('startBtn');
-    const homeBtn = document.getElementById('homeBtn');
+      <div class="waitBox" id="waitText">بانتظار مقدم اللعبة…</div>
 
-    const overlay = document.getElementById('overlay');
-    const closeModal = document.getElementById('closeModal');
+      <div class="homeBtn" id="homeBtnWait" title="الرئيسية" aria-label="الرئيسية">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
 
-    const tabBtns = document.querySelectorAll('.tabBtn');
-    const secLink = document.getElementById('sec-link');
-    const secCode = document.getElementById('sec-code');
-    const secQr = document.getElementById('sec-qr');
+  <!-- Share Modal -->
+  <div class="overlay" id="overlay">
+    <div class="modal" role="dialog" aria-modal="true">
+      <button class="closeX" id="closeModal" aria-label="إغلاق">×</button>
+      <div class="modalTitle">مشاركة اللعبة</div>
 
-    const joinLinkText = document.getElementById('joinLinkText');
-    const roomCodeText = document.getElementById('roomCodeText');
-    const qrImg = document.getElementById('qrImg');
+      <div class="tabs">
+        <!-- ✅ الترتيب الصحيح: باركود = QR ، رمز = كود ، رابط = رابط -->
+        <button class="tab tabLink active" id="tabLink">رابط</button>
+        <button class="tab tabCode" id="tabCode">رمز</button>
+        <button class="tab tabQR" id="tabQR">باركود</button>
+      </div>
 
-    const copyLinkBtn = document.getElementById('copyLinkBtn');
-    const copyLinkBtn2 = document.getElementById('copyLinkBtn2');
-    const toast = document.getElementById('toast');
+      <div class="shareBox">
+        <div class="shareLabel" id="shareLabel">رابط الدخول</div>
 
-    // ====== توليد رمز غرفة ======
-    function makeRoomCode(){
+        <div id="panelLink">
+          <div class="linkText" id="linkBox"></div>
+
+          <div class="copyRow">
+            <button class="copyBtn" id="copyLinkBtn">نسخ الرابط</button>
+          </div>
+        </div>
+
+        <div id="panelCode" style="display:none;">
+          <div class="shareLabel">رمز الغرفة</div>
+          <div class="bigCode" id="codeBox">------</div>
+
+          <div class="copyRow">
+            <button class="copyBtn" id="copyCodeBtn">نسخ الرمز</button>
+          </div>
+        </div>
+
+        <div id="panelQR" style="display:none;">
+          <div class="shareLabel">امسح الباركود للدخول</div>
+          <div class="qrWrap">
+            <img class="qrImg" id="qrImg" alt="QR">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { ensureRoom, addPlayer, listenRoom, setRoomStatus } from "./data/firebase.js";
+
+    // ===== Helpers =====
+    function randRoom(){
       return String(Math.floor(100000 + Math.random() * 900000));
     }
 
-    // نخزن الغرفة بالجلسة للمقدم
-    let roomCode = sessionStorage.getItem('multi_room');
-    if(!roomCode){
-      roomCode = makeRoomCode();
-      sessionStorage.setItem('multi_room', roomCode);
+    function safeJSONParse(v){
+      try{ return JSON.parse(v); }catch(e){ return null; }
     }
 
-    // ====== بناء رابط join بشكل صحيح دائماً ======
-    // يبني المسار داخل نفس المجلد (repo) حتى ما يصير 404 بسبب مسار غلط
-    function buildJoinUrl(code){
-      const base = location.origin + location.pathname.replace(/[^\/]*$/, '');
-      return base + 'join.html?room=' + encodeURIComponent(code);
-    }
-
-    function updateShareData(){
-      const url = buildJoinUrl(roomCode);
-      joinLinkText.textContent = url;
-      roomCodeText.textContent = roomCode;
-
-      // QR عبر خدمة جاهزة
-      const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" + encodeURIComponent(url);
-      qrImg.src = qrUrl;
-    }
-
-    updateShareData();
-
-    // ====== Toast ======
-    let toastTimer = null;
-    function showToast(msg){
-      toast.textContent = msg;
-      toast.classList.add('show');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toast.classList.remove('show'), 1200);
-    }
-
-    async function copyText(text){
-      try{
-        await navigator.clipboard.writeText(text);
-        showToast('تم نسخ الرابط ✔');
-        return true;
-      }catch(e){
-        // fallback
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.select();
-        try{
-          document.execCommand('copy');
-          showToast('تم نسخ الرابط ✔');
-          document.body.removeChild(ta);
-          return true;
-        }catch(err){
-          document.body.removeChild(ta);
-          alert('ما قدرت أنسخ تلقائياً. انسخه يدويًا من داخل المربع.');
-          return false;
+    function setPlaceholderBehavior(input){
+      document.addEventListener('focusin', (e) => {
+        if (e.target === input) {
+          e.target.dataset.ph = e.target.placeholder;
+          e.target.placeholder = '';
         }
-      }
-    }
-
-    function currentJoinUrl(){
-      return joinLinkText.textContent.trim();
-    }
-
-    copyLinkBtn.addEventListener('click', () => copyText(currentJoinUrl()));
-    copyLinkBtn2.addEventListener('click', () => copyText(currentJoinUrl()));
-
-    // ====== فتح/إغلاق المودال ======
-    function openModal(){
-      updateShareData();
-      overlay.classList.add('show');
-      overlay.setAttribute('aria-hidden','false');
-      // افتراضي: رابط
-      setTab('link');
-    }
-    function closeIt(){
-      overlay.classList.remove('show');
-      overlay.setAttribute('aria-hidden','true');
-    }
-
-    shareBtn.addEventListener('click', openModal);
-    closeModal.addEventListener('click', closeIt);
-    overlay.addEventListener('click', (e) => {
-      if(e.target === overlay) closeIt();
-    });
-
-    // ====== التابات (إصلاح التبديل) ======
-    function setTab(which){
-      tabBtns.forEach(b => b.classList.remove('active'));
-      secLink.classList.remove('show');
-      secCode.classList.remove('show');
-      secQr.classList.remove('show');
-
-      if(which === 'link'){
-        document.getElementById('tabLink').classList.add('active');
-        secLink.classList.add('show');
-      }else if(which === 'code'){
-        document.getElementById('tabCode').classList.add('active');
-        secCode.classList.add('show');
-      }else{
-        document.getElementById('tabQr').classList.add('active');
-        secQr.classList.add('show');
-      }
-    }
-
-    tabBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        setTab(btn.getAttribute('data-tab'));
       });
-    });
-
-    // ====== قائمة اللاعبين (مؤقتاً محلياً للمظهر) ======
-    // (الربط الحقيقي مع join.html + Firebase بنسويه بعد إضافة join.html)
-    const localPlayersKey = 'multi_players_' + roomCode;
-
-    function renderPlayers(names){
-      playersList.innerHTML = '';
-      (names || []).forEach(n => {
-        const d = document.createElement('div');
-        d.className = 'pItem';
-        d.textContent = n;
-        playersList.appendChild(d);
+      document.addEventListener('focusout', (e) => {
+        if (e.target === input) {
+          if (!e.target.value.trim()) {
+            e.target.placeholder = e.target.dataset.ph || '';
+          }
+        }
       });
     }
 
-    function loadLocalPlayers(){
-      try{
-        const v = localStorage.getItem(localPlayersKey);
-        const arr = v ? JSON.parse(v) : [];
-        return Array.isArray(arr) ? arr : [];
-      }catch(e){ return []; }
+    function getBaseUrl(){
+      // يبني رابط صحيح على GitHub Pages مهما كان اسم المستودع
+      const u = new URL(location.href);
+      const path = u.pathname; // /-bara-alsalfah/players.html
+      const dir = path.substring(0, path.lastIndexOf('/') + 1);
+      return u.origin + dir;
     }
 
-    renderPlayers(loadLocalPlayers());
+    function makeJoinLink(roomId){
+      // ✅ لا يوجد join.html — كله داخل players.html
+      return getBaseUrl() + "players.html?room=" + encodeURIComponent(roomId);
+    }
 
-    // ====== زر ابدأ اللعب (لاحقاً بيروح لصفحة اللعبة المتعددة) ======
-    startBtn.addEventListener('click', () => {
-      // حالياً فقط تأكيد بسيط (لين نكمل صفحات النمط المتعدد)
-      if(!hostInput.value.trim()){
-        alert('اكتب اسمك (اسم المقدم) أولاً');
+    function qrUrl(data){
+      // ✅ QR من خدمة موثوقة (بدون ملفات ناقصة)
+      return "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" + encodeURIComponent(data);
+    }
+
+    function renderPlayers(listEl, players){
+      listEl.innerHTML = "";
+      const names = (players || [])
+        .map(p => (p && p.name ? String(p.name).trim() : ""))
+        .filter(Boolean);
+
+      if(!names.length){
+        listEl.innerHTML = `<div class="playerItem" style="opacity:.75;">لا يوجد لاعبين بعد</div>`;
         return;
       }
-      sessionStorage.setItem('multi_host', hostInput.value.trim());
-      sessionStorage.setItem('multi_room', roomCode);
-      alert('تمام. الآن شارك الرابط مع اللاعبين. (بنكمّل صفحات النمط المتعدد بعد join.html)');
+
+      names.forEach(n => {
+        const div = document.createElement("div");
+        div.className = "playerItem";
+        div.textContent = n;
+        listEl.appendChild(div);
+      });
+    }
+
+    async function copyText(btn, text){
+      const original = btn.textContent;
+      try{
+        await navigator.clipboard.writeText(text);
+      }catch(e){
+        // fallback
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+      }
+
+      btn.classList.add("copied");
+      btn.textContent = "تم النسخ ✓";
+      setTimeout(() => {
+        btn.classList.remove("copied");
+        btn.textContent = original;
+      }, 1200);
+    }
+
+    // ===== Elements =====
+    const params = new URLSearchParams(location.search);
+    const roomParam = (params.get("room") || "").trim();
+
+    const screenHost = document.getElementById("screenHost");
+    const screenJoin = document.getElementById("screenJoin");
+    const screenWait = document.getElementById("screenWait");
+
+    const hostName = document.getElementById("hostName");
+    const playerName = document.getElementById("playerName");
+
+    const playersList = document.getElementById("playersList");
+    const shareBtn = document.getElementById("shareBtn");
+    const startBtn = document.getElementById("startBtn");
+
+    const homeBtnHost = document.getElementById("homeBtnHost");
+    const homeBtnJoin = document.getElementById("homeBtnJoin");
+    const homeBtnWait = document.getElementById("homeBtnWait");
+
+    const overlay = document.getElementById("overlay");
+    const closeModal = document.getElementById("closeModal");
+
+    const tabLink = document.getElementById("tabLink");
+    const tabCode = document.getElementById("tabCode");
+    const tabQR = document.getElementById("tabQR");
+
+    const panelLink = document.getElementById("panelLink");
+    const panelCode = document.getElementById("panelCode");
+    const panelQR = document.getElementById("panelQR");
+
+    const linkBox = document.getElementById("linkBox");
+    const codeBox = document.getElementById("codeBox");
+    const qrImg = document.getElementById("qrImg");
+
+    const copyLinkBtn = document.getElementById("copyLinkBtn");
+    const copyCodeBtn = document.getElementById("copyCodeBtn");
+
+    const readyBtn = document.getElementById("readyBtn");
+    const buyBtn = document.getElementById("buyBtn");
+    const waitText = document.getElementById("waitText");
+
+    setPlaceholderBehavior(hostName);
+    setPlaceholderBehavior(playerName);
+
+    function show(screen){
+      [screenHost, screenJoin, screenWait].forEach(s => s.classList.remove("show"));
+      screen.classList.add("show");
+    }
+
+    function goHome(){
+      location.href = "index.html";
+    }
+
+    homeBtnHost.addEventListener("click", goHome);
+    homeBtnJoin.addEventListener("click", goHome);
+    homeBtnWait.addEventListener("click", goHome);
+
+    // ===== Waiting animation (كما طلبت) =====
+    const seq = [
+      "بانتظار",
+      "بانتظار مقدم",
+      "بانتظار مقدم اللعبة",
+      "بانتظار مقدم اللعبة.",
+      "بانتظار مقدم اللعبة..",
+      "بانتظار مقدم اللعبة...",
+      ""
+    ];
+    let wI = 0, wTimer = null;
+    function startWaitAnim(){
+      if (wTimer) clearInterval(wTimer);
+      wI = 0;
+      wTimer = setInterval(() => {
+        waitText.textContent = seq[wI];
+        wI++;
+        if (wI >= seq.length) wI = 0;
+      }, 380);
+    }
+
+    // ===== Modal tabs =====
+    function setActiveTab(which){
+      [tabLink, tabCode, tabQR].forEach(t => t.classList.remove("active"));
+      panelLink.style.display = "none";
+      panelCode.style.display = "none";
+      panelQR.style.display = "none";
+
+      if(which === "link"){
+        tabLink.classList.add("active");
+        panelLink.style.display = "block";
+      }else if(which === "code"){
+        tabCode.classList.add("active");
+        panelCode.style.display = "block";
+      }else{
+        tabQR.classList.add("active");
+        panelQR.style.display = "block";
+      }
+    }
+
+    tabLink.addEventListener("click", () => setActiveTab("link"));
+    tabCode.addEventListener("click", () => setActiveTab("code"));
+    tabQR.addEventListener("click", () => setActiveTab("qr"));
+
+    closeModal.addEventListener("click", () => overlay.classList.remove("show"));
+    overlay.addEventListener("click", (e) => {
+      if(e.target === overlay) overlay.classList.remove("show");
     });
 
-    // ====== زر الرئيسية ======
-    homeBtn.addEventListener('click', () => {
-      // لا نمسح كل شيء عشان ما نخرب النمط، فقط رجوع للرئيسية
-      window.location.href = 'index.html';
-    });
+    // ===== Host flow =====
+    let currentRoom = null;
+    let unsub = null;
+
+    async function initHost(){
+      show(screenHost);
+
+      // تثبيت/توليد رقم الغرفة للمقدم
+      currentRoom = sessionStorage.getItem("multi_room");
+      if(!currentRoom){
+        currentRoom = randRoom();
+        sessionStorage.setItem("multi_room", currentRoom);
+      }
+
+      await ensureRoom(currentRoom);
+
+      const link = makeJoinLink(currentRoom);
+      linkBox.textContent = link;
+      codeBox.textContent = currentRoom;
+      qrImg.src = qrUrl(link);
+
+      // زر مشاركة اللاعبين
+      shareBtn.addEventListener("click", () => {
+        setActiveTab("link");
+        overlay.classList.add("show");
+      });
+
+      copyLinkBtn.addEventListener("click", () => copyText(copyLinkBtn, link));
+      copyCodeBtn.addEventListener("click", () => copyText(copyCodeBtn, currentRoom));
+
+      // استماع لحالة الغرفة واللاعبين
+      if (unsub) unsub();
+      unsub = listenRoom(currentRoom, (data) => {
+        const players = data && Array.isArray(data.players) ? data.players : [];
+        renderPlayers(playersList, players);
+
+        // تفعيل زر ابدأ اللعب إذا يوجد لاعب واحد على الأقل
+        startBtn.disabled = players.length === 0;
+      });
+
+      // ابدأ اللعب (نغير الحالة فقط الآن)
+      startBtn.addEventListener("click", async () => {
+        startBtn.disabled = true;
+        await setRoomStatus(currentRoom, "playing");
+        // (الانتقال لصفحة اللعب المتعدد سنضيفها لاحقاً)
+        startBtn.disabled = false;
+      });
+    }
+
+    // ===== Player flow =====
+    async function initPlayer(roomId){
+      show(screenJoin);
+
+      await ensureRoom(roomId);
+
+      buyBtn.addEventListener("click", () => {
+        window.open("https://sandooq-m.com", "_blank");
+      });
+
+      readyBtn.addEventListener("click", async () => {
+        const name = (playerName.value || "").trim();
+        if(!name){
+          alert("اكتب اسمك أولاً");
+          return;
+        }
+
+        // ✅ إضافة اللاعب للغرفة في Firestore
+        await addPlayer(roomId, name);
+
+        // انتقال لصفحة الانتظار بالحركة
+        show(screenWait);
+        startWaitAnim();
+
+        // نستمع للحالة (حاليًا ما ننقله لأي صفحة لعب حتى نبنيها)
+        if (unsub) unsub();
+        unsub = listenRoom(roomId, (data) => {
+          // إذا احتجنا لاحقاً: لو status = playing ننتقل لصفحة اللعب
+          // (بنضيفها بعدين حسب تصميمك)
+        });
+      });
+    }
+
+    // ===== Init =====
+    (async function(){
+      if(roomParam){
+        // هذا لاعب
+        await initPlayer(roomParam);
+      }else{
+        // هذا مقدم
+        await initHost();
+      }
+    })();
   </script>
 </body>
 </html>
