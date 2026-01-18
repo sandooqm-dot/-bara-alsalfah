@@ -49,10 +49,12 @@
       overflow:hidden;
     }
 
+    /* ✅ نفس فكرة صفحة المقدم: عنوان يمين + لوجو يسار */
     .topRow{
       position: relative;
       min-height: 86px;
       margin-bottom: 10px;
+      padding-left: 118px; /* مساحة للّوجو */
     }
     .logo{
       position:absolute;
@@ -65,13 +67,17 @@
       pointer-events:none;
     }
     .h1{
-      margin: 22px 0 0;
-      text-align:center;
+      position:absolute;
+      right: 18px;
+      top: 22px;
+      margin:0;
+      text-align:right;
       color: var(--green);
       font-weight: 1000;
       font-size: 44px;
       letter-spacing: .2px;
       line-height: 1.15;
+      white-space:nowrap;
     }
 
     .centerBlock{
@@ -79,7 +85,8 @@
       display:flex;
       flex-direction:column;
       align-items:center;
-      padding-top: clamp(8px, 6vh, 44px);
+      /* ✅ ننزل العناصر شوي لتكون بالمنتصف */
+      padding-top: clamp(28px, 10vh, 80px);
       gap: 16px;
     }
 
@@ -117,7 +124,17 @@
     .btn:active{ transform: translateY(1px); box-shadow: 0 9px 0 rgba(0,0,0,0.18); }
 
     .btnReady{ background: var(--yellow); color:#111; }
-    .btnBuy{ background: var(--blue); color:#111; font-size: 28px; }
+
+    /* ✅ زر الشراء أصغر من الأطراف + ينزل أكثر */
+    .btnBuy{
+      width: min(360px, 82%);
+      background: var(--blue);
+      color:#111;
+      font-size: 28px;
+    }
+    .buySpacer{
+      height: clamp(28px, 7vh, 110px); /* ينزل زر الشراء للأسفل */
+    }
 
     .btn[disabled]{
       opacity:.55;
@@ -141,7 +158,7 @@
     }
 
     @media (max-width: 360px){
-      .h1{ font-size: 38px; }
+      .h1{ font-size: 38px; top: 20px; right: 16px; }
       .logo{ width: 90px; height: 90px; }
       .btn{ font-size: 32px; }
       .btnBuy{ font-size: 26px; }
@@ -162,6 +179,9 @@
         <input id="playerInput" class="nameBox" type="text" placeholder="اكتب اسمك هنا" autocomplete="off" />
 
         <button id="readyBtn" class="btn btnReady">جاهز</button>
+
+        <div class="buySpacer"></div>
+
         <button id="buyBtn" class="btn btnBuy">لشراء اللعبة اضغط هنا</button>
 
         <div id="err" class="err"></div>
@@ -172,7 +192,7 @@
   </div>
 
   <script type="module">
-    import { addPlayer, ensureRoom, listenRoom } from "./data/firebase.js";
+    import { addPlayer } from "./data/firebase.js";
 
     const playerInput = document.getElementById("playerInput");
     const readyBtn    = document.getElementById("readyBtn");
@@ -228,9 +248,6 @@
       window.open("https://sandooq-m.com", "_blank", "noopener,noreferrer");
     });
 
-    // (اختياري) نتابع حالة الغرفة لاحقاً في صفحة الانتظار
-    let unsub = null;
-
     readyBtn.addEventListener("click", async () => {
       hideErr();
 
@@ -252,10 +269,10 @@
       readyBtn.textContent = "جارٍ الدخول...";
 
       try{
-        await ensureRoom(roomId);
+        // ✅ حل التأخير: لا نستدعي ensureRoom هنا لأن addPlayer يستدعيها داخلياً
         await addPlayer(roomId, name);
 
-        // بعد الإضافة: روح لصفحة الانتظار (بنضبطها بالملف القادم)
+        // روح لصفحة الانتظار (تأكد أن ملف wait.html موجود بنفس الاسم)
         window.location.href = "wait.html?room=" + encodeURIComponent(roomId);
       }catch(e){
         console.error(e);
