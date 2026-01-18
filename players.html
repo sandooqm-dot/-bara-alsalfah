@@ -640,13 +640,6 @@
     tabCode.addEventListener("click", () => setTab("code"));
     tabLink.addEventListener("click", () => setTab("link"));
 
-    // ✅ هذا هو المطلوب: الزر صار يشتغل مهما صار لفirebase
-    shareBtn.addEventListener("click", () => {
-      const hostName = normalizeName(hostInput.value);
-      sessionStorage.setItem(KEY_HOST, hostName);
-      openModal();
-    });
-
     async function copyText(text){
       try{
         await navigator.clipboard.writeText(text);
@@ -729,6 +722,38 @@
       const v = normalizeName(hostInput.value);
       sessionStorage.setItem(KEY_HOST, v);
       renderPlayers(currentPlayers);
+    });
+
+    // ✅ التعديل الأساسي: عند مشاركة اللاعبين نضيف المقدم مباشرة داخل الغرفة
+    shareBtn.addEventListener("click", async () => {
+      const hostName = normalizeName(hostInput.value);
+      sessionStorage.setItem(KEY_HOST, hostName);
+
+      if(!hostName){
+        alert("اكتب اسمك أولاً.");
+        hostInput.focus();
+        return;
+      }
+
+      // إذا الفايربيس جاهز: نضمن أن اسم المقدم موجود ضمن players قبل دخول أي لاعب
+      if(firebaseReady){
+        try{
+          await ensureRoom(roomId);
+
+          const hostAdded = sessionStorage.getItem(KEY_HOST_ADDED) === "1";
+          const exists = (currentPlayers || []).some(p => normalizeName(p?.name) === hostName);
+
+          if(!hostAdded && !exists){
+            await addPlayer(roomId, hostName);
+            sessionStorage.setItem(KEY_HOST_ADDED, "1");
+          }
+        }catch(e){
+          console.warn("Host add on share failed:", e);
+          // نكمل فتح المشاركة حتى لو صار خطأ مؤقت
+        }
+      }
+
+      openModal();
     });
 
     // زر ابدأ اللعب (لو firebase مو جاهز نعطي تنبيه بدل ما “ما يصير شيء”)
