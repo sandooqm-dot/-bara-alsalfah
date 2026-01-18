@@ -42,7 +42,9 @@
 
       --homeSize: 60px;        /* حجم زر الرئيسية */
       --homeGap: 12px;         /* مسافة زر الرئيسية عن الحواف */
-      --bottomGap: 16px;       /* مسافة الشريط السفلي */
+
+      /* ✅ (تعديل 1) رفع زر التالي لمكانه الصحيح (أعلى من أسفل الشاشة) */
+      --bottomGap: 34px;       /* مسافة الشريط السفلي (أعلى) */
     }
 
     *{box-sizing:border-box}
@@ -58,7 +60,7 @@
       min-height:100vh;
       display:flex;
       justify-content:center;
-      padding:18px 14px 120px; /* مساحة للشريط السفلي */
+      padding:18px 14px 160px; /* ✅ مساحة أكبر للشريط السفلي بعد رفعه */
     }
     .frame{
       width:min(var(--containerMax), 100%);
@@ -82,8 +84,9 @@
       color:#2f3f22;
       opacity:.95;
     }
+    /* ✅ (تعديل 3) تكبير اللوجو */
     .logo{
-      width:54px;height:54px;
+      width:86px;height:86px;
       object-fit:contain;
     }
 
@@ -100,7 +103,11 @@
       font-size: var(--headerSize);
       line-height:1;
       text-align:center;
+
+      /* ✅ (تعديل 2) مخفي افتراضيًا لتجنب مربع فاضي */
+      display:none;
     }
+    .badgeTitle.show{ display:block; }
 
     .playerNameBox{
       margin: 10px auto 16px;
@@ -186,7 +193,10 @@
     .bottomBar{
       position:fixed;
       left:0; right:0;
-      bottom: var(--bottomGap);
+
+      /* ✅ (تعديل 1) رفع مكان الزر (مع مراعاة safe-area) */
+      bottom: calc(var(--bottomGap) + env(safe-area-inset-bottom));
+
       display:flex;
       justify-content:center;
       pointer-events:none;
@@ -245,6 +255,7 @@
       .cta{ width: 90%; font-size: 26px; }
       .homeBtn{ width:56px;height:56px; }
       .homeBtn svg{ width:30px;height:30px; }
+      .logo{ width:80px;height:80px; }
     }
 
     /* زر تصويت */
@@ -275,7 +286,7 @@
         <img class="logo" src="logo.PNG" alt="logo" />
       </div>
 
-      <div class="badgeTitle" id="pageTitle"> </div>
+      <div class="badgeTitle" id="pageTitle"></div>
       <div id="content"></div>
       <div class="spacerBottom"></div>
     </div>
@@ -443,6 +454,18 @@ const content = document.getElementById("content");
 const ctaBtn = document.getElementById("ctaBtn");
 const homeBtn = document.getElementById("homeBtn");
 
+/* ✅ (تعديل 2) عنوان الصفحة: يظهر فقط إذا فيه نص */
+function setPageTitle(text){
+  const t = (text || "").trim();
+  if(!t){
+    pageTitle.textContent = "";
+    pageTitle.classList.remove("show");
+    return;
+  }
+  pageTitle.textContent = t;
+  pageTitle.classList.add("show");
+}
+
 /* زر الرئيسية: يرجع للرئيسية + يصفر بيانات الجلسة */
 homeBtn.addEventListener("click", () => {
   // امسح كل المفاتيح المحتملة (قديمة/جديدة)
@@ -464,7 +487,7 @@ ctaBtn.addEventListener("click", () => next());
 /* ابدأ */
 (async function boot(){
   // شاشة تحميل بسيطة
-  pageTitle.textContent = " ";
+  setPageTitle("");
   content.innerHTML = `
     <div class="bigCard" style="min-height:260px;">
       <div class="msgText">جاري تجهيز الجولة...</div>
@@ -487,7 +510,7 @@ function render(){
 
   if(s === 0){
     const p = players[state.revealIndex];
-    pageTitle.textContent = " ";
+    setPageTitle("");
     content.innerHTML = `
       <div class="playerNameBox">${escapeHtml(p)}</div>
       <div class="bigCard" style="min-height:260px;">
@@ -507,7 +530,7 @@ function render(){
     // ✅ الحل الجذري: برا السالفة بالـ index وليس الاسم
     const isOut = (state.revealIndex === state.outsiderIndex);
 
-    pageTitle.textContent = " ";
+    setPageTitle("");
     if(isOut){
       content.innerHTML = `
         <div class="bigCard">
@@ -531,7 +554,7 @@ function render(){
   }
 
   if(s === 2){
-    pageTitle.textContent = "وقت الاسئلة";
+    setPageTitle("وقت الاسئلة");
     content.innerHTML = `
       <div class="bigCard" style="min-height:280px;">
         <div class="msgText">
@@ -544,7 +567,7 @@ function render(){
   }
 
   if(s === 3){
-    pageTitle.textContent = "وقت الاسئلة";
+    setPageTitle("وقت الاسئلة");
     const pair = state.pairings[state.askIndex];
     content.innerHTML = `
       <div class="bigCard" style="min-height:320px;">
@@ -569,7 +592,7 @@ function render(){
   }
 
   if(s === 4){
-    pageTitle.textContent = "ما تأكدت صح ؟";
+    setPageTitle("ما تأكدت صح ؟");
     ctaBtn.textContent = "تصويت";
     ctaBtn.classList.add("vote");
     ctaBtn.classList.add("compact");
@@ -653,3 +676,5 @@ function escapeHtml(str){
 
 </body>
 </html>
+
+<!-- single_game.html برا السالفة – إصدار 2 -->
