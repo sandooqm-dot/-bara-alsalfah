@@ -2,8 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>انضم للعبة</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>لعبة برا السالفة - أجهزة متعددة (لاعب)</title>
 
   <style>
     :root{
@@ -17,9 +17,6 @@
 
       --shadow: 0 10px 0 rgba(0,0,0,0.18);
       --shadowSmall: 0 8px 0 rgba(0,0,0,0.18);
-
-      --homeSide: 18px;
-      --homeBottom: calc(18px + env(safe-area-inset-bottom));
     }
 
     *{ box-sizing:border-box; }
@@ -43,22 +40,20 @@
       background: var(--bg);
       border: 6px solid var(--green);
       border-radius: 26px;
-      padding: 18px 16px 24px;
+      padding: 18px 16px 22px;
       position: relative;
 
       min-height: calc(100vh - 28px);
       display:flex;
       flex-direction:column;
-      gap: 18px;
+      overflow:hidden;
     }
 
     .topRow{
       position: relative;
-      min-height: 100px;
-      margin-bottom: 4px;
-      padding-left: 118px;
+      min-height: 86px;
+      margin-bottom: 10px;
     }
-
     .logo{
       position:absolute;
       left: 10px;
@@ -69,118 +64,87 @@
       opacity: 0.98;
       pointer-events:none;
     }
-
-    .mainTitle{
-      margin: 28px 0 0;
+    .h1{
+      margin: 22px 0 0;
       text-align:center;
       color: var(--green);
-      font-size: 42px;
       font-weight: 1000;
+      font-size: 44px;
       letter-spacing: .2px;
+      line-height: 1.15;
     }
 
-    .nameInput{
-      width: 100%;
-      padding: 16px 14px;
-      border: 5px solid var(--green2);
+    .centerBlock{
+      flex: 1;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      padding-top: clamp(8px, 6vh, 44px);
+      gap: 16px;
+    }
+
+    .nameBox{
+      width: min(460px, 92%);
+      padding: 14px 14px;
+      border: 4px solid var(--green2);
       border-radius: 18px;
       background:#fff;
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 900;
       color:#111;
       outline:none;
       text-align:center;
     }
-    .nameInput::placeholder{
+    .nameBox::placeholder{
       color: var(--muted);
       font-weight: 900;
       font-size: 18px;
       opacity: 0.75;
     }
 
-    /* زر جاهز */
-    .readyBtn{
-      border: 5px solid #000;
-      background: var(--yellow);
-      color:#111;
+    .btn{
+      width: min(420px, 92%);
+      border: 4px solid #000;
+      border-radius: 22px;
+      padding: 14px 18px;
+      font-size: 34px;
       font-weight: 1000;
-      font-size: 40px;
-      border-radius: 26px;
-      padding: 12px 26px;
-      width: min(320px, 85%);
-      margin: 0 auto;
       box-shadow: var(--shadow);
       cursor:pointer;
       -webkit-tap-highlight-color:transparent;
-    }
-    .readyBtn:active{ transform: translateY(1px); box-shadow: 0 9px 0 rgba(0,0,0,0.18); }
-
-    /* زر الشراء */
-    .buyBtn{
-      border: 5px solid #000;
-      background: var(--blue);
-      color:#111;
-      font-weight: 1000;
-      font-size: 28px;
-      border-radius: 22px;
-      padding: 12px 22px;
-      width: min(360px, 92%);
-      margin: 0 auto;
-      box-shadow: var(--shadowSmall);
-      cursor:pointer;
-      -webkit-tap-highlight-color:transparent;
-    }
-    .buyBtn:active{ transform: translateY(1px); box-shadow: 0 7px 0 rgba(0,0,0,0.18); }
-
-    /* زر الرئيسية */
-    .homeBtn{
-      position:absolute;
-      left: var(--homeSide);
-      bottom: var(--homeBottom);
-      width: 70px;
-      height: 70px;
-      border-radius: 22px;
-      border: 5px solid #000;
-      background: #bfe3ff;
-      box-shadow: var(--shadowSmall);
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      cursor:pointer;
-      z-index: 30;
-      -webkit-tap-highlight-color:transparent;
-    }
-    .homeBtn svg{ width:38px; height:38px; fill:#111; }
-
-    /* شاشة الانتظار */
-    .waitBox{
-      width: 100%;
-      padding: 20px 14px;
-      border: 6px solid var(--green);
-      border-radius: 22px;
-      background: rgba(63,91,42,0.75);
-      color:#fff;
       text-align:center;
-      font-weight: 1000;
-      font-size: 30px;
-      box-shadow: inset 0 0 0 0 rgba(0,0,0,0);
-      min-height: 92px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
+    }
+    .btn:active{ transform: translateY(1px); box-shadow: 0 9px 0 rgba(0,0,0,0.18); }
+
+    .btnReady{ background: var(--yellow); color:#111; }
+    .btnBuy{ background: var(--blue); color:#111; font-size: 28px; }
+
+    .btn[disabled]{
+      opacity:.55;
+      cursor:not-allowed;
+      transform:none;
     }
 
-    .screen{ display:none; }
-    .screen.show{ display:block; }
+    .err{
+      width: min(460px, 92%);
+      text-align:center;
+      color:#b00020;
+      font-weight: 900;
+      font-size: 16px;
+      display:none;
+      line-height: 1.4;
+    }
+
+    /* نخلي مساحة فاضية تحت (مثل الصورة) */
+    .bottomSpacer{
+      height: clamp(120px, 22vh, 260px);
+    }
 
     @media (max-width: 360px){
-      .mainTitle{ font-size: 38px; }
-      .readyBtn{ font-size: 36px; }
-      .buyBtn{ font-size: 26px; }
+      .h1{ font-size: 38px; }
       .logo{ width: 90px; height: 90px; }
-      .homeBtn{ width: 66px; height: 66px; }
-      .homeBtn svg{ width: 36px; height: 36px; }
-      .waitBox{ font-size: 26px; }
+      .btn{ font-size: 32px; }
+      .btnBuy{ font-size: 26px; }
     }
   </style>
 </head>
@@ -188,122 +152,117 @@
 <body>
   <div class="page">
     <div class="frame">
+
       <div class="topRow">
         <img class="logo" src="logo.PNG" alt="logo">
-        <div class="mainTitle">لعبة برا السالفة</div>
+        <div class="h1">لعبة برا السالفة</div>
       </div>
 
-      <!-- شاشة الإدخال -->
-      <div class="screen show" id="screenJoin">
-        <input id="playerName" class="nameInput" type="text" placeholder="اكتب اسمك هنا" />
+      <div class="centerBlock">
+        <input id="playerInput" class="nameBox" type="text" placeholder="اكتب اسمك هنا" autocomplete="off" />
 
-        <button class="readyBtn" id="readyBtn">جاهز</button>
+        <button id="readyBtn" class="btn btnReady">جاهز</button>
+        <button id="buyBtn" class="btn btnBuy">لشراء اللعبة اضغط هنا</button>
 
-        <button class="buyBtn" id="buyBtn">للشراء اللعبة اضغط هنا</button>
+        <div id="err" class="err"></div>
       </div>
 
-      <!-- شاشة الانتظار -->
-      <div class="screen" id="screenWait">
-        <div class="waitBox" id="waitText">بانتظار مقدم اللعبة…</div>
-      </div>
-
-      <div class="homeBtn" id="homeBtn" title="الرئيسية" aria-label="الرئيسية">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
-        </svg>
-      </div>
+      <div class="bottomSpacer"></div>
     </div>
   </div>
 
-  <script>
-    // Placeholder يختفي عند التركيز مثل بقية الصفحات
-    const playerName = document.getElementById('playerName');
+  <script type="module">
+    import { addPlayer, ensureRoom, listenRoom } from "./data/firebase.js";
+
+    const playerInput = document.getElementById("playerInput");
+    const readyBtn    = document.getElementById("readyBtn");
+    const buyBtn      = document.getElementById("buyBtn");
+    const errBox      = document.getElementById("err");
+
+    // Placeholder hide
     document.addEventListener('focusin', (e) => {
-      if (e.target === playerName) {
-        e.target.dataset.ph = e.target.placeholder;
-        e.target.placeholder = '';
+      if (e.target === playerInput) {
+        playerInput.dataset.ph = playerInput.placeholder;
+        playerInput.placeholder = '';
       }
     });
     document.addEventListener('focusout', (e) => {
-      if (e.target === playerName) {
-        if (!e.target.value.trim()) {
-          e.target.placeholder = e.target.dataset.ph || '';
+      if (e.target === playerInput) {
+        if (!playerInput.value.trim()) {
+          playerInput.placeholder = playerInput.dataset.ph || '';
         }
       }
     });
 
-    const screenJoin = document.getElementById('screenJoin');
-    const screenWait = document.getElementById('screenWait');
-    const waitText = document.getElementById('waitText');
+    function showErr(msg){
+      errBox.textContent = msg;
+      errBox.style.display = "block";
+    }
+    function hideErr(){
+      errBox.textContent = "";
+      errBox.style.display = "none";
+    }
+    function cleanName(x){
+      return String(x || "").trim();
+    }
 
-    const readyBtn = document.getElementById('readyBtn');
-    const buyBtn = document.getElementById('buyBtn');
-    const homeBtn = document.getElementById('homeBtn');
-
-    // قراءة رقم الغرفة من الرابط
+    // room from URL
     const params = new URLSearchParams(location.search);
-    const room = (params.get('room') || '').trim();
+    const roomId = (params.get("room") || "").trim();
 
-    if (!room) {
-      alert('الرابط غير صحيح: رقم الغرفة غير موجود.');
-      location.href = 'index.html';
+    const KEY_PLAYER_NAME = "bara_playerName_multi";
+    const KEY_ROOM        = "bara_roomId_multi_join";
+
+    if(!roomId){
+      showErr("الرابط غير صحيح: رمز الغرفة غير موجود.");
+      readyBtn.disabled = true;
+    }else{
+      sessionStorage.setItem(KEY_ROOM, roomId);
     }
 
-    // زر شراء يفتح المتجر
-    buyBtn.addEventListener('click', () => {
-      window.open('https://sandooq-m.com', '_blank');
+    // restore name
+    const saved = (sessionStorage.getItem(KEY_PLAYER_NAME) || "").trim();
+    if(saved) playerInput.value = saved;
+
+    buyBtn.addEventListener("click", () => {
+      window.open("https://sandooq-m.com", "_blank", "noopener,noreferrer");
     });
 
-    // رجوع للرئيسية
-    homeBtn.addEventListener('click', () => {
-      location.href = 'index.html';
-    });
+    // (اختياري) نتابع حالة الغرفة لاحقاً في صفحة الانتظار
+    let unsub = null;
 
-    // حركة الانتظار المطلوبة (كلمات + نقاط ثم إعادة)
-    const seq = [
-      'بانتظار',
-      'بانتظار مقدم',
-      'بانتظار مقدم اللعبة',
-      'بانتظار مقدم اللعبة.',
-      'بانتظار مقدم اللعبة..',
-      'بانتظار مقدم اللعبة...',
-      ''
-    ];
-    let seqI = 0;
-    let waitTimer = null;
+    readyBtn.addEventListener("click", async () => {
+      hideErr();
 
-    function startWaitAnimation(){
-      if (waitTimer) clearInterval(waitTimer);
-      seqI = 0;
-      waitTimer = setInterval(() => {
-        waitText.textContent = seq[seqI];
-        seqI++;
-        if (seqI >= seq.length) seqI = 0;
-      }, 380);
-    }
-
-    // حفظ الاسم محلياً (ويستخدمه لاحقاً عند ربط Firebase)
-    function saveLocal(name){
-      const key = 'multi_joined_' + room;
-      localStorage.setItem(key, name);
-    }
-
-    readyBtn.addEventListener('click', () => {
-      const name = (playerName.value || '').trim();
-      if (!name) {
-        alert('اكتب اسمك أولاً');
+      const name = cleanName(playerInput.value);
+      if(!name){
+        showErr("اكتب اسمك أولاً.");
+        playerInput.focus();
+        return;
+      }
+      if(!roomId){
+        showErr("الرابط غير صحيح.");
         return;
       }
 
-      saveLocal(name);
+      // حفظ الاسم محلياً
+      sessionStorage.setItem(KEY_PLAYER_NAME, name);
 
-      // الانتقال لشاشة الانتظار
-      screenJoin.classList.remove('show');
-      screenWait.classList.add('show');
-      startWaitAnimation();
+      readyBtn.disabled = true;
+      readyBtn.textContent = "جارٍ الدخول...";
 
-      // 🔴 ملاحظة: إرسال الاسم للمقدم لحظيًا يحتاج Firebase
-      // إذا عندك ملف Firebase في مجلد data أرسله لي وبأربطه مباشرة.
+      try{
+        await ensureRoom(roomId);
+        await addPlayer(roomId, name);
+
+        // بعد الإضافة: روح لصفحة الانتظار (بنضبطها بالملف القادم)
+        window.location.href = "wait.html?room=" + encodeURIComponent(roomId);
+      }catch(e){
+        console.error(e);
+        readyBtn.disabled = false;
+        readyBtn.textContent = "جاهز";
+        showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
+      }
     });
   </script>
 </body>
