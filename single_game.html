@@ -1134,7 +1134,11 @@ function render(){
 
     // تغيير اللاعبين: يرجع لصفحة إضافة اللاعبين مع بقاء الأسماء والنتيجة (ما نمسح شيء)
     document.getElementById("changePlayersBtn").addEventListener("click", () => {
-      // نترك bara_players و SCORE_KEY كما هي (عشان يحتفظ)
+      /* ✅ التعديل المطلوب فقط: تأكيد حفظ الأسماء في كل المفاتيح قبل الرجوع */
+      setSessionJSON("bara_players", players);
+      setSessionJSON("players", players);
+      setSessionJSON("baraPlayers", players);
+
       // فقط نمسح حالة الجولة الحالية عشان تبدأ بشكل نظيف
       sessionStorage.removeItem("singleState");
       location.href = "single.html";
