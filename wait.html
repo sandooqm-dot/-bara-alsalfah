@@ -48,10 +48,12 @@
       overflow:hidden;
     }
 
+    /* ✅ نفس join.html: عنوان يمين + لوجو يسار */
     .topRow{
       position: relative;
       min-height: 86px;
       margin-bottom: 10px;
+      padding-left: 118px;
     }
     .logo{
       position:absolute;
@@ -64,13 +66,17 @@
       pointer-events:none;
     }
     .h1{
-      margin: 22px 0 0;
-      text-align:center;
+      position:absolute;
+      right: 18px;
+      top: 22px;
+      margin:0;
+      text-align:right;
       color: var(--green);
       font-weight: 1000;
       font-size: 44px;
       letter-spacing: .2px;
       line-height: 1.15;
+      white-space:nowrap;
     }
 
     .centerBlock{
@@ -78,25 +84,28 @@
       display:flex;
       flex-direction:column;
       align-items:center;
-      padding-top: clamp(8px, 5vh, 34px);
+      /* ✅ نخليها أقرب للمنتصف */
+      padding-top: clamp(18px, 7vh, 64px);
       gap: 14px;
     }
 
+    /* ✅ مربع الحالة: زيتوني + نص أبيض */
     .status{
       width: min(460px, 92%);
-      background: rgba(63,91,42,0.12);
+      background: var(--green);
       border: 4px solid var(--green2);
       border-radius: 18px;
       padding: 14px 14px;
       text-align:center;
       font-weight: 1000;
       font-size: 20px;
-      color:#111;
+      color:#fff;
     }
 
     .status.started{
-      background: rgba(26,163,84,0.16);
-      border-color: rgba(26,163,84,0.65);
+      background: rgba(26,163,84,0.22);
+      border-color: rgba(26,163,84,0.70);
+      color:#111;
     }
 
     .namesCard{
@@ -141,8 +150,12 @@
       padding: 10px 8px 6px;
     }
 
+    /* ✅ زر الشراء أصغر من الأطراف + ينزل أكثر (منتصف باتجاه الأسفل) */
+    .buySpacer{
+      height: clamp(18px, 6vh, 80px);
+    }
     .btn{
-      width: min(420px, 92%);
+      width: min(360px, 82%);
       border: 4px solid #000;
       border-radius: 22px;
       padding: 14px 18px;
@@ -172,10 +185,11 @@
     }
 
     @media (max-width: 360px){
-      .h1{ font-size: 38px; }
+      .h1{ font-size: 38px; top: 20px; right: 16px; }
       .logo{ width: 90px; height: 90px; }
       .btn{ font-size: 26px; }
       .namesTitle{ font-size: 28px; }
+      .status{ font-size: 18px; }
     }
   </style>
 </head>
@@ -190,7 +204,7 @@
       </div>
 
       <div class="centerBlock">
-        <div id="statusBox" class="status">بانتظار المقدم يبدأ اللعب…</div>
+        <div id="statusBox" class="status"><span id="statusText">بانتظار بدء اللعبة …</span></div>
 
         <div class="namesCard">
           <div class="namesTitle">اسماء اللاعبين</div>
@@ -200,6 +214,7 @@
           </div>
         </div>
 
+        <div class="buySpacer"></div>
         <button id="buyBtn" class="btn">لشراء اللعبة اضغط هنا</button>
 
         <div id="err" class="err"></div>
@@ -213,6 +228,7 @@
     import { ensureRoom, listenRoom } from "./data/firebase.js";
 
     const statusBox   = document.getElementById("statusBox");
+    const statusText  = document.getElementById("statusText");
     const playersWrap = document.getElementById("playersWrap");
     const emptyHint   = document.getElementById("emptyHint");
     const buyBtn      = document.getElementById("buyBtn");
@@ -234,15 +250,42 @@
       window.open("https://sandooq-m.com", "_blank", "noopener,noreferrer");
     });
 
+    // ✅ حركة النص (بانتظار -> بدء -> اللعبة -> ... ثم إعادة)
+    let animTimer = null;
+    function startWaitingAnim(){
+      stopWaitingAnim();
+      const steps = [
+        "بانتظار",
+        "بانتظار بدء",
+        "بانتظار بدء اللعبة",
+        "بانتظار بدء اللعبة .",
+        "بانتظار بدء اللعبة ..",
+        "بانتظار بدء اللعبة ...",
+        ""
+      ];
+      let i = 0;
+      animTimer = setInterval(() => {
+        statusText.textContent = steps[i];
+        i = (i + 1) % steps.length;
+      }, 320);
+    }
+    function stopWaitingAnim(){
+      if(animTimer){ clearInterval(animTimer); animTimer = null; }
+    }
+
     // room from URL
     const params = new URLSearchParams(location.search);
     const roomId = (params.get("room") || "").trim();
 
     if(!roomId){
       showErr("الرابط غير صحيح: رمز الغرفة غير موجود.");
-      statusBox.textContent = "خطأ في الرابط";
+      statusText.textContent = "خطأ في الرابط";
+      stopWaitingAnim();
     }else{
       hideErr();
+
+      // شغّل الحركة مبدئياً
+      startWaitingAnim();
 
       try{
         await ensureRoom(roomId);
@@ -251,18 +294,28 @@
           const players = Array.isArray(data?.players) ? data.players : [];
           const status  = String(data?.status || "lobby");
 
+          // ✅ اسم المقدم (إذا موجود بالغرفة) يطلع أول القائمة
+          const hostName = cleanName(data?.hostName);
+
           // حالة اللعب
           if(status === "playing"){
+            stopWaitingAnim();
             statusBox.classList.add("started");
-            statusBox.textContent = "بدأ اللعب ✅ تابع المقدم على الشاشة.";
+            statusText.textContent = "بدأ اللعب ✅ تابع المقدم على الشاشة.";
           }else{
             statusBox.classList.remove("started");
-            statusBox.textContent = "بانتظار المقدم يبدأ اللعب…";
+            // لو توقفنا قبل، رجع الحركة
+            if(!animTimer) startWaitingAnim();
           }
 
           // الأسماء
           playersWrap.innerHTML = "";
-          const names = players.map(p => cleanName(p?.name)).filter(Boolean);
+          let names = players.map(p => cleanName(p?.name)).filter(Boolean);
+
+          if(hostName){
+            // ضع اسم المقدم بالأعلى دائمًا بدون تكرار
+            names = [hostName, ...names.filter(n => n !== hostName)];
+          }
 
           if(names.length === 0){
             emptyHint.style.display = "block";
@@ -280,6 +333,7 @@
 
       }catch(e){
         console.error(e);
+        stopWaitingAnim();
         showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
       }
     }
