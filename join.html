@@ -1,269 +1,185 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>لعبة برا السالفة - أجهزة متعددة (لاعب)</title>
+// data/firebase.js
+// Firebase (Firestore) setup for "bara-alsalfah" project
+// ✅ نسخة تشخيص + تنبيه واضح عند مشكلة الصلاحيات
 
-  <style>
-    :root{
-      --bg:#e9e3d6;
-      --green:#3f5b2a;
-      --green2:#6e8554;
-      --yellow:#f2c300;
-      --blue:#bfe3ff;
-      --text:#1a1a1a;
-      --muted:#9a9a9a;
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  onSnapshot,
+  serverTimestamp,
+  arrayUnion,
+  increment
+} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-      --shadow: 0 10px 0 rgba(0,0,0,0.18);
-      --shadowSmall: 0 8px 0 rgba(0,0,0,0.18);
+// ✅ إعدادات مشروعك (كما ظهرت لك في Firebase)
+const firebaseConfig = {
+  apiKey: "AIzaSyDQx4gJZMHNWQBeMYsU4fknZHG0WFJ_ckc",
+  authDomain: "bara-alsalfah.firebaseapp.com",
+  projectId: "bara-alsalfah",
+  storageBucket: "bara-alsalfah.firebasestorage.app",
+  messagingSenderId: "658748312832",
+  appId: "1:658748312832:web:3e0c970ba54bb25c0437e5",
+  measurementId: "G-82ZV2RDDDP"
+};
+
+const app = initializeApp(firebaseConfig);
+export const db = getFirestore(app);
+
+// ===== تشخيص / تنبيه =====
+function _onceAlert(msg) {
+  try{
+    if (typeof window === "undefined") return;
+    if (window.__BARA_FB_ALERTED) return;
+    window.__BARA_FB_ALERTED = true;
+    alert(msg);
+  }catch(e){}
+}
+
+function _errCode(e){
+  return (e && (e.code || e.name)) ? String(e.code || e.name) : "unknown";
+}
+
+function _friendlyMessage(e){
+  const code = _errCode(e);
+
+  if(code.includes("permission-denied")){
+    return "مشكلة صلاحيات Firestore (permission-denied).\n\nالحل من Firebase Console > Firestore > Rules.\nلازم تخلي القراءة/الكتابة مسموحة (مؤقتًا للاختبار) ثم نرجع نقفلها بقواعد آمنة.";
+  }
+
+  if(code.includes("failed-precondition")){
+    return "Firestore غالبًا غير مفعّل أو يحتاج إعداد.\n\nادخل Firebase Console > Firestore Database وسوّ Create database (Test mode مؤقتًا).";
+  }
+
+  if(code.includes("unavailable") || code.includes("network")){
+    return "مشكلة اتصال مؤقتة (network/unavailable).\nجرّب تحديث الصفحة أو تغيير الشبكة.";
+  }
+
+  return "صار خطأ في Firebase/Firestore.\nالكود: " + code;
+}
+
+function _throwWithCode(e, where){
+  try{
+    if (typeof window !== "undefined") {
+      window.__BARA_LAST_FB_ERROR = {
+        where,
+        code: _errCode(e),
+        message: String(e?.message || "")
+      };
     }
+  }catch(_){}
 
-    *{ box-sizing:border-box; }
-    body{
-      margin:0;
-      background: var(--bg);
-      font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
-      color: var(--text);
+  const msg = _friendlyMessage(e);
+  const code = _errCode(e);
+
+  // تنبيه واضح فقط في أخطاء الإعدادات
+  if(code.includes("permission-denied") || code.includes("failed-precondition")){
+    _onceAlert(msg);
+  }
+
+  const err = new Error(msg);
+  err.code = code;
+  err.original = e;
+  throw err;
+}
+
+// -------- Helpers --------
+export function roomRef(roomId) {
+  return doc(db, "rooms", String(roomId));
+}
+
+export async function ensureRoom(roomId) {
+  const ref = roomRef(roomId);
+
+  // ✅ نجرّب قراءة الوثيقة أولاً
+  let snap;
+  try{
+    snap = await getDoc(ref);
+  }catch(e){
+    console.error("ensureRoom:getDoc error", e);
+    _throwWithCode(e, "ensureRoom:getDoc");
+  }
+
+  // ✅ إذا غير موجودة ننشئها
+  if (!snap.exists()) {
+    try{
+      await setDoc(ref, {
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        status: "lobby",          // lobby | playing
+        players: [],              // [{name, joinedAt}]
+        hostStartedAt: null,
+        version: 1,
+        tick: 0
+      });
+    }catch(e){
+      console.error("ensureRoom:setDoc error", e);
+      _throwWithCode(e, "ensureRoom:setDoc");
     }
+  }
 
-    .page{
-      min-height: 100vh;
-      padding: 14px 12px;
-      display:flex;
-      justify-content:center;
-      align-items:flex-start;
-    }
+  return ref;
+}
 
-    .frame{
-      width: min(520px, 100%);
-      background: var(--bg);
-      border: 6px solid var(--green);
-      border-radius: 26px;
-      padding: 18px 16px 22px;
-      position: relative;
+export async function addPlayer(roomId, playerName) {
+  const clean = String(playerName || "").trim();
+  if (!clean) return;
 
-      min-height: calc(100vh - 28px);
-      display:flex;
-      flex-direction:column;
-      overflow:hidden;
-    }
+  let ref;
+  try{
+    ref = await ensureRoom(roomId);
+  }catch(e){
+    // ensureRoom already throws nice error
+    throw e;
+  }
 
-    .topRow{
-      position: relative;
-      min-height: 86px;
-      margin-bottom: 10px;
-    }
-    .logo{
-      position:absolute;
-      left: 10px;
-      top: 2px;
-      width: 98px;
-      height: 98px;
-      object-fit: contain;
-      opacity: 0.98;
-      pointer-events:none;
-    }
-    .h1{
-      margin: 22px 0 0;
-      text-align:center;
-      color: var(--green);
-      font-weight: 1000;
-      font-size: 44px;
-      letter-spacing: .2px;
-      line-height: 1.15;
-    }
-
-    .centerBlock{
-      flex: 1;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      padding-top: clamp(8px, 6vh, 44px);
-      gap: 16px;
-    }
-
-    .nameBox{
-      width: min(460px, 92%);
-      padding: 14px 14px;
-      border: 4px solid var(--green2);
-      border-radius: 18px;
-      background:#fff;
-      font-size: 20px;
-      font-weight: 900;
-      color:#111;
-      outline:none;
-      text-align:center;
-    }
-    .nameBox::placeholder{
-      color: var(--muted);
-      font-weight: 900;
-      font-size: 18px;
-      opacity: 0.75;
-    }
-
-    .btn{
-      width: min(420px, 92%);
-      border: 4px solid #000;
-      border-radius: 22px;
-      padding: 14px 18px;
-      font-size: 34px;
-      font-weight: 1000;
-      box-shadow: var(--shadow);
-      cursor:pointer;
-      -webkit-tap-highlight-color:transparent;
-      text-align:center;
-    }
-    .btn:active{ transform: translateY(1px); box-shadow: 0 9px 0 rgba(0,0,0,0.18); }
-
-    .btnReady{ background: var(--yellow); color:#111; }
-    .btnBuy{ background: var(--blue); color:#111; font-size: 28px; }
-
-    .btn[disabled]{
-      opacity:.55;
-      cursor:not-allowed;
-      transform:none;
-    }
-
-    .err{
-      width: min(460px, 92%);
-      text-align:center;
-      color:#b00020;
-      font-weight: 900;
-      font-size: 16px;
-      display:none;
-      line-height: 1.4;
-    }
-
-    /* نخلي مساحة فاضية تحت (مثل الصورة) */
-    .bottomSpacer{
-      height: clamp(120px, 22vh, 260px);
-    }
-
-    @media (max-width: 360px){
-      .h1{ font-size: 38px; }
-      .logo{ width: 90px; height: 90px; }
-      .btn{ font-size: 32px; }
-      .btnBuy{ font-size: 26px; }
-    }
-  </style>
-</head>
-
-<body>
-  <div class="page">
-    <div class="frame">
-
-      <div class="topRow">
-        <img class="logo" src="logo.PNG" alt="logo">
-        <div class="h1">لعبة برا السالفة</div>
-      </div>
-
-      <div class="centerBlock">
-        <input id="playerInput" class="nameBox" type="text" placeholder="اكتب اسمك هنا" autocomplete="off" />
-
-        <button id="readyBtn" class="btn btnReady">جاهز</button>
-        <button id="buyBtn" class="btn btnBuy">لشراء اللعبة اضغط هنا</button>
-
-        <div id="err" class="err"></div>
-      </div>
-
-      <div class="bottomSpacer"></div>
-    </div>
-  </div>
-
-  <script type="module">
-    import { addPlayer, ensureRoom, listenRoom } from "./data/firebase.js";
-
-    const playerInput = document.getElementById("playerInput");
-    const readyBtn    = document.getElementById("readyBtn");
-    const buyBtn      = document.getElementById("buyBtn");
-    const errBox      = document.getElementById("err");
-
-    // Placeholder hide
-    document.addEventListener('focusin', (e) => {
-      if (e.target === playerInput) {
-        playerInput.dataset.ph = playerInput.placeholder;
-        playerInput.placeholder = '';
-      }
+  try{
+    await updateDoc(ref, {
+      updatedAt: serverTimestamp(),
+      players: arrayUnion({ name: clean, joinedAt: Date.now() }),
+      tick: increment(1)
     });
-    document.addEventListener('focusout', (e) => {
-      if (e.target === playerInput) {
-        if (!playerInput.value.trim()) {
-          playerInput.placeholder = playerInput.dataset.ph || '';
-        }
-      }
+  }catch(e){
+    console.error("addPlayer:updateDoc error", e);
+    _throwWithCode(e, "addPlayer:updateDoc");
+  }
+}
+
+export async function setRoomStatus(roomId, status) {
+  let ref;
+  try{
+    ref = await ensureRoom(roomId);
+  }catch(e){
+    throw e;
+  }
+
+  try{
+    await updateDoc(ref, {
+      updatedAt: serverTimestamp(),
+      status: status,
+      tick: increment(1),
+      hostStartedAt: status === "playing" ? Date.now() : null
     });
+  }catch(e){
+    console.error("setRoomStatus:updateDoc error", e);
+    _throwWithCode(e, "setRoomStatus:updateDoc");
+  }
+}
 
-    function showErr(msg){
-      errBox.textContent = msg;
-      errBox.style.display = "block";
-    }
-    function hideErr(){
-      errBox.textContent = "";
-      errBox.style.display = "none";
-    }
-    function cleanName(x){
-      return String(x || "").trim();
-    }
-
-    // room from URL
-    const params = new URLSearchParams(location.search);
-    const roomId = (params.get("room") || "").trim();
-
-    const KEY_PLAYER_NAME = "bara_playerName_multi";
-    const KEY_ROOM        = "bara_roomId_multi_join";
-
-    if(!roomId){
-      showErr("الرابط غير صحيح: رمز الغرفة غير موجود.");
-      readyBtn.disabled = true;
-    }else{
-      sessionStorage.setItem(KEY_ROOM, roomId);
-    }
-
-    // restore name
-    const saved = (sessionStorage.getItem(KEY_PLAYER_NAME) || "").trim();
-    if(saved) playerInput.value = saved;
-
-    buyBtn.addEventListener("click", () => {
-      window.open("https://sandooq-m.com", "_blank", "noopener,noreferrer");
+export function listenRoom(roomId, cb) {
+  const ref = roomRef(roomId);
+  try{
+    return onSnapshot(ref, (snap) => {
+      cb(snap.exists() ? snap.data() : null);
+    }, (e) => {
+      console.error("listenRoom:onSnapshot error", e);
+      _throwWithCode(e, "listenRoom:onSnapshot");
     });
-
-    // (اختياري) نتابع حالة الغرفة لاحقاً في صفحة الانتظار
-    let unsub = null;
-
-    readyBtn.addEventListener("click", async () => {
-      hideErr();
-
-      const name = cleanName(playerInput.value);
-      if(!name){
-        showErr("اكتب اسمك أولاً.");
-        playerInput.focus();
-        return;
-      }
-      if(!roomId){
-        showErr("الرابط غير صحيح.");
-        return;
-      }
-
-      // حفظ الاسم محلياً
-      sessionStorage.setItem(KEY_PLAYER_NAME, name);
-
-      readyBtn.disabled = true;
-      readyBtn.textContent = "جارٍ الدخول...";
-
-      try{
-        await ensureRoom(roomId);
-        await addPlayer(roomId, name);
-
-        // بعد الإضافة: روح لصفحة الانتظار (بنضبطها بالملف القادم)
-        window.location.href = "wait.html?room=" + encodeURIComponent(roomId);
-      }catch(e){
-        console.error(e);
-        readyBtn.disabled = false;
-        readyBtn.textContent = "جاهز";
-        showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
-      }
-    });
-  </script>
-</body>
-</html>
+  }catch(e){
+    console.error("listenRoom error", e);
+    _throwWithCode(e, "listenRoom");
+  }
+}
