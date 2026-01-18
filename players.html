@@ -485,7 +485,12 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <script type="module">
-    import { ensureRoom, listenRoom, addPlayer, setRoomStatus } from "./data/firebase.js";
+    // ✅ تعديل مهم: Dynamic import عشان الصفحة ما تتعطل لو firebase.js ما انقرأ
+    let ensureRoom   = async () => {};
+    let listenRoom   = () => () => {};
+    let addPlayer    = async () => {};
+    let setRoomStatus= async () => {};
+    let firebaseReady = false;
 
     const hostInput   = document.getElementById("hostInput");
     const playersWrap = document.getElementById("playersWrap");
@@ -560,10 +565,6 @@
     roomCodeEl.textContent = roomId;
     joinLinkBox.textContent = joinUrl;
 
-    // تجهيز الغرفة
-    await ensureRoom(roomId);
-
-    // تحميل اسم المقدم السابق لو موجود
     const savedHost = (sessionStorage.getItem(KEY_HOST) || "").trim();
     if(savedHost) hostInput.value = savedHost;
 
@@ -575,7 +576,6 @@
       playersWrap.innerHTML = "";
 
       const hostName = normalizeName(hostInput.value);
-      // نعرض اللاعبين باستثناء الاسم المطابق لاسم المقدم (عشان ما يتكرر)
       const others = (list || [])
         .map(p => normalizeName(p?.name))
         .filter(Boolean)
@@ -594,34 +594,15 @@
         playersWrap.appendChild(div);
       }
 
-      // تفعيل زر ابدأ اللعب (اسم مقدم موجود + على الأقل 3 لاعبين مع المقدم)
       const total = (hostName ? 1 : 0) + others.length;
       startBtn.disabled = !(hostName && total >= 3);
     }
 
-    // تحديث اسم المقدم وحفظه
-    hostInput.addEventListener("input", () => {
-      const v = normalizeName(hostInput.value);
-      sessionStorage.setItem(KEY_HOST, v);
-      // إعادة التقييم فوراً (بدون انتظار snapshot)
-      // سنعتمد على آخر قائمة من firestore محفوظة في currentPlayers
-      renderPlayers(currentPlayers);
-    });
-
-    // Listen room
-    let currentPlayers = [];
-    const unsub = listenRoom(roomId, (data) => {
-      currentPlayers = Array.isArray(data?.players) ? data.players : [];
-      renderPlayers(currentPlayers);
-    });
-
-    // مودال
+    // ========== مودال المشاركة ==========
     function openModal(){
       modalBack.style.display = "flex";
       modalBack.setAttribute("aria-hidden", "false");
-      // افتراضي: رمز
       setTab("code");
-      // جهز QR والرابط
       joinLinkBox.textContent = joinUrl;
       roomCodeEl.textContent = roomId;
       renderQR(joinUrl);
@@ -637,7 +618,6 @@
     });
 
     function setTab(which){
-      // reset
       [tabQR, tabCode, tabLink].forEach(t => t.classList.remove("active"));
       panelQR.style.display = "none";
       panelCode.style.display = "none";
@@ -660,8 +640,8 @@
     tabCode.addEventListener("click", () => setTab("code"));
     tabLink.addEventListener("click", () => setTab("link"));
 
+    // ✅ هذا هو المطلوب: الزر صار يشتغل مهما صار لفirebase
     shareBtn.addEventListener("click", () => {
-      // قبل فتح المشاركة: احفظ اسم المقدم
       const hostName = normalizeName(hostInput.value);
       sessionStorage.setItem(KEY_HOST, hostName);
       openModal();
@@ -673,7 +653,6 @@
         showToast();
         return true;
       }catch(e){
-        // fallback
         const ta = document.createElement("textarea");
         ta.value = text;
         ta.style.position = "fixed";
@@ -692,12 +671,10 @@
         }
       }
     }
-
     copyBtn.addEventListener("click", () => copyText(joinUrl));
 
     function renderQR(text){
       qrBox.innerHTML = "";
-      // QRCode.js
       try{
         // eslint-disable-next-line no-undef
         new QRCode(qrBox, {
@@ -707,7 +684,6 @@
           correctLevel: QRCode.CorrectLevel.M
         });
       }catch(e){
-        // fallback img
         const img = document.createElement("img");
         img.alt = "QR";
         img.style.width = "220px";
@@ -717,7 +693,45 @@
       }
     }
 
-    // زر ابدأ اللعب
+    // ========== Firebase (محمي) ==========
+    let currentPlayers = [];
+    let unsub = null;
+
+    async function initFirebaseSafe(){
+      try{
+        const fb = await import("./data/firebase.js");
+        ensureRoom    = fb.ensureRoom;
+        listenRoom    = fb.listenRoom;
+        addPlayer     = fb.addPlayer;
+        setRoomStatus = fb.setRoomStatus;
+        firebaseReady = true;
+
+        await ensureRoom(roomId);
+
+        unsub = listenRoom(roomId, (data) => {
+          currentPlayers = Array.isArray(data?.players) ? data.players : [];
+          renderPlayers(currentPlayers);
+        });
+
+        renderPlayers(currentPlayers);
+      }catch(e){
+        firebaseReady = false;
+        console.warn("Firebase load failed:", e);
+        // خل الصفحة شغالة UI فقط
+        currentPlayers = [];
+        renderPlayers(currentPlayers);
+      }
+    }
+    initFirebaseSafe();
+
+    // تحديث اسم المقدم وحفظه
+    hostInput.addEventListener("input", () => {
+      const v = normalizeName(hostInput.value);
+      sessionStorage.setItem(KEY_HOST, v);
+      renderPlayers(currentPlayers);
+    });
+
+    // زر ابدأ اللعب (لو firebase مو جاهز نعطي تنبيه بدل ما “ما يصير شيء”)
     startBtn.addEventListener("click", async () => {
       const hostName = normalizeName(hostInput.value);
       if(!hostName){
@@ -725,11 +739,13 @@
         hostInput.focus();
         return;
       }
+      if(!firebaseReady){
+        alert("في مشكلة اتصال/تحميل Firebase حالياً، جرب تحدّث الصفحة أو تأكد من ملف data/firebase.js.");
+        return;
+      }
 
-      // إضافة اسم المقدم للغرفة مرة واحدة فقط (بدون تكرار)
       const hostAdded = sessionStorage.getItem(KEY_HOST_ADDED) === "1";
       if(!hostAdded){
-        // إذا الاسم موجود مسبقاً ضمن اللاعبين لا نضيفه
         const exists = (currentPlayers || []).some(p => normalizeName(p?.name) === hostName);
         if(!exists){
           await addPlayer(roomId, hostName);
@@ -737,16 +753,13 @@
         sessionStorage.setItem(KEY_HOST_ADDED, "1");
       }
 
-      // بدء اللعب (نحوّل حالة الغرفة)
       await setRoomStatus(roomId, "playing");
-
-      // (حاليًا نوديك للكتاغوريات نفس جهاز واحد)
       window.location.href = "categories.html";
     });
 
     // تنظيف والعودة للرئيسية
     function clearMultiState(){
-      unsub && unsub();
+      if(unsub) try{ unsub(); }catch(e){}
       sessionStorage.removeItem(KEY_ROOM);
       sessionStorage.removeItem(KEY_HOST);
       sessionStorage.removeItem(KEY_HOST_ADDED);
