@@ -41,10 +41,8 @@
       --btnRadius: 26px;
 
       --homeSize: 60px;        /* حجم زر الرئيسية */
-      --homeGap: 12px;         /* مسافة زر الرئيسية عن الحواف */
-
-      /* ✅ (تعديل 1) رفع زر التالي لمكانه الصحيح (أعلى من أسفل الشاشة) */
-      --bottomGap: 34px;       /* مسافة الشريط السفلي (أعلى) */
+      --homeGap: 14px;         /* مسافة زر الرئيسية عن الحواف */
+      --bottomGap: 16px;       /* مسافة أسفل */
     }
 
     *{box-sizing:border-box}
@@ -60,7 +58,7 @@
       min-height:100vh;
       display:flex;
       justify-content:center;
-      padding:18px 14px 160px; /* ✅ مساحة أكبر للشريط السفلي بعد رفعه */
+      padding:18px 14px 28px; /* ✅ تم تقليل مساحة الأسفل لأن الزر لم يعد ثابت */
     }
     .frame{
       width:min(var(--containerMax), 100%);
@@ -84,9 +82,8 @@
       color:#2f3f22;
       opacity:.95;
     }
-    /* ✅ (تعديل 3) تكبير اللوجو */
     .logo{
-      width:86px;height:86px;
+      width:54px;height:54px;
       object-fit:contain;
     }
 
@@ -103,11 +100,7 @@
       font-size: var(--headerSize);
       line-height:1;
       text-align:center;
-
-      /* ✅ (تعديل 2) مخفي افتراضيًا لتجنب مربع فاضي */
-      display:none;
     }
-    .badgeTitle.show{ display:block; }
 
     .playerNameBox{
       margin: 10px auto 16px;
@@ -189,42 +182,32 @@
       line-height:1.6;
     }
 
-    /* الشريط السفلي: زر ثابت + زر الرئيسية */
-    .bottomBar{
-      position:fixed;
-      left:0; right:0;
-
-      /* ✅ (تعديل 1) رفع مكان الزر (مع مراعاة safe-area) */
-      bottom: calc(var(--bottomGap) + env(safe-area-inset-bottom));
-
-      display:flex;
-      justify-content:center;
-      pointer-events:none;
-      z-index:9999;
-    }
-    .bottomInner{
-      width:min(var(--containerMax), calc(100% - 28px));
-      position:relative;
-      pointer-events:none;
-    }
-
+    /* ✅ زر الرئيسية ثابت أسفل يسار */
     .homeBtn{
-      position:absolute;
+      position: fixed;
       left: var(--homeGap);
-      bottom:0;
+      bottom: calc(var(--bottomGap) + env(safe-area-inset-bottom));
       width: var(--homeSize);
       height: var(--homeSize);
-      border-radius: 50%;
+      border-radius: 18px;
       background: #bfe7ff;
       border:4px solid #000;
       box-shadow: var(--shadow);
       display:flex;
       align-items:center;
       justify-content:center;
-      pointer-events:auto;
       cursor:pointer;
+      z-index:9999;
     }
     .homeBtn svg{ width:34px;height:34px; }
+
+    /* ✅ مكان زر التالي/تصويت الجديد داخل الإطار (مثل اللون الأصفر بالصورة) */
+    .ctaArea{
+      display:flex;
+      justify-content:center;
+      margin: 16px auto 0;
+      padding-bottom: 6px;
+    }
 
     .cta{
       height: var(--btnH);
@@ -240,8 +223,6 @@
       justify-content:center;
       width: 86%;
       max-width: 420px;
-      margin: 0 auto;
-      pointer-events:auto;
       cursor:pointer;
       user-select:none;
       text-align:center;
@@ -252,10 +233,9 @@
       .cta{ width: 88%; }
     }
     @media (max-width: 360px){
-      .cta{ width: 90%; font-size: 26px; }
+      .cta{ width: 90%; font-size: 26px; height:56px; border-radius:22px; }
       .homeBtn{ width:56px;height:56px; }
       .homeBtn svg{ width:30px;height:30px; }
-      .logo{ width:80px;height:80px; }
     }
 
     /* زر تصويت */
@@ -265,16 +245,7 @@
       max-width: 360px;
     }
 
-    /* زر التالي الأصغر */
-    .cta.compact{
-      height: 56px;
-      border-radius: 22px;
-      max-width: 360px;
-      width: 78%;
-      font-size: 26px;
-    }
-
-    .spacerBottom{ height: 18px; }
+    .spacerBottom{ height: 10px; }
   </style>
 </head>
 <body>
@@ -286,24 +257,25 @@
         <img class="logo" src="logo.PNG" alt="logo" />
       </div>
 
-      <div class="badgeTitle" id="pageTitle"></div>
+      <div class="badgeTitle" id="pageTitle"> </div>
       <div id="content"></div>
+
+      <!-- ✅ زر التالي/تصويت بالمكان الجديد -->
+      <div class="ctaArea">
+        <button class="cta" id="ctaBtn">التالي</button>
+      </div>
+
       <div class="spacerBottom"></div>
     </div>
   </div>
 
-  <div class="bottomBar">
-    <div class="bottomInner">
-      <button class="homeBtn" id="homeBtn" aria-label="الرئيسية" title="الرئيسية">
-        <svg viewBox="0 0 24 24" fill="none">
-          <path d="M3 11.5L12 4l9 7.5" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M6.5 10.5V20h11V10.5" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-
-      <button class="cta compact" id="ctaBtn">التالي</button>
-    </div>
-  </div>
+  <!-- زر الرئيسية ثابت -->
+  <button class="homeBtn" id="homeBtn" aria-label="الرئيسية" title="الرئيسية">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M3 11.5L12 4l9 7.5" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M6.5 10.5V20h11V10.5" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
 
 <script>
 /* =========================================================
@@ -454,18 +426,6 @@ const content = document.getElementById("content");
 const ctaBtn = document.getElementById("ctaBtn");
 const homeBtn = document.getElementById("homeBtn");
 
-/* ✅ (تعديل 2) عنوان الصفحة: يظهر فقط إذا فيه نص */
-function setPageTitle(text){
-  const t = (text || "").trim();
-  if(!t){
-    pageTitle.textContent = "";
-    pageTitle.classList.remove("show");
-    return;
-  }
-  pageTitle.textContent = t;
-  pageTitle.classList.add("show");
-}
-
 /* زر الرئيسية: يرجع للرئيسية + يصفر بيانات الجلسة */
 homeBtn.addEventListener("click", () => {
   // امسح كل المفاتيح المحتملة (قديمة/جديدة)
@@ -487,7 +447,7 @@ ctaBtn.addEventListener("click", () => next());
 /* ابدأ */
 (async function boot(){
   // شاشة تحميل بسيطة
-  setPageTitle("");
+  pageTitle.textContent = " ";
   content.innerHTML = `
     <div class="bigCard" style="min-height:260px;">
       <div class="msgText">جاري تجهيز الجولة...</div>
@@ -502,7 +462,6 @@ ctaBtn.addEventListener("click", () => next());
    Render Screens
    ========================= */
 function render(){
-  ctaBtn.classList.add("compact");
   ctaBtn.classList.remove("vote");
   ctaBtn.textContent = "التالي";
 
@@ -510,7 +469,7 @@ function render(){
 
   if(s === 0){
     const p = players[state.revealIndex];
-    setPageTitle("");
+    pageTitle.textContent = " ";
     content.innerHTML = `
       <div class="playerNameBox">${escapeHtml(p)}</div>
       <div class="bigCard" style="min-height:260px;">
@@ -530,7 +489,7 @@ function render(){
     // ✅ الحل الجذري: برا السالفة بالـ index وليس الاسم
     const isOut = (state.revealIndex === state.outsiderIndex);
 
-    setPageTitle("");
+    pageTitle.textContent = " ";
     if(isOut){
       content.innerHTML = `
         <div class="bigCard">
@@ -554,7 +513,7 @@ function render(){
   }
 
   if(s === 2){
-    setPageTitle("وقت الاسئلة");
+    pageTitle.textContent = "وقت الاسئلة";
     content.innerHTML = `
       <div class="bigCard" style="min-height:280px;">
         <div class="msgText">
@@ -567,7 +526,7 @@ function render(){
   }
 
   if(s === 3){
-    setPageTitle("وقت الاسئلة");
+    pageTitle.textContent = "وقت الاسئلة";
     const pair = state.pairings[state.askIndex];
     content.innerHTML = `
       <div class="bigCard" style="min-height:320px;">
@@ -592,10 +551,9 @@ function render(){
   }
 
   if(s === 4){
-    setPageTitle("ما تأكدت صح ؟");
+    pageTitle.textContent = "ما تأكدت صح ؟";
     ctaBtn.textContent = "تصويت";
     ctaBtn.classList.add("vote");
-    ctaBtn.classList.add("compact");
 
     content.innerHTML = `
       <div class="bigCard" style="min-height:320px;">
@@ -677,4 +635,4 @@ function escapeHtml(str){
 </body>
 </html>
 
-<!-- single_game.html برا السالفة – إصدار 2 -->
+<!-- single_game.html برا السالفة – إصدار 3 -->
