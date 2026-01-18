@@ -18,10 +18,9 @@
       --shadow: 0 10px 0 rgba(0,0,0,0.18);
       --shadowSmall: 0 8px 0 rgba(0,0,0,0.18);
 
-      /* ✅ مكان الأزرار حسب تحديدك (أحمر/أزرق) */
-      --controlsBottom: 110px; /* ارفع/نزّلها لو احتجت (لكن هذا أقرب لمكان الأحمر بالصورة) */
-      --controlsSideGap: 18px; /* مسافة زر الرئيسية من يسار الشاشة */
-      --controlsBarWidthGap: 24px; /* هامش عرض البار */
+      /* ✅ مكان زر ابدأ + زر الرئيسية (مثل تحديدك) */
+      --controlsBottom: calc(92px + env(safe-area-inset-bottom));
+      --controlsSide: 18px;
     }
 
     *{ box-sizing:border-box; }
@@ -52,31 +51,32 @@
       display:flex;
       flex-direction:column;
 
-      /* ✅ مساحة تحت حتى ما تغطي الأزرار الثابتة المحتوى */
-      padding-bottom: 220px;
+      /* مساحة تحت عشان الأزرار ما تغطي المحتوى */
+      padding-bottom: calc(18px + var(--controlsBottom) + 40px);
     }
 
     /* ✅ رأس الصفحة */
     .topRow{
       position: relative;
-      min-height: 86px;
+      min-height: 86px;      /* مساحة تكفي اللوجو الكبير */
       margin-bottom: 10px;
-      padding-left: 118px;
-      display:flex;
-      align-items:flex-start;
-      justify-content:flex-end;
+      padding-left: 118px;   /* مساحة محجوزة لليسار (مكان اللوجو) */
     }
 
+    /* ✅ العنوان في نفس المكان اللي محددته (يمين أعلى) + تكبير 2% */
     .title{
+      position:absolute;
+      right: 18px;
+      top: 18px;
       font-weight: 800;
       color: var(--green);
-      font-size: 16px;
+      font-size: calc(16px * 1.02); /* ✅ +2% */
       line-height: 1.2;
-      margin-top: 6px;
       text-align:right;
+      white-space:nowrap;
     }
 
-    /* ✅ اللوجو */
+    /* ✅ اللوجو يسار */
     .logo{
       position:absolute;
       left: 10px;
@@ -149,28 +149,12 @@
       transform: translateY(-1px);
     }
 
-    /* =========================
-       ✅ الشريط السفلي الثابت (حسب الأحمر/الأزرق)
-       ========================= */
-    .bottomBar{
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: calc(var(--controlsBottom) + env(safe-area-inset-bottom));
-      display:flex;
-      justify-content:center;
-      z-index: 9999;
-      pointer-events:none;
-    }
-    .bottomInner{
-      width: min(520px, calc(100% - var(--controlsBarWidthGap)));
-      position: relative;
-      pointer-events:none;
-      min-height: 80px;
-    }
-
-    /* ✅ زر ابدأ اللعب (في مكان الأحمر) */
+    /* ✅ زر ابدأ اللعب (ثابت داخل الإطار بالمكان المطلوب) */
     .startBtn{
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      bottom: var(--controlsBottom);
       border: 4px solid #000;
       background: var(--yellow);
       color:#111;
@@ -182,18 +166,14 @@
       max-width: 78%;
       box-shadow: var(--shadow);
       cursor:pointer;
-      pointer-events:auto;
-      display:block;
-      margin: 0 auto;
       -webkit-tap-highlight-color:transparent;
     }
-    .startBtn:active{ transform: translateY(1px); box-shadow: 0 9px 0 rgba(0,0,0,0.18); }
 
-    /* ✅ زر الرئيسية (في مكان الأزرق) - SVG مضمون ما يخرب */
+    /* ✅ زر الرئيسية (نفس المكان المطلوب) */
     .homeBtn{
-      position: absolute;
-      left: var(--controlsSideGap);
-      bottom: -6px;
+      position:absolute;
+      left: var(--controlsSide);
+      bottom: var(--controlsBottom);
       width: 64px;
       height: 64px;
       border-radius: 18px;
@@ -204,11 +184,9 @@
       justify-content:center;
       align-items:center;
       cursor:pointer;
-      pointer-events:auto;
-      z-index: 2;
+      z-index: 5;
       -webkit-tap-highlight-color:transparent;
     }
-    .homeBtn:active{ transform: translateY(1px); box-shadow: 0 7px 0 rgba(0,0,0,0.18); }
     .homeBtn svg{
       width: 34px;
       height: 34px;
@@ -218,13 +196,12 @@
     @media (max-width: 360px){
       .topRow{ min-height: 78px; padding-left: 108px; }
       .logo{ width: 90px; height: 90px; left: 10px; top: 2px; }
+      .title{ font-size: calc(15px * 1.02); right: 16px; top: 16px; }
       h2{ font-size: 20px; }
       .nameInput{ font-size: 18px; }
       .startBtn{ font-size: 22px; min-width: 200px; }
       .plusBtn{ width: 54px; height: 54px; }
       .plusBtn span{ font-size: 34px; }
-      .homeBtn{ width: 60px; height: 60px; border-radius: 16px; }
-      .homeBtn svg{ width: 32px; height: 32px; }
     }
   </style>
 </head>
@@ -250,19 +227,14 @@
           <span>+</span>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- ✅ الأزرار الثابتة (أحمر/أزرق) -->
-  <div class="bottomBar" aria-hidden="false">
-    <div class="bottomInner">
-      <button class="homeBtn" id="homeBtn" title="الرئيسية" aria-label="الرئيسية">
+      <button class="startBtn" id="startBtn">ابدأ اللعب</button>
+
+      <div class="homeBtn" id="homeBtn" title="الرئيسية" aria-label="الرئيسية">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
         </svg>
-      </button>
-
-      <button class="startBtn" id="startBtn">ابدأ اللعب</button>
+      </div>
     </div>
   </div>
 
@@ -309,6 +281,9 @@
       sessionStorage.removeItem('bara_selectedCategory');
       sessionStorage.removeItem('bara_secretWord');
       sessionStorage.removeItem('bara_outPlayerIndex');
+      sessionStorage.removeItem('players');
+      sessionStorage.removeItem('categoryKey');
+      sessionStorage.removeItem('singleState');
     }
 
     homeBtn.addEventListener('click', () => {
@@ -332,5 +307,3 @@
   </script>
 </body>
 </html>
-
-<!-- single.html – إصدار تعديل (تحريك زر ابدأ + زر الرئيسية حسب الصورة) -->
