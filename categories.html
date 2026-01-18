@@ -45,6 +45,7 @@
       position:relative;
     }
 
+    /* ✅ topbar: "لعبة برا السالفة" يمين + اللوجو يسار */
     .topbar{
       display:flex;
       align-items:flex-start;
@@ -53,12 +54,7 @@
       margin-bottom:10px;
     }
 
-    .logo{
-      width:86px;
-      height:auto;
-      object-fit:contain;
-    }
-
+    /* ✅ عبارة اللعبة (مكان الأحمر) */
     .gameName{
       margin:0;
       font-weight:800;
@@ -67,6 +63,13 @@
       line-height:1.1;
       text-align:right;
       padding-top:6px;
+    }
+
+    /* ✅ اللوجو (مكان الأخضر) */
+    .logo{
+      width:86px;
+      height:auto;
+      object-fit:contain;
     }
 
     .title{
@@ -164,7 +167,7 @@
       transform:none;
     }
 
-    /* زر الرئيسية */
+    /* ✅ زر الرئيسية (SVG بدل صورة home.png عشان ما يطلع ? ) */
     .homeBtn{
       position:absolute;
       left:18px;
@@ -183,18 +186,20 @@
     }
     .homeBtn:active{ transform:translateY(1px); box-shadow:0 7px 0 rgba(0,0,0,.25); }
 
-    .homeBtn img{
-      width:48px;
-      height:48px;
-      object-fit:contain;
+    .homeBtn svg{
+      width:44px;
+      height:44px;
+      fill:#111;
     }
 
     @media (max-width:360px){
       .grid{ gap:12px; }
       .cat{ min-height:128px; border-width:5px; }
       .homeBtn{ width:66px; height:66px; }
-      .homeBtn img{ width:44px; height:44px; }
+      .homeBtn svg{ width:40px; height:40px; }
       .primaryBtn{ width:min(290px, 74%); }
+      .logo{ width:78px; }
+      .gameName{ font-size:18px; }
     }
   </style>
 </head>
@@ -202,9 +207,11 @@
 <body>
   <div class="page">
     <div class="frame">
+
+      <!-- ✅ تم التبديل: العنوان يمين + اللوجو يسار -->
       <div class="topbar">
-        <img class="logo" src="logo.PNG" alt="logo">
         <h3 class="gameName">لعبة برا السالفة</h3>
+        <img class="logo" src="logo.PNG" alt="logo">
       </div>
 
       <div class="title">اختر نوع السالفة</div>
@@ -215,8 +222,11 @@
 
       <button class="primaryBtn" id="startBtn" disabled>ابدأ اللعب</button>
 
-      <button class="homeBtn" id="homeBtn" aria-label="home">
-        <img src="home.png" alt="home">
+      <!-- ✅ SVG Home -->
+      <button class="homeBtn" id="homeBtn" aria-label="الرئيسية" title="الرئيسية">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
+        </svg>
       </button>
     </div>
   </div>
@@ -280,12 +290,10 @@
     }
 
     function getPlayersFromSession(){
-      // 1) الشكل الجديد المعتمد: players
       const v1 = sessionStorage.getItem(KEY_PLAYERS);
       const p1 = safeJSONParse(v1);
       if (Array.isArray(p1) && p1.length) return p1;
 
-      // 2) مفاتيح بديلة (bara_...)
       for (const k of ALT_PLAYER_KEYS){
         const v = sessionStorage.getItem(k);
         const p = safeJSONParse(v);
@@ -301,10 +309,7 @@
         .filter(Boolean);
 
       if(players.length){
-        // نكتبها للمفتاح اللي يعتمد عليه single_game.html
         sessionStorage.setItem(KEY_PLAYERS, JSON.stringify(players));
-
-        // نكتب نسخة توافقية لبعض الأكواد القديمة (احتياط)
         sessionStorage.setItem("bara_players", JSON.stringify(players));
         sessionStorage.setItem("bara_players_list", JSON.stringify(players));
       }
@@ -315,15 +320,11 @@
     function setCategoryEverywhere(key, label){
       selectedKey = key;
 
-      // المفتاح الأساسي الذي يعتمد عليه single_game.html
       sessionStorage.setItem(KEY_CATEGORY, key);
 
-      // مفاتيح توافقية (احتياط)
       sessionStorage.setItem("bara_category_id", key);
       sessionStorage.setItem("bara_category_label", label);
       sessionStorage.setItem("bara_selectedCategory", key);
-
-      // لو عندك أي كود قديم يقرأ هذه
       sessionStorage.setItem("bara_step", "category");
 
       startBtn.disabled = false;
@@ -359,7 +360,6 @@
     }
 
     function clearAllGameState(){
-      // امسح كل bara_ من session/local (علشان عند الرجوع للرئيسية تبدأ من جديد)
       const ssKeys = [];
       for(let i=0;i<sessionStorage.length;i++){
         const k = sessionStorage.key(i);
@@ -388,11 +388,9 @@
       window.location.href = "index.html";
     });
 
-    // ✅ تشغيل الصفحة
     (function init(){
       buildGrid();
 
-      // ✅ حل جذري: تأكد أن الأسماء موجودة وبالمفتاح الصحيح
       const players = normalizePlayersToExpectedKeys();
 
       if(players.length < 3){
@@ -401,11 +399,9 @@
         return;
       }
 
-      // إذا كان فيه كتاغوري محفوظ مسبقاً، فعّلها بصرياً
       let saved = (sessionStorage.getItem(KEY_CATEGORY) || "").trim();
 
       if(!saved){
-        // حاول من مفاتيح بديلة
         for (const k of ALT_CAT_KEYS){
           const v = (sessionStorage.getItem(k) || "").trim();
           if(v){ saved = v; break; }
@@ -423,7 +419,6 @@
       }
     })();
 
-    // ✅ زر ابدأ اللعب
     startBtn.addEventListener("click", () => {
       const players = normalizePlayersToExpectedKeys();
       if(players.length < 3){
@@ -436,10 +431,7 @@
         return;
       }
 
-      // تأكيد نهائي للمفاتيح قبل الدخول
       sessionStorage.setItem(KEY_CATEGORY, selectedKey);
-
-      // الدخول للعبة
       window.location.href = "single_game.html";
     });
   </script>
