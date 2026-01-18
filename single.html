@@ -295,6 +295,56 @@
       window.location.href = 'index.html';
     });
 
+    /* ✅ (التعديل المطلوب فقط) تعبئة الأسماء عند الرجوع من "تغيير اللاعبين" */
+    function readSavedPlayers(){
+      try{
+        const a = sessionStorage.getItem('bara_players');
+        if(a){
+          const v = JSON.parse(a);
+          if(Array.isArray(v) && v.length) return v;
+        }
+      }catch(e){}
+      try{
+        const b = sessionStorage.getItem('players');
+        if(b){
+          const v = JSON.parse(b);
+          if(Array.isArray(v) && v.length) return v;
+        }
+      }catch(e){}
+      try{
+        const c = sessionStorage.getItem('baraPlayers');
+        if(c){
+          const v = JSON.parse(c);
+          if(Array.isArray(v) && v.length) return v;
+        }
+      }catch(e){}
+      return [];
+    }
+
+    function ensureInputsCount(count){
+      const current = inputsWrap.querySelectorAll('.nameInput').length;
+      for(let n=current+1; n<=count; n++){
+        const i = document.createElement('input');
+        i.className = 'nameInput';
+        i.type = 'text';
+        i.placeholder = `اللاعب رقم ${n}`;
+        inputsWrap.appendChild(i);
+      }
+    }
+
+    (function hydrateNames(){
+      const names = readSavedPlayers();
+      if(!names.length) return;
+
+      ensureInputsCount(names.length);
+
+      const inputs = Array.from(inputsWrap.querySelectorAll('.nameInput'));
+      names.forEach((name, idx) => {
+        if(inputs[idx]) inputs[idx].value = String(name || '').trim();
+      });
+    })();
+    /* ✅ نهاية التعديل المطلوب */
+
     startBtn.addEventListener('click', () => {
       const names = Array.from(inputsWrap.querySelectorAll('.nameInput'))
         .map(i => i.value.trim())
@@ -311,3 +361,5 @@
   </script>
 </body>
 </html>
+
+<!-- single.html برا السالفة – إصلاح تعبئة الأسماء عند الرجوع -->
