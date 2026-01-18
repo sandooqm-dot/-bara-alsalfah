@@ -191,9 +191,7 @@
     </div>
   </div>
 
-  <script type="module">
-    import { addPlayer } from "./data/firebase.js";
-
+  <script>
     const playerInput = document.getElementById("playerInput");
     const readyBtn    = document.getElementById("readyBtn");
     const buyBtn      = document.getElementById("buyBtn");
@@ -230,8 +228,10 @@
     const params = new URLSearchParams(location.search);
     const roomId = (params.get("room") || "").trim();
 
-    const KEY_PLAYER_NAME = "bara_playerName_multi";
-    const KEY_ROOM        = "bara_roomId_multi_join";
+    const KEY_PLAYER_NAME   = "bara_playerName_multi";
+    const KEY_ROOM          = "bara_roomId_multi_join";
+    const KEY_PENDING_ADD   = "bara_pendingAdd_multi"; // ✅ نخلي wait.html هو اللي يضيف اللاعب (عشان السرعة)
+    const KEY_PENDING_ROOM  = "bara_pendingRoom_multi";
 
     if(!roomId){
       showErr("الرابط غير صحيح: رمز الغرفة غير موجود.");
@@ -248,7 +248,7 @@
       window.open("https://sandooq-m.com", "_blank", "noopener,noreferrer");
     });
 
-    readyBtn.addEventListener("click", async () => {
+    readyBtn.addEventListener("click", () => {
       hideErr();
 
       const name = cleanName(playerInput.value);
@@ -265,21 +265,14 @@
       // حفظ الاسم محلياً
       sessionStorage.setItem(KEY_PLAYER_NAME, name);
 
+      // ✅ علّمنا أن اللاعب يحتاج ينضاف في wait.html
+      sessionStorage.setItem(KEY_PENDING_ADD, "1");
+      sessionStorage.setItem(KEY_PENDING_ROOM, roomId);
+
+      // ✅ نقل فوري بدون انتظار Firebase
       readyBtn.disabled = true;
       readyBtn.textContent = "جارٍ الدخول...";
-
-      try{
-        // ✅ حل التأخير: لا نستدعي ensureRoom هنا لأن addPlayer يستدعيها داخلياً
-        await addPlayer(roomId, name);
-
-        // روح لصفحة الانتظار (تأكد أن ملف wait.html موجود بنفس الاسم)
-        window.location.href = "wait.html?room=" + encodeURIComponent(roomId);
-      }catch(e){
-        console.error(e);
-        readyBtn.disabled = false;
-        readyBtn.textContent = "جاهز";
-        showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
-      }
+      window.location.href = "wait.html?room=" + encodeURIComponent(roomId);
     });
   </script>
 </body>
