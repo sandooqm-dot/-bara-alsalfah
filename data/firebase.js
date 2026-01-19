@@ -109,16 +109,13 @@ export async function setRoomStatus(roomId, status) {
   });
 }
 
-/* ✅ (إضافة مطلوبة فقط) تحديث أي حقول للغرفة بدون تكرار الكود في الصفحات
-   مثال استخدام لاحقًا:
-   updateRoomFields(roomId, { phase: "ready", categoryKey: "eat" })
-*/
+// ✅ (إضافة مطلوبة فقط) تحديث أي حقول داخل الغرفة (مثل phase / categoryKey ...)
 export async function updateRoomFields(roomId, fields = {}) {
   const ref = await ensureRoom(roomId);
   await updateDoc(ref, {
+    ...fields,
     updatedAt: serverTimestamp(),
-    tick: increment(1),
-    ...(fields || {})
+    tick: increment(1)
   });
 }
 
