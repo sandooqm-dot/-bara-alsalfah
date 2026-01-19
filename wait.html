@@ -245,11 +245,9 @@
     const KEY_PLAYER_NAME    = "bara_playerName_multi";
     const KEY_ROOM_JOIN      = "bara_roomId_multi_join";
 
-    // ✅ مفاتيح الانتقال من join.html
     const KEY_PENDING_ADD    = "bara_pendingAdd_multi";
     const KEY_PENDING_ROOM   = "bara_pendingRoom_multi";
 
-    // ✅ منع تكرار الإضافة عند تحديث الصفحة
     const KEY_ADDED_ROOM     = "bara_addedRoom_multi";
 
     function showErr(msg){
@@ -289,11 +287,8 @@
       window.open("https://sandooq-m.com", "_blank", "noopener,noreferrer");
     });
 
-    // room from URL
     const params = new URLSearchParams(location.search);
     const roomId = (params.get("room") || "").trim();
-
-    // (اختياري) دعم اسم المقدم من الرابط لو أضفناه لاحقًا
     const hostFromUrl = cleanName(params.get("host"));
 
     let animTimer = null;
@@ -360,7 +355,6 @@
       const pending = sessionStorage.getItem(KEY_PENDING_ADD) === "1";
       const pendingRoom = cleanName(sessionStorage.getItem(KEY_PENDING_ROOM));
 
-      // ✅ إذا جاء من join.html أو لم يتم الإضافة سابقًا لنفس الغرفة
       if(pending && pendingRoom === roomId){
         try{
           await addPlayer(roomId, name);
@@ -371,6 +365,12 @@
           console.warn("addPlayer failed:", e);
         }
       }
+    }
+
+    function goReady(){
+      // ✅ المطلوب: نقل اللاعب تلقائيًا لصفحة جاهز عند بدء المرحلة
+      const url = "ready.html?room=" + encodeURIComponent(roomId);
+      window.location.href = url;
     }
 
     (async () => {
@@ -395,7 +395,6 @@
         statusBox.classList.remove("started");
         startWaitingAnim();
 
-        // ✅ أهم تعديل: إضافة اللاعب فعليًا للغرفة (إن لزم)
         if(localPlayer){
           await tryAddPlayerIfNeeded(roomId, localPlayer);
         }
@@ -403,13 +402,13 @@
         listenRoom(roomId, (data) => {
           if(!data) return;
 
-          const status  = String(data?.status || "lobby");
+          // ✅ الجديد: نعتمد على phase بدل status
+          const phase = String(data?.phase || "");
 
           const players = Array.isArray(data?.players) ? data.players : [];
           const ordered = sortPlayers(players);
           const firestoreNames = ordered.map(p => cleanName(p?.name)).filter(Boolean);
 
-          // ✅ اسم المقدم من الغرفة (لو انضاف لاحقًا) أو من الرابط (اختياري)
           const hostName =
             cleanName(data?.hostName) ||
             cleanName(data?.host?.name) ||
@@ -421,21 +420,24 @@
           if(hostName) allNames.push(hostName);
           allNames = allNames.concat(firestoreNames);
 
-          // ✅ لو اسم اللاعب المحلي مو ظاهر لسه (تأخير)، نضيفه مؤقتًا
           if(localPlayer && !allNames.includes(localPlayer)){
             allNames.push(localPlayer);
           }
 
           renderNames(allNames);
 
-          if(status === "playing"){
+          // ✅ إذا المقدم اختار كتاغوري وبدأ الجولة (phase=ready) ننقل اللاعب
+          if(phase === "ready"){
             stopWaitingAnim();
             statusBox.classList.add("started");
-            setStatusText("بدأ اللعب ✅ تابع المقدم على الشاشة.");
-          }else{
-            statusBox.classList.remove("started");
-            if(!animTimer) startWaitingAnim();
+            setStatusText("بدأت الجولة ✅");
+            goReady();
+            return;
           }
+
+          // باقي الحالات: يظل ينتظر
+          statusBox.classList.remove("started");
+          if(!animTimer) startWaitingAnim();
         });
 
       }catch(e){
