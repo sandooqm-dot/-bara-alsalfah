@@ -109,6 +109,19 @@ export async function setRoomStatus(roomId, status) {
   });
 }
 
+/* ✅ (إضافة مطلوبة فقط) تحديث أي حقول للغرفة بدون تكرار الكود في الصفحات
+   مثال استخدام لاحقًا:
+   updateRoomFields(roomId, { phase: "ready", categoryKey: "eat" })
+*/
+export async function updateRoomFields(roomId, fields = {}) {
+  const ref = await ensureRoom(roomId);
+  await updateDoc(ref, {
+    updatedAt: serverTimestamp(),
+    tick: increment(1),
+    ...(fields || {})
+  });
+}
+
 // ✅ استماع للتحديثات مع تسجيل أي خطأ في الكونسول
 export function listenRoom(roomId, cb) {
   const ref = roomRef(roomId);
