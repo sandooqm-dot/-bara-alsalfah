@@ -519,7 +519,6 @@
       return String(Math.floor(100000 + Math.random() * 900000));
     }
 
-    // ✅ تثبيت الغرفة: localStorage بدل sessionStorage (هذا حل المشكلة)
     const KEY_ROOM = "bara_roomId_multi_v2";
     const KEY_HOST = "bara_hostName_multi_v2";
     const KEY_HOST_ADDED = "bara_hostAdded_multi_v2";
@@ -631,12 +630,6 @@
     tabCode.addEventListener("click", () => setTab("code"));
     tabLink.addEventListener("click", () => setTab("link"));
 
-    shareBtn.addEventListener("click", () => {
-      const hostName = normalizeName(hostInput.value);
-      localStorage.setItem(KEY_HOST, hostName);
-      openModal();
-    });
-
     async function copyText(text){
       try{
         await navigator.clipboard.writeText(text);
@@ -666,7 +659,6 @@
     function renderQR(text){
       qrBox.innerHTML = "";
       try{
-        // eslint-disable-next-line no-undef
         new QRCode(qrBox, {
           text,
           width: 220,
@@ -683,6 +675,45 @@
       }
     }
 
+    // ✅ جديد: إضافة اسم المقدم للغرفة مباشرة (مرة واحدة)
+    let hostAddDebounce = null;
+    async function ensureHostAddedNow(){
+      if(!firebaseReady) return;
+
+      const hostName = normalizeName(hostInput.value);
+      if(!hostName) return;
+
+      const hostAdded = localStorage.getItem(KEY_HOST_ADDED) === "1";
+      if(hostAdded) return;
+
+      try{
+        const exists = (currentPlayers || []).some(p => normalizeName(p?.name) === hostName);
+        if(!exists){
+          await addPlayer(roomId, hostName);
+        }
+        localStorage.setItem(KEY_HOST_ADDED, "1");
+      }catch(e){
+        console.warn("ensureHostAddedNow failed:", e);
+      }
+    }
+
+    function scheduleHostAdd(){
+      clearTimeout(hostAddDebounce);
+      hostAddDebounce = setTimeout(() => {
+        ensureHostAddedNow();
+      }, 450);
+    }
+
+    shareBtn.addEventListener("click", async () => {
+      const hostName = normalizeName(hostInput.value);
+      localStorage.setItem(KEY_HOST, hostName);
+
+      // ✅ قبل المشاركة: تأكد أن اسم المقدم انضاف للغرفة
+      await ensureHostAddedNow();
+
+      openModal();
+    });
+
     async function initFirebaseSafe(){
       try{
         const fb = await import("./data/firebase.js");
@@ -698,9 +729,15 @@
         unsub = listenRoom(roomId, (data) => {
           currentPlayers = Array.isArray(data?.players) ? data.players : [];
           renderPlayers(currentPlayers);
+
+          // ✅ لو المقدم كاتب اسمه ومهب مُضاف، نضيفه تلقائي
+          scheduleHostAdd();
         });
 
         renderPlayers(currentPlayers);
+
+        // ✅ لو فيه اسم محفوظ للمقدم من قبل، نضيفه مباشرة بعد جاهزية Firebase
+        await ensureHostAddedNow();
       }catch(e){
         firebaseReady = false;
         console.warn("Firebase load failed:", e);
@@ -714,6 +751,9 @@
       const v = normalizeName(hostInput.value);
       localStorage.setItem(KEY_HOST, v);
       renderPlayers(currentPlayers);
+
+      // ✅ أي تغيير على اسم المقدم = محاولة إضافة الاسم للغرفة (مرة واحدة)
+      scheduleHostAdd();
     });
 
     startBtn.addEventListener("click", async () => {
@@ -728,14 +768,8 @@
         return;
       }
 
-      const hostAdded = localStorage.getItem(KEY_HOST_ADDED) === "1";
-      if(!hostAdded){
-        const exists = (currentPlayers || []).some(p => normalizeName(p?.name) === hostName);
-        if(!exists){
-          await addPlayer(roomId, hostName);
-        }
-        localStorage.setItem(KEY_HOST_ADDED, "1");
-      }
+      // ✅ تأكيد أخير أن المقدم موجود ضمن القائمة قبل بدء اللعب
+      await ensureHostAddedNow();
 
       await setRoomStatus(roomId, "playing");
       window.location.href = "categories.html";
