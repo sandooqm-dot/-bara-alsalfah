@@ -8,13 +8,12 @@
   <style>
     :root{
       --bg:#e9e3d6;
-      --green:#3f5b2a;   /* زيتوني */
+      --green:#3f5b2a;
       --green2:#6e8554;
       --yellow:#f2c300;
       --blue:#bfe3ff;
       --text:#1a1a1a;
       --muted:#9a9a9a;
-
       --shadow: 0 10px 0 rgba(0,0,0,0.18);
     }
 
@@ -48,7 +47,6 @@
       overflow:hidden;
     }
 
-    /* ✅ عنوان يمين + لوجو يسار (مثل صفحة تسجيل الاسم) */
     .topRow{
       position: relative;
       min-height: 86px;
@@ -88,7 +86,6 @@
       gap: 14px;
     }
 
-    /* ✅ مربع الحالة الزيتوني + ثابت الحجم */
     .status{
       width: min(460px, 92%);
       background: var(--green);
@@ -100,7 +97,7 @@
       font-size: 20px;
       color:#fff;
 
-      min-height: 62px;               /* تثبيت الارتفاع */
+      min-height: 62px;
       display:flex;
       align-items:center;
       justify-content:center;
@@ -159,7 +156,6 @@
       padding: 10px 8px 6px;
     }
 
-    /* ✅ زر الشراء أصغر + نازل أكثر */
     .buySpacer{
       height: clamp(34px, 10vh, 160px);
     }
@@ -237,7 +233,7 @@
   </div>
 
   <script type="module">
-    import { ensureRoom, listenRoom } from "./data/firebase.js";
+    import { ensureRoom, listenRoom, addPlayer } from "./data/firebase.js";
 
     const statusBox   = document.getElementById("statusBox");
     const statusText  = document.getElementById("statusText");
@@ -246,7 +242,15 @@
     const buyBtn      = document.getElementById("buyBtn");
     const errBox      = document.getElementById("err");
 
-    const KEY_PLAYER_NAME = "bara_playerName_multi";
+    const KEY_PLAYER_NAME    = "bara_playerName_multi";
+    const KEY_ROOM_JOIN      = "bara_roomId_multi_join";
+
+    // ✅ مفاتيح الانتقال من join.html
+    const KEY_PENDING_ADD    = "bara_pendingAdd_multi";
+    const KEY_PENDING_ROOM   = "bara_pendingRoom_multi";
+
+    // ✅ منع تكرار الإضافة عند تحديث الصفحة
+    const KEY_ADDED_ROOM     = "bara_addedRoom_multi";
 
     function showErr(msg){
       errBox.textContent = msg;
@@ -259,10 +263,11 @@
     function cleanName(x){
       return String(x || "").trim();
     }
+
     function uniqKeepOrder(arr){
       const s = new Set();
       const out = [];
-      for(const x of arr){
+      for(const x of (arr || [])){
         const v = cleanName(x);
         if(!v) continue;
         if(s.has(v)) continue;
@@ -270,6 +275,14 @@
         out.push(v);
       }
       return out;
+    }
+
+    function sortPlayers(list){
+      return (list || []).slice().sort((a,b)=>{
+        const aa = Number(a?.joinedAt || 0);
+        const bb = Number(b?.joinedAt || 0);
+        return aa - bb;
+      });
     }
 
     buyBtn.addEventListener("click", () => {
@@ -280,12 +293,13 @@
     const params = new URLSearchParams(location.search);
     const roomId = (params.get("room") || "").trim();
 
-    // ✅ حركة الانتظار (أبطأ + ثابت حجم المربع)
+    // (اختياري) دعم اسم المقدم من الرابط لو أضفناه لاحقًا
+    const hostFromUrl = cleanName(params.get("host"));
+
     let animTimer = null;
     let animStep = 0;
 
     function setStatusText(t){
-      // نخلي المربع ثابت حتى لو النص فاضي
       statusText.innerHTML = (t && t.trim()) ? t : "&nbsp;";
     }
 
@@ -300,18 +314,14 @@
         "بانتظار بدء اللعبة .",
         "بانتظار بدء اللعبة ..",
         "بانتظار بدء اللعبة ...",
-        "" // اختفاء ثم إعادة
+        ""
       ];
-
-      // ✅ خففنا السرعة جدًا
-      const intervalMs = 900;
 
       animTimer = setInterval(() => {
         setStatusText(seq[animStep] || "");
         animStep = (animStep + 1) % seq.length;
-      }, intervalMs);
+      }, 900);
 
-      // اعرض أول خطوة فورًا
       setStatusText(seq[0]);
     }
 
@@ -340,6 +350,29 @@
       }
     }
 
+    async function tryAddPlayerIfNeeded(roomId, playerName){
+      const name = cleanName(playerName);
+      if(!name) return;
+
+      const already = cleanName(sessionStorage.getItem(KEY_ADDED_ROOM));
+      if(already === roomId) return;
+
+      const pending = sessionStorage.getItem(KEY_PENDING_ADD) === "1";
+      const pendingRoom = cleanName(sessionStorage.getItem(KEY_PENDING_ROOM));
+
+      // ✅ إذا جاء من join.html أو لم يتم الإضافة سابقًا لنفس الغرفة
+      if(pending && pendingRoom === roomId){
+        try{
+          await addPlayer(roomId, name);
+          sessionStorage.setItem(KEY_ADDED_ROOM, roomId);
+          sessionStorage.removeItem(KEY_PENDING_ADD);
+          sessionStorage.removeItem(KEY_PENDING_ROOM);
+        }catch(e){
+          console.warn("addPlayer failed:", e);
+        }
+      }
+    }
+
     (async () => {
       if(!roomId){
         showErr("الرابط غير صحيح: رمز الغرفة غير موجود.");
@@ -349,8 +382,8 @@
       }
 
       hideErr();
+      sessionStorage.setItem(KEY_ROOM_JOIN, roomId);
 
-      // اظهر اسم اللاعب محليًا فورًا (حتى لو فيه تأخير شبكة)
       const localPlayer = cleanName(sessionStorage.getItem(KEY_PLAYER_NAME));
       if(localPlayer){
         renderNames([localPlayer]);
@@ -359,26 +392,31 @@
       try{
         await ensureRoom(roomId);
 
-        // نبدأ حركة الانتظار افتراضياً
         statusBox.classList.remove("started");
         startWaitingAnim();
+
+        // ✅ أهم تعديل: إضافة اللاعب فعليًا للغرفة (إن لزم)
+        if(localPlayer){
+          await tryAddPlayerIfNeeded(roomId, localPlayer);
+        }
 
         listenRoom(roomId, (data) => {
           if(!data) return;
 
-          const players = Array.isArray(data?.players) ? data.players : [];
           const status  = String(data?.status || "lobby");
 
-          // ✅ اسم المقدم إذا كان محفوظ في الغرفة (يدعمه الكود)
+          const players = Array.isArray(data?.players) ? data.players : [];
+          const ordered = sortPlayers(players);
+          const firestoreNames = ordered.map(p => cleanName(p?.name)).filter(Boolean);
+
+          // ✅ اسم المقدم من الغرفة (لو انضاف لاحقًا) أو من الرابط (اختياري)
           const hostName =
             cleanName(data?.hostName) ||
             cleanName(data?.host?.name) ||
             cleanName(data?.host) ||
+            hostFromUrl ||
             "";
 
-          const firestoreNames = players.map(p => cleanName(p?.name)).filter(Boolean);
-
-          // ✅ ترتيب الأسماء: المقدم أولاً ثم الباقي (بدون تكرار)
           let allNames = [];
           if(hostName) allNames.push(hostName);
           allNames = allNames.concat(firestoreNames);
@@ -390,14 +428,12 @@
 
           renderNames(allNames);
 
-          // حالة اللعب
           if(status === "playing"){
             stopWaitingAnim();
             statusBox.classList.add("started");
             setStatusText("بدأ اللعب ✅ تابع المقدم على الشاشة.");
           }else{
             statusBox.classList.remove("started");
-            // خلي الحركة شغالة
             if(!animTimer) startWaitingAnim();
           }
         });
