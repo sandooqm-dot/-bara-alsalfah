@@ -860,8 +860,26 @@
 
       await ensureHostAddedNow();
 
-      await setRoomStatus(roomId, "playing");
-      window.location.href = "categories.html";
+      /* ✅ التعديل المطلوب فقط:
+         - نبقي اللاعبين في wait.html (لا نحول status إلى playing)
+         - نحفظ أسماء اللاعبين بالمفاتيح اللي تعتمد عليها categories.html
+         - ننقل المقدم إلى categories.html
+      */
+      const ordered = sortPlayers(currentPlayers);
+      const names = [hostName].concat(
+        ordered.map(p => normalizeName(p?.name)).filter(Boolean)
+      );
+      const uniq = Array.from(new Set(names.filter(Boolean)));
+
+      sessionStorage.setItem("players", JSON.stringify(uniq));
+      sessionStorage.setItem("bara_players", JSON.stringify(uniq));
+      sessionStorage.setItem("bara_players_list", JSON.stringify(uniq));
+
+      // (اختياري للمراحل القادمة) نثبت إن هذا Multi + رقم الغرفة
+      sessionStorage.setItem("bara_mode", "multi");
+      sessionStorage.setItem("bara_room_multi", roomId);
+
+      window.location.href = "categories.html?room=" + encodeURIComponent(roomId) + "&mode=multi";
     });
 
     function clearMultiState(){
@@ -879,3 +897,5 @@
   </script>
 </body>
 </html>
+
+<!-- players.html برا السالفة – أجهزة متعددة (المقدم) – إصدار 2 -->
