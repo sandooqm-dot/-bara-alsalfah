@@ -519,22 +519,50 @@
       return String(Math.floor(100000 + Math.random() * 900000));
     }
 
-    const KEY_ROOM = "bara_roomId_multi_v2";
-    const KEY_HOST = "bara_hostName_multi_v2";
-    const KEY_HOST_ADDED = "bara_hostAdded_multi_v2";
+    // ✅ مفاتيح الحالة
+    // (تعديل) الغرفة صارت sessionStorage عشان كل جلسة = لعبة جديدة
+    const KEY_ROOM = "bara_roomId_multi_v3";
+    const KEY_HOST = "bara_hostName_multi_v3";
+    const KEY_HOST_ADDED = "bara_hostAdded_multi_v3";
+
+    // (تعديل) نميّز بين Reload وفتح جديد
+    function getNavType(){
+      try{
+        const nav = performance.getEntriesByType("navigation")[0];
+        return nav?.type || "navigate";
+      }catch(e){
+        return "navigate";
+      }
+    }
+    const NAV_TYPE = getNavType(); // "reload" | "navigate" | "back_forward"
 
     const params = new URLSearchParams(location.search);
     const roomFromUrl = (params.get("room") || "").trim();
 
+    function normalizeName(x){ return String(x||"").trim(); }
+
+    // (تعديل) قرار إنشاء غرفة جديدة
     let roomId = "";
+
     if(roomFromUrl){
+      // لو جايك رابط فيه room (استكمال/دخول مباشر)
       roomId = roomFromUrl;
-      localStorage.setItem(KEY_ROOM, roomId);
+      sessionStorage.setItem(KEY_ROOM, roomId);
     }else{
-      roomId = (localStorage.getItem(KEY_ROOM) || "").trim();
-      if(!roomId){
+      const existing = (sessionStorage.getItem(KEY_ROOM) || "").trim();
+
+      // ✅ لو Reload: ثبّت نفس الغرفة
+      if(existing && NAV_TYPE === "reload"){
+        roomId = existing;
+      }else{
+        // ✅ فتح جديد: غرفة جديدة + تصفير اسم المقدم/إضافة المقدم
         roomId = genRoomId();
-        localStorage.setItem(KEY_ROOM, roomId);
+        sessionStorage.setItem(KEY_ROOM, roomId);
+
+        // تصفير كل شيء عشان ما تتداخل لعبة قديمة
+        localStorage.removeItem(KEY_HOST);
+        sessionStorage.removeItem(KEY_HOST_ADDED);
+        hostInput.value = "";
       }
     }
 
@@ -543,14 +571,13 @@
       return base + "join.html?room=" + encodeURIComponent(roomId);
     }
 
-    const joinUrl = buildJoinUrl();
+    let joinUrl = buildJoinUrl();
     roomCodeEl.textContent = roomId;
     joinLinkBox.textContent = joinUrl;
 
+    // اسم المقدم (محفوظ محلياً فقط) — راح يكون فاضي عند كل لعبة جديدة
     const savedHost = (localStorage.getItem(KEY_HOST) || "").trim();
     if(savedHost) hostInput.value = savedHost;
-
-    function normalizeName(x){ return String(x||"").trim(); }
 
     function sortPlayers(list){
       return (list || []).slice().sort((a,b)=>{
@@ -592,11 +619,14 @@
     }
 
     function openModal(){
+      // (تعديل) تحديث الرابط/الباركود دائماً بحسب roomId الحالي
+      joinUrl = buildJoinUrl();
+      joinLinkBox.textContent = joinUrl;
+      roomCodeEl.textContent = roomId;
+
       modalBack.style.display = "flex";
       modalBack.setAttribute("aria-hidden", "false");
       setTab("code");
-      joinLinkBox.textContent = joinUrl;
-      roomCodeEl.textContent = roomId;
       renderQR(joinUrl);
     }
     function closeIt(){
@@ -630,6 +660,12 @@
     tabCode.addEventListener("click", () => setTab("code"));
     tabLink.addEventListener("click", () => setTab("link"));
 
+    shareBtn.addEventListener("click", () => {
+      const hostName = normalizeName(hostInput.value);
+      localStorage.setItem(KEY_HOST, hostName);
+      openModal();
+    });
+
     async function copyText(text){
       try{
         await navigator.clipboard.writeText(text);
@@ -659,6 +695,7 @@
     function renderQR(text){
       qrBox.innerHTML = "";
       try{
+        // eslint-disable-next-line no-undef
         new QRCode(qrBox, {
           text,
           width: 220,
@@ -675,45 +712,6 @@
       }
     }
 
-    // ✅ جديد: إضافة اسم المقدم للغرفة مباشرة (مرة واحدة)
-    let hostAddDebounce = null;
-    async function ensureHostAddedNow(){
-      if(!firebaseReady) return;
-
-      const hostName = normalizeName(hostInput.value);
-      if(!hostName) return;
-
-      const hostAdded = localStorage.getItem(KEY_HOST_ADDED) === "1";
-      if(hostAdded) return;
-
-      try{
-        const exists = (currentPlayers || []).some(p => normalizeName(p?.name) === hostName);
-        if(!exists){
-          await addPlayer(roomId, hostName);
-        }
-        localStorage.setItem(KEY_HOST_ADDED, "1");
-      }catch(e){
-        console.warn("ensureHostAddedNow failed:", e);
-      }
-    }
-
-    function scheduleHostAdd(){
-      clearTimeout(hostAddDebounce);
-      hostAddDebounce = setTimeout(() => {
-        ensureHostAddedNow();
-      }, 450);
-    }
-
-    shareBtn.addEventListener("click", async () => {
-      const hostName = normalizeName(hostInput.value);
-      localStorage.setItem(KEY_HOST, hostName);
-
-      // ✅ قبل المشاركة: تأكد أن اسم المقدم انضاف للغرفة
-      await ensureHostAddedNow();
-
-      openModal();
-    });
-
     async function initFirebaseSafe(){
       try{
         const fb = await import("./data/firebase.js");
@@ -729,15 +727,9 @@
         unsub = listenRoom(roomId, (data) => {
           currentPlayers = Array.isArray(data?.players) ? data.players : [];
           renderPlayers(currentPlayers);
-
-          // ✅ لو المقدم كاتب اسمه ومهب مُضاف، نضيفه تلقائي
-          scheduleHostAdd();
         });
 
         renderPlayers(currentPlayers);
-
-        // ✅ لو فيه اسم محفوظ للمقدم من قبل، نضيفه مباشرة بعد جاهزية Firebase
-        await ensureHostAddedNow();
       }catch(e){
         firebaseReady = false;
         console.warn("Firebase load failed:", e);
@@ -751,9 +743,6 @@
       const v = normalizeName(hostInput.value);
       localStorage.setItem(KEY_HOST, v);
       renderPlayers(currentPlayers);
-
-      // ✅ أي تغيير على اسم المقدم = محاولة إضافة الاسم للغرفة (مرة واحدة)
-      scheduleHostAdd();
     });
 
     startBtn.addEventListener("click", async () => {
@@ -768,8 +757,14 @@
         return;
       }
 
-      // ✅ تأكيد أخير أن المقدم موجود ضمن القائمة قبل بدء اللعب
-      await ensureHostAddedNow();
+      const hostAdded = sessionStorage.getItem(KEY_HOST_ADDED) === "1";
+      if(!hostAdded){
+        const exists = (currentPlayers || []).some(p => normalizeName(p?.name) === hostName);
+        if(!exists){
+          await addPlayer(roomId, hostName);
+        }
+        sessionStorage.setItem(KEY_HOST_ADDED, "1");
+      }
 
       await setRoomStatus(roomId, "playing");
       window.location.href = "categories.html";
@@ -777,9 +772,9 @@
 
     function clearMultiState(){
       if(unsub) try{ unsub(); }catch(e){}
-      localStorage.removeItem(KEY_ROOM);
+      sessionStorage.removeItem(KEY_ROOM);
       localStorage.removeItem(KEY_HOST);
-      localStorage.removeItem(KEY_HOST_ADDED);
+      sessionStorage.removeItem(KEY_HOST_ADDED);
     }
 
     homeBtn.addEventListener("click", () => {
