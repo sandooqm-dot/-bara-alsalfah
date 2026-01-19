@@ -540,11 +540,11 @@
     }
     function normalizeName(x){ return String(x||"").trim(); }
 
-    // ✅ مفاتيح التخزين
-    const KEY_ROOM = "bara_roomId_multi_v3";
-    const KEY_ROOM_TS = "bara_roomTs_multi_v3";
-    const KEY_HOST = "bara_hostName_multi_v3";
-    const KEY_HOST_ADDED = "bara_hostAdded_multi_v3";
+    // ✅ مفاتيح التخزين (تم تغييرها فقط لحل ظهور أسماء قديمة مثل "أحمد")
+    const KEY_ROOM = "bara_roomId_multi_v4";
+    const KEY_ROOM_TS = "bara_roomTs_multi_v4";
+    const KEY_HOST = "bara_hostName_multi_v4";
+    const KEY_HOST_ADDED = "bara_hostAdded_multi_v4";
 
     // ✅ لو جاي من index.html نبدأ جلسة جديدة أكيد (حل تداخل الألعاب)
     const ref = String(document.referrer || "");
@@ -666,7 +666,6 @@
       modalBack.setAttribute("aria-hidden", "false");
       setTab("code");
 
-      // توليد QR بعد ما يظهر المودال مباشرة (يقلل التهنيق)
       requestAnimationFrame(() => {
         try{ renderQR(joinUrl); }catch(e){}
       });
@@ -703,7 +702,7 @@
     tabCode.addEventListener("click", () => setTab("code"));
     tabLink.addEventListener("click", () => setTab("link"));
 
-    // ✅ إضافة المقدم تلقائيًا (بدون انتظار المشاركة)
+    // ✅ إضافة المقدم تلقائيًا
     let pendingHostAdd = false;
     async function ensureHostAddedNow(){
       const hostName = normalizeName(hostInput.value);
@@ -733,7 +732,6 @@
       pendingHostAdd = false;
     }
 
-    // debounce على كتابة اسم المقدم
     let hostDebTimer = null;
     hostInput.addEventListener("input", () => {
       const v = normalizeName(hostInput.value);
@@ -746,10 +744,10 @@
       }, 450);
     });
 
-    /* ✅ زر المشاركة: افتح فورًا + الإضافة بالخلفية بدون انتظار */
+    /* ✅ زر المشاركة: افتح فورًا + الإضافة بالخلفية */
     shareBtn.addEventListener("click", () => {
       openModalFast();
-      ensureHostAddedNow(); // بدون await لتفادي التأخير
+      ensureHostAddedNow();
     });
 
     /* ✅ نسخ الرابط: زر يصفر + "تم النسخ" ثانية */
