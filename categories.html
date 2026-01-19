@@ -45,7 +45,6 @@
       position:relative;
     }
 
-    /* ✅ topbar: "لعبة برا السالفة" يمين + اللوجو يسار */
     .topbar{
       display:flex;
       align-items:flex-start;
@@ -54,7 +53,6 @@
       margin-bottom:10px;
     }
 
-    /* ✅ عبارة اللعبة (مكان الأحمر) */
     .gameName{
       margin:0;
       font-weight:800;
@@ -65,7 +63,6 @@
       padding-top:6px;
     }
 
-    /* ✅ اللوجو (مكان الأخضر) */
     .logo{
       width:86px;
       height:auto;
@@ -143,7 +140,6 @@
       filter: drop-shadow(0 2px 0 rgba(0,0,0,.15));
     }
 
-    /* زر ابدأ اللعب (ثابت بأسفل منتصف الشاشة داخل الإطار) */
     .primaryBtn{
       width:min(300px, 70%);
       margin:14px auto 0;
@@ -156,11 +152,8 @@
       cursor:pointer;
       box-shadow:0 10px 0 rgba(0,0,0,.25);
       display:block;
-
       position:sticky;
       bottom:18px;
-
-      /* ✅ التعديل المطلوب: لون نص "ابدأ اللعب" أسود */
       color:#000;
     }
     .primaryBtn:active{ transform:translateY(1px); box-shadow:0 9px 0 rgba(0,0,0,.25); }
@@ -170,7 +163,6 @@
       transform:none;
     }
 
-    /* ✅ زر الرئيسية (SVG بدل صورة home.png عشان ما يطلع ? ) */
     .homeBtn{
       position:absolute;
       left:18px;
@@ -211,7 +203,6 @@
   <div class="page">
     <div class="frame">
 
-      <!-- ✅ تم التبديل: العنوان يمين + اللوجو يسار -->
       <div class="topbar">
         <h3 class="gameName">لعبة برا السالفة</h3>
         <img class="logo" src="logo.PNG" alt="logo">
@@ -225,7 +216,6 @@
 
       <button class="primaryBtn" id="startBtn" disabled>ابدأ اللعب</button>
 
-      <!-- ✅ SVG Home -->
       <button class="homeBtn" id="homeBtn" aria-label="الرئيسية" title="الرئيسية">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
@@ -235,8 +225,10 @@
   </div>
 
   <script type="module">
+    import { updateRoomFields, ensureRoom } from "./data/firebase.js";
+
     /**************************************************************
-     * قائمة مقاسات الصور (عدّلها أنت)
+     * قائمة مقاسات الصور
      **************************************************************/
     const IMAGE_SIZES = {
       eat:  { file: "eat.PNG",  w: 190, h: 120  },
@@ -257,15 +249,11 @@
     ];
 
     /* =========================
-       مفاتيح التخزين (حل جذري)
-       single_game.html يعتمد على:
-       - players
-       - categoryKey
+       مفاتيح التخزين (جهاز واحد)
        ========================= */
     const KEY_PLAYERS = "players";
     const KEY_CATEGORY = "categoryKey";
 
-    // مفاتيح قديمة/مستخدمة في صفحات ثانية عندك
     const ALT_PLAYER_KEYS = [
       "bara_players",
       "bara_players_list",
@@ -274,21 +262,11 @@
       "bara_players_v1"
     ];
 
-    // مفاتيح قديمة للكتاغوري
     const ALT_CAT_KEYS = [
       "bara_category_id",
       "bara_selectedCategory",
       "bara_category",
       "bara_category_key"
-    ];
-
-    // ✅ مفاتيح نمط الأجهزة المتعددة (المقدم)
-    const MULTI_ROOM_KEYS = [
-      "bara_roomId_multi_v4",
-      "bara_roomId_multi_v3",
-      "bara_roomId_multi_v2",
-      "bara_roomId_multi_v1",
-      "bara_roomId_multi_join"
     ];
 
     const grid = document.getElementById("grid");
@@ -312,7 +290,6 @@
         const p = safeJSONParse(v);
         if (Array.isArray(p) && p.length) return p;
       }
-
       return [];
     }
 
@@ -326,30 +303,22 @@
         sessionStorage.setItem("bara_players", JSON.stringify(players));
         sessionStorage.setItem("bara_players_list", JSON.stringify(players));
       }
-
       return players;
     }
 
-    function getMultiRoomId(){
-      for(const k of MULTI_ROOM_KEYS){
-        const v = String(sessionStorage.getItem(k) || "").trim();
-        if(v) return v;
-      }
-      return "";
-    }
-
-    const multiRoomId = getMultiRoomId();
-    const IS_MULTI_HOST = !!multiRoomId;
+    // ✅ كشف نمط الأجهزة المتعددة (المقدم) بدون تغيير أي صفحات أخرى
+    const MULTI_ROOM_KEY = "bara_roomId_multi_v4";
+    const multiRoomId = String(sessionStorage.getItem(MULTI_ROOM_KEY) || "").trim();
+    const isMultiHost = !!multiRoomId; // وجود roomId الخاص بالمقدم يعني Multi
 
     function setCategoryEverywhere(key, label){
       selectedKey = key;
       selectedLabel = String(label || "");
 
-      // ✅ نخزنها للجهاز الواحد (كما كان)
+      // نخزن محليًا (يفيد للجهاز الواحد + ما يضر للأجهزة المتعددة)
       sessionStorage.setItem(KEY_CATEGORY, key);
-
       sessionStorage.setItem("bara_category_id", key);
-      sessionStorage.setItem("bara_category_label", label);
+      sessionStorage.setItem("bara_category_label", selectedLabel);
       sessionStorage.setItem("bara_selectedCategory", key);
       sessionStorage.setItem("bara_step", "category");
 
@@ -417,8 +386,8 @@
     (function init(){
       buildGrid();
 
-      // ✅ إذا كان نمط أجهزة متعددة (مقدم): لا نتحقق من players ولا نرجع single.html
-      if(!IS_MULTI_HOST){
+      // ✅ جهاز واحد فقط: لازم أسماء
+      if(!isMultiHost){
         const players = normalizePlayersToExpectedKeys();
 
         if(players.length < 3){
@@ -429,7 +398,6 @@
       }
 
       let saved = (sessionStorage.getItem(KEY_CATEGORY) || "").trim();
-
       if(!saved){
         for (const k of ALT_CAT_KEYS){
           const v = (sessionStorage.getItem(k) || "").trim();
@@ -448,46 +416,35 @@
       }
     })();
 
-    // ✅ زر "ابدأ اللعب" للنمطين
     startBtn.addEventListener("click", async () => {
       if(!selectedKey){
         alert("اختر نوع السالفة أولاً.");
         return;
       }
 
-      // ✅ نمط الأجهزة المتعددة (المقدم)
-      if(IS_MULTI_HOST){
+      // ✅ نمط الأجهزة المتعددة (المقدم): ثبت الكتاغوري وابدأ مرحلة ready
+      if(isMultiHost){
         try{
-          // تحميل Firebase فقط عند الحاجة (بدون ما نأثر على نمط جهاز واحد)
-          const fb = await import("./data/firebase.js");
-          const { ensureRoom, roomRef, db } = fb;
-
-          const firestore = await import("https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js");
-          const { updateDoc, serverTimestamp, increment } = firestore;
+          startBtn.disabled = true;
 
           await ensureRoom(multiRoomId);
-
-          await updateDoc(roomRef(multiRoomId), {
-            updatedAt: serverTimestamp(),
-            status: "playing",
+          await updateRoomFields(multiRoomId, {
             categoryKey: selectedKey,
-            categoryLabel: selectedLabel || "",
-            phase: "ready",   // ✅ المرحلة القادمة: صفحة جاهز/البطاقة
-            tick: increment(1)
+            categoryLabel: selectedLabel,
+            phase: "ready",
+            phaseAt: Date.now()
           });
 
-          // ✅ المقدم يروح لصفحة جاهز (بننشئها لاحقًا)
-          window.location.href = "ready.html?room=" + encodeURIComponent(multiRoomId);
-          return;
-
+          window.location.href = "ready.html";
         }catch(e){
           console.warn(e);
-          alert("صار خطأ في الاتصال. جرّب تحدّث الصفحة ثم حاول مرة ثانية.");
-          return;
+          startBtn.disabled = false;
+          alert("صار خطأ في الاتصال. جرّب مرة ثانية.");
         }
+        return;
       }
 
-      // ✅ نمط جهاز واحد (كما كان)
+      // ✅ جهاز واحد (كما هو)
       const players = normalizePlayersToExpectedKeys();
       if(players.length < 3){
         alert("الأسماء غير موجودة. ارجع وأدخل الأسماء.");
