@@ -197,7 +197,7 @@
     .homeBtn svg{ width: 34px; height: 34px; fill: #111; }
 
     /* =========================
-       ✅ مودال المشاركة (ستايل اللعبة)
+       ✅ مودال المشاركة (معدل لستايل اللعبة)
        ========================= */
     .modalBack{
       position: fixed;
@@ -239,8 +239,8 @@
       font-weight: 1000;
       color:#111;
       cursor:pointer;
-      box-shadow: 0 7px 0 rgba(0,0,0,0.18);
       -webkit-tap-highlight-color:transparent;
+      box-shadow: 0 7px 0 rgba(0,0,0,0.18);
       line-height: 1;
       display:flex;
       align-items:center;
@@ -271,13 +271,12 @@
     .tab.yellow{ background: var(--yellow); }
     .tab.orange{ background: #f29b1a; }
     .tab.active{
-      outline: 0;
       filter: brightness(0.98);
       transform: translateY(0);
+      outline: 0;
     }
 
     .modalBody{ padding: 10px 16px 16px; }
-
     .panel{
       background: rgba(63,91,42,0.75);
       border: 4px solid rgba(0,0,0,0.18);
@@ -314,7 +313,6 @@
       text-align:left;
       direction:ltr;
     }
-
     .qrWrap{
       display:flex;
       align-items:center;
@@ -334,7 +332,6 @@
       box-shadow: 0 8px 0 rgba(0,0,0,0.18);
       overflow:hidden;
     }
-
     .modalActions{
       display:flex;
       gap:12px;
@@ -360,7 +357,6 @@
       background: var(--yellow);
       color:#111;
     }
-
     .modalNote{
       text-align:center;
       font-weight: 900;
@@ -370,7 +366,6 @@
       line-height: 1.4;
     }
 
-    /* (اختياري) توست - نتركه موجود لكن ما نعتمد عليه */
     .toast{
       position: fixed;
       left: 50%;
@@ -398,7 +393,7 @@
       .namesTitle{ font-size: 30px; }
       .actionBtn{ font-size: 26px; }
       .roomCode{ font-size: 36px; }
-      .miniBtn{ font-size: 20px; }
+      .miniBtn{ font-size: 20px; min-width: 150px; }
     }
   </style>
 </head>
@@ -515,10 +510,11 @@
     const qrBox        = document.getElementById("qrBox");
 
     const toast = document.getElementById("toast");
+
     function showToast(){
       toast.classList.add("show");
       clearTimeout(showToast._t);
-      showToast._t = setTimeout(()=> toast.classList.remove("show"), 900);
+      showToast._t = setTimeout(()=> toast.classList.remove("show"), 1200);
     }
 
     document.addEventListener('focusin', (e) => {
@@ -539,23 +535,41 @@
       return String(Math.floor(100000 + Math.random() * 900000));
     }
 
-    // ✅ تثبيت الغرفة: localStorage بدل sessionStorage
-    const KEY_ROOM = "bara_roomId_multi_v2";
-    const KEY_HOST = "bara_hostName_multi_v2";
-    const KEY_HOST_ADDED = "bara_hostAdded_multi_v2";
+    const KEY_ROOM = "bara_roomId_multi_v3";
+    const KEY_HOST = "bara_hostName_multi_v3";
+    const KEY_HOST_ADDED = "bara_hostAdded_multi_v3";
+
+    function getNavType(){
+      try{
+        const nav = performance.getEntriesByType("navigation")[0];
+        return nav?.type || "navigate";
+      }catch(e){
+        return "navigate";
+      }
+    }
+    const NAV_TYPE = getNavType();
 
     const params = new URLSearchParams(location.search);
     const roomFromUrl = (params.get("room") || "").trim();
 
+    function normalizeName(x){ return String(x||"").trim(); }
+
     let roomId = "";
+
     if(roomFromUrl){
       roomId = roomFromUrl;
-      localStorage.setItem(KEY_ROOM, roomId);
+      sessionStorage.setItem(KEY_ROOM, roomId);
     }else{
-      roomId = (localStorage.getItem(KEY_ROOM) || "").trim();
-      if(!roomId){
+      const existing = (sessionStorage.getItem(KEY_ROOM) || "").trim();
+      if(existing && NAV_TYPE === "reload"){
+        roomId = existing;
+      }else{
         roomId = genRoomId();
-        localStorage.setItem(KEY_ROOM, roomId);
+        sessionStorage.setItem(KEY_ROOM, roomId);
+
+        localStorage.removeItem(KEY_HOST);
+        sessionStorage.removeItem(KEY_HOST_ADDED);
+        hostInput.value = "";
       }
     }
 
@@ -564,14 +578,12 @@
       return base + "join.html?room=" + encodeURIComponent(roomId);
     }
 
-    const joinUrl = buildJoinUrl();
+    let joinUrl = buildJoinUrl();
     roomCodeEl.textContent = roomId;
     joinLinkBox.textContent = joinUrl;
 
     const savedHost = (localStorage.getItem(KEY_HOST) || "").trim();
     if(savedHost) hostInput.value = savedHost;
-
-    function normalizeName(x){ return String(x||"").trim(); }
 
     function sortPlayers(list){
       return (list || []).slice().sort((a,b)=>{
@@ -613,7 +625,7 @@
     }
 
     /* =========================
-       ✅ QR Render (بدون تعطيل فتح المودال)
+       ✅ QR: منع التوليد وقت فتح المودال (عشان ما يتأخر)
        ========================= */
     let lastQRText = "";
     function renderQR(text){
@@ -642,22 +654,17 @@
     }
 
     function openModal(){
+      // تحديث الرابط/الرمز قبل الفتح
+      joinUrl = buildJoinUrl();
+      joinLinkBox.textContent = joinUrl;
+      roomCodeEl.textContent = roomId;
+
       // ✅ فتح فوري
       modalBack.style.display = "flex";
       modalBack.setAttribute("aria-hidden", "false");
 
-      // ✅ لا تولّد QR الآن (عشان ما يعلّق)
+      // ✅ لا تولّد QR هنا (هذا كان سبب التأخير)
       setTab("code");
-
-      // حدّث البيانات فورًا
-      joinLinkBox.textContent = joinUrl;
-      roomCodeEl.textContent = roomId;
-
-      // ✅ حضّر QR بالخلفية بعد فتح المودال (غير مُعطّل)
-      setTimeout(() => {
-        // جاهز لو فتح تبويب الباركود مباشرة
-        renderQR(joinUrl);
-      }, 120);
     }
 
     function closeIt(){
@@ -677,7 +684,7 @@
       if(which === "qr"){
         tabQR.classList.add("active");
         panelQR.style.display = "block";
-        // ✅ توليد/تحديث QR فقط عند فتح تبويب الباركود
+        // ✅ توليد QR فقط عند تبويب الباركود
         setTimeout(() => renderQR(joinUrl), 0);
       }else if(which === "link"){
         tabLink.classList.add("active");
@@ -692,12 +699,32 @@
     tabCode.addEventListener("click", () => setTab("code"));
     tabLink.addEventListener("click", () => setTab("link"));
 
-    shareBtn.addEventListener("click", () => {
-      // حفظ الاسم محليًا
+    // ✅ (كما هي) إضافة المقدم لقائمة اللاعبين وقت المشاركة
+    async function ensureHostAddedNow(){
       const hostName = normalizeName(hostInput.value);
+      if(!hostName) return;
+
       localStorage.setItem(KEY_HOST, hostName);
 
-      // ✅ افتح المودال فورًا
+      if(!firebaseReady) return;
+
+      const hostAdded = sessionStorage.getItem(KEY_HOST_ADDED) === "1";
+      if(hostAdded) return;
+
+      const exists = (currentPlayers || []).some(p => normalizeName(p?.name) === hostName);
+      if(!exists){
+        try{
+          await addPlayer(roomId, hostName);
+        }catch(e){
+          console.warn("Add host failed:", e);
+          return;
+        }
+      }
+      sessionStorage.setItem(KEY_HOST_ADDED, "1");
+    }
+
+    shareBtn.addEventListener("click", async () => {
+      await ensureHostAddedNow();
       openModal();
     });
 
@@ -739,7 +766,7 @@
       const ok = await copyText(joinUrl);
       if(ok){
         flashCopied();
-        // اختياري (لو تبي التوست)
+        // لو تبي التوست كمان اتركه شغال:
         // showToast();
       }else{
         alert("ما قدرت أنسخ الرابط. انسخه يدويًا.");
@@ -791,14 +818,8 @@
         return;
       }
 
-      const hostAdded = localStorage.getItem(KEY_HOST_ADDED) === "1";
-      if(!hostAdded){
-        const exists = (currentPlayers || []).some(p => normalizeName(p?.name) === hostName);
-        if(!exists){
-          await addPlayer(roomId, hostName);
-        }
-        localStorage.setItem(KEY_HOST_ADDED, "1");
-      }
+      // تأكيد إضافة المقدم (لو ما صار وقت المشاركة)
+      await ensureHostAddedNow();
 
       await setRoomStatus(roomId, "playing");
       window.location.href = "categories.html";
@@ -806,9 +827,9 @@
 
     function clearMultiState(){
       if(unsub) try{ unsub(); }catch(e){}
-      localStorage.removeItem(KEY_ROOM);
+      sessionStorage.removeItem(KEY_ROOM);
       localStorage.removeItem(KEY_HOST);
-      localStorage.removeItem(KEY_HOST_ADDED);
+      sessionStorage.removeItem(KEY_HOST_ADDED);
     }
 
     homeBtn.addEventListener("click", () => {
