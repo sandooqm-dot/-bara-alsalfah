@@ -196,7 +196,6 @@
     }
     .homeBtn svg{ width: 34px; height: 34px; fill: #111; }
 
-    /* ✅ (تعديل) مودال متوافق مع ستايل اللعبة */
     .modalBack{
       position: fixed;
       inset:0;
@@ -209,51 +208,41 @@
     }
     .modal{
       width: min(520px, 94vw);
-      background: var(--bg);
-      border: 6px solid var(--green);
-      border-radius: 22px;
-      box-shadow: var(--shadow);
+      background:#fff;
+      border: 5px solid #000;
+      border-radius: 18px;
+      box-shadow: 0 12px 0 rgba(0,0,0,0.25);
       overflow:hidden;
       position: relative;
     }
     .modalHeader{
-      padding: 14px 16px 12px;
+      padding: 14px 16px 10px;
       text-align:center;
       font-weight: 1000;
       font-size: 26px;
-      color:#fff;
+      color:#111;
       position: relative;
-      background: rgba(63,91,42,0.90);
-      border-bottom: 4px solid rgba(0,0,0,0.18);
     }
     .closeX{
       position:absolute;
       left: 10px;
       top: 10px;
-      width: 44px;
-      height: 44px;
-      border: 4px solid #000;
-      border-radius: 14px;
-      background: #fff;
-      font-size: 30px;
-      font-weight: 1000;
-      color:#111;
+      width: 40px;
+      height: 40px;
+      border:0;
+      background: transparent;
+      font-size: 34px;
+      font-weight: 900;
+      color:#1f4fa3;
       cursor:pointer;
-      box-shadow: 0 7px 0 rgba(0,0,0,0.18);
       -webkit-tap-highlight-color:transparent;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      line-height: 1;
     }
-    .closeX:active{ transform: translateY(1px); box-shadow: 0 6px 0 rgba(0,0,0,0.18); }
 
     .tabs{
       display:flex;
       gap:10px;
       justify-content:center;
-      padding: 12px 16px 12px;
-      background: rgba(63,91,42,0.18);
+      padding: 0 16px 12px;
     }
     .tab{
       border: 4px solid #000;
@@ -263,59 +252,56 @@
       font-size: 20px;
       box-shadow: 0 7px 0 rgba(0,0,0,0.20);
       cursor:pointer;
-      background:#fff;
+      background:#f7f7f7;
       -webkit-tap-highlight-color:transparent;
       min-width: 92px;
       text-align:center;
-      color:#111;
     }
     .tab.active{
-      background: var(--green);
+      background: #1aa354;
       color:#fff;
     }
-    .tab.yellow{ background: #fff; }
-    .tab.orange{ background: #fff; }
-    .tab.yellow.active{ background: var(--yellow); color:#111; }
+    .tab.yellow{ background: #f2c300; }
+    .tab.orange{ background: #f29b1a; }
     .tab.orange.active{ background:#f29b1a; color:#111; }
+    .tab.yellow.active{ background:#f2c300; color:#111; }
 
-    .modalBody{ padding: 12px 16px 16px; }
+    .modalBody{ padding: 10px 16px 16px; }
     .panel{
-      background: rgba(255,255,255,0.65);
-      border: 4px solid rgba(63,91,42,0.35);
-      border-radius: 18px;
+      background:#f3f3f3;
+      border: 3px solid rgba(0,0,0,0.15);
+      border-radius: 14px;
       padding: 12px;
     }
     .labelSmall{
       text-align:center;
       font-weight: 900;
-      color:#1a1a1a;
+      color:#333;
       margin: 6px 0 8px;
       font-size: 18px;
     }
     .roomCode{
       background:#fff;
-      border: 4px solid var(--green2);
-      border-radius: 18px;
+      border: 3px solid rgba(0,0,0,0.15);
+      border-radius: 14px;
       padding: 12px 10px;
       font-size: 40px;
       font-weight: 1000;
       text-align:center;
       letter-spacing: 2px;
       color:#111;
-      box-shadow: 0 8px 0 rgba(0,0,0,0.10);
     }
     .linkBox{
       background:#fff;
-      border: 4px solid var(--green2);
-      border-radius: 18px;
+      border: 3px solid rgba(0,0,0,0.15);
+      border-radius: 14px;
       padding: 10px 10px;
       font-size: 15px;
-      font-weight: 900;
+      font-weight: 800;
       color:#111;
       word-break: break-all;
       text-align:left;
       direction:ltr;
-      box-shadow: 0 8px 0 rgba(0,0,0,0.10);
     }
     .qrWrap{
       display:flex;
@@ -342,8 +328,6 @@
       justify-content:center;
       padding-top: 12px;
     }
-
-    /* ✅ (تعديل) زر النسخ + حالة "تم النسخ" */
     .miniBtn{
       border: 4px solid #000;
       border-radius: 16px;
@@ -351,34 +335,22 @@
       font-size: 20px;
       font-weight: 1000;
       cursor:pointer;
-      background: var(--blue);
+      background:#fff;
       box-shadow: 0 7px 0 rgba(0,0,0,0.18);
       -webkit-tap-highlight-color:transparent;
       min-width: 150px;
-      color:#111;
-      transition: background .15s ease, transform .05s ease;
+      color:#1f4fa3;
     }
     .miniBtn:active{ transform: translateY(1px); box-shadow: 0 6px 0 rgba(0,0,0,0.18); }
-    .miniBtn.copied{
-      background: var(--yellow);
-      color:#111;
-    }
-    .miniBtn[disabled]{
-      opacity: .85;
-      cursor: not-allowed;
-      transform:none;
-    }
-
     .modalNote{
       text-align:center;
       font-weight: 900;
-      color:#3a3a3a;
+      color:#666;
       margin-top: 10px;
       font-size: 15px;
       line-height: 1.4;
     }
 
-    /* (تركناها كما هي - ما نستخدمها الآن) */
     .toast{
       position: fixed;
       left: 50%;
@@ -491,10 +463,14 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <script type="module">
+    import { updateDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
     let ensureRoom   = async () => {};
     let listenRoom   = () => () => {};
     let addPlayer    = async () => {};
     let setRoomStatus= async () => {};
+    let roomRefFn    = (id) => null;
+
     let firebaseReady = false;
 
     const hostInput   = document.getElementById("hostInput");
@@ -521,6 +497,14 @@
     const copyBtn      = document.getElementById("copyBtn");
     const qrBox        = document.getElementById("qrBox");
 
+    const toast = document.getElementById("toast");
+
+    function showToast(){
+      toast.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=> toast.classList.remove("show"), 1200);
+    }
+
     document.addEventListener('focusin', (e) => {
       if (e.target === hostInput) {
         hostInput.dataset.ph = hostInput.placeholder;
@@ -546,7 +530,7 @@
     const KEY_HOST = "bara_hostName_multi_v3";
     const KEY_HOST_ADDED = "bara_hostAdded_multi_v3";
 
-    // ✅ لو جاي من index.html نبدأ جلسة جديدة أكيد (حل تداخل الألعاب)
+    // ✅ لو جاي من index.html نبدأ جلسة جديدة أكيد
     const ref = String(document.referrer || "");
     const FROM_INDEX = /index\.html(\?|#|$)/i.test(ref);
 
@@ -563,6 +547,9 @@
     const params = new URLSearchParams(location.search);
     const roomFromUrl = (params.get("room") || "").trim();
 
+    // ✅ علامة: هذه جلسة جديدة لازم ننظف الغرفة في Firestore (حل ظهور أسماء قديمة مثل "أحمد")
+    let FRESH_SESSION = false;
+
     function startFreshSession(){
       const newId = genRoomId();
       sessionStorage.setItem(KEY_ROOM, newId);
@@ -575,6 +562,7 @@
       emptyHint.style.display = "block";
       startBtn.disabled = true;
 
+      FRESH_SESSION = true;
       return newId;
     }
 
@@ -589,14 +577,12 @@
       const ts = Number(sessionStorage.getItem(KEY_ROOM_TS) || "0");
       const ageMs = ts ? (Date.now() - ts) : 999999999;
 
-      // نسمح فقط بالـ reload يحتفظ بنفس الغرفة، غير كذا نبدأ جديد
       if(existing && NAV_TYPE === "reload" && ageMs < 6 * 60 * 60 * 1000){
         roomId = existing;
       }else{
         roomId = startFreshSession();
       }
 
-      // ✅ لو جاء من index بالذات، لازم جديد 100% حتى لو Safari لخبط navType
       if(FROM_INDEX){
         roomId = startFreshSession();
       }
@@ -656,8 +642,7 @@
       startBtn.disabled = !(hostName && total >= 3);
     }
 
-    /* ✅ (تعديل) فتح المودال فورًا بدون انتظار أي عمليات شبكة */
-    function openModalFast(){
+    function openModal(){
       joinUrl = buildJoinUrl();
       joinLinkBox.textContent = joinUrl;
       roomCodeEl.textContent = roomId;
@@ -665,13 +650,8 @@
       modalBack.style.display = "flex";
       modalBack.setAttribute("aria-hidden", "false");
       setTab("code");
-
-      // توليد QR بعد ما يظهر المودال مباشرة (يقلل التهنيق)
-      requestAnimationFrame(() => {
-        try{ renderQR(joinUrl); }catch(e){}
-      });
+      renderQR(joinUrl);
     }
-
     function closeIt(){
       modalBack.style.display = "none";
       modalBack.setAttribute("aria-hidden", "true");
@@ -689,7 +669,7 @@
       if(which === "qr"){
         tabQR.classList.add("active");
         panelQR.style.display = "block";
-        requestAnimationFrame(() => { try{ renderQR(joinUrl); }catch(e){} });
+        renderQR(joinUrl);
       }else if(which === "link"){
         tabLink.classList.add("active");
         panelLink.style.display = "block";
@@ -703,7 +683,7 @@
     tabCode.addEventListener("click", () => setTab("code"));
     tabLink.addEventListener("click", () => setTab("link"));
 
-    // ✅ إضافة المقدم تلقائيًا (بدون انتظار المشاركة)
+    // ✅ إضافة المقدم تلقائيًا
     let pendingHostAdd = false;
     async function ensureHostAddedNow(){
       const hostName = normalizeName(hostInput.value);
@@ -733,7 +713,6 @@
       pendingHostAdd = false;
     }
 
-    // debounce على كتابة اسم المقدم
     let hostDebTimer = null;
     hostInput.addEventListener("input", () => {
       const v = normalizeName(hostInput.value);
@@ -746,33 +725,15 @@
       }, 450);
     });
 
-    /* ✅ (تعديل) زر المشاركة: افتح فورًا + الإضافة بالخلفية بدون انتظار */
-    shareBtn.addEventListener("click", () => {
-      openModalFast();
-      ensureHostAddedNow(); // بدون await لتفادي التأخير
+    shareBtn.addEventListener("click", async () => {
+      await ensureHostAddedNow();
+      openModal();
     });
-
-    /* ✅ (تعديل) نسخ الرابط: زر يصفر + "تم النسخ" ثانية */
-    const COPY_DEFAULT_TEXT = "نسخ الرابط";
-    let copyResetTimer = null;
-
-    function flashCopyBtn(){
-      clearTimeout(copyResetTimer);
-      copyBtn.classList.add("copied");
-      copyBtn.textContent = "تم النسخ";
-      copyBtn.disabled = true;
-
-      copyResetTimer = setTimeout(() => {
-        copyBtn.classList.remove("copied");
-        copyBtn.textContent = COPY_DEFAULT_TEXT;
-        copyBtn.disabled = false;
-      }, 1000);
-    }
 
     async function copyText(text){
       try{
         await navigator.clipboard.writeText(text);
-        flashCopyBtn();
+        showToast();
         return true;
       }catch(e){
         const ta = document.createElement("textarea");
@@ -783,8 +744,8 @@
         ta.select();
         try{
           document.execCommand("copy");
+          showToast();
           document.body.removeChild(ta);
-          flashCopyBtn();
           return true;
         }catch(err){
           document.body.removeChild(ta);
@@ -793,7 +754,6 @@
         }
       }
     }
-
     copyBtn.addEventListener("click", () => copyText(joinUrl));
 
     function renderQR(text){
@@ -823,10 +783,29 @@
         listenRoom    = fb.listenRoom;
         addPlayer     = fb.addPlayer;
         setRoomStatus = fb.setRoomStatus;
+        roomRefFn     = fb.roomRef;
 
         firebaseReady = true;
 
         await ensureRoom(roomId);
+
+        // ✅ أهم تعديل: إذا جلسة جديدة، نظّف الغرفة من أي أسماء قديمة (حل ظهور "أحمد" وغيره)
+        if(FRESH_SESSION && roomRefFn){
+          try{
+            await updateDoc(roomRefFn(roomId), {
+              updatedAt: serverTimestamp(),
+              status: "lobby",
+              hostStartedAt: null,
+              players: [],
+              hostName: "",
+              tick: increment(1),
+              version: increment(1)
+            });
+          }catch(e){
+            console.warn("reset room failed:", e);
+          }
+          FRESH_SESSION = false;
+        }
 
         unsub = listenRoom(roomId, (data) => {
           currentPlayers = Array.isArray(data?.players) ? data.players : [];
