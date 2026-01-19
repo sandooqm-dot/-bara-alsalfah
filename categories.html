@@ -234,7 +234,7 @@
     </div>
   </div>
 
-  <script>
+  <script type="module">
     /**************************************************************
      * قائمة مقاسات الصور (عدّلها أنت)
      **************************************************************/
@@ -282,11 +282,21 @@
       "bara_category_key"
     ];
 
+    // ✅ مفاتيح نمط الأجهزة المتعددة (المقدم)
+    const MULTI_ROOM_KEYS = [
+      "bara_roomId_multi_v4",
+      "bara_roomId_multi_v3",
+      "bara_roomId_multi_v2",
+      "bara_roomId_multi_v1",
+      "bara_roomId_multi_join"
+    ];
+
     const grid = document.getElementById("grid");
     const startBtn = document.getElementById("startBtn");
     const homeBtn = document.getElementById("homeBtn");
 
     let selectedKey = null;
+    let selectedLabel = "";
 
     function safeJSONParse(v){
       try { return JSON.parse(v); } catch(e){ return null; }
@@ -320,9 +330,22 @@
       return players;
     }
 
+    function getMultiRoomId(){
+      for(const k of MULTI_ROOM_KEYS){
+        const v = String(sessionStorage.getItem(k) || "").trim();
+        if(v) return v;
+      }
+      return "";
+    }
+
+    const multiRoomId = getMultiRoomId();
+    const IS_MULTI_HOST = !!multiRoomId;
+
     function setCategoryEverywhere(key, label){
       selectedKey = key;
+      selectedLabel = String(label || "");
 
+      // ✅ نخزنها للجهاز الواحد (كما كان)
       sessionStorage.setItem(KEY_CATEGORY, key);
 
       sessionStorage.setItem("bara_category_id", key);
@@ -394,12 +417,15 @@
     (function init(){
       buildGrid();
 
-      const players = normalizePlayersToExpectedKeys();
+      // ✅ إذا كان نمط أجهزة متعددة (مقدم): لا نتحقق من players ولا نرجع single.html
+      if(!IS_MULTI_HOST){
+        const players = normalizePlayersToExpectedKeys();
 
-      if(players.length < 3){
-        alert("الأسماء غير موجودة. ارجع للصفحة السابقة وأدخل الأسماء ثم جرّب مرة ثانية.");
-        window.location.href = "single.html";
-        return;
+        if(players.length < 3){
+          alert("الأسماء غير موجودة. ارجع للصفحة السابقة وأدخل الأسماء ثم جرّب مرة ثانية.");
+          window.location.href = "single.html";
+          return;
+        }
       }
 
       let saved = (sessionStorage.getItem(KEY_CATEGORY) || "").trim();
@@ -422,15 +448,50 @@
       }
     })();
 
-    startBtn.addEventListener("click", () => {
+    // ✅ زر "ابدأ اللعب" للنمطين
+    startBtn.addEventListener("click", async () => {
+      if(!selectedKey){
+        alert("اختر نوع السالفة أولاً.");
+        return;
+      }
+
+      // ✅ نمط الأجهزة المتعددة (المقدم)
+      if(IS_MULTI_HOST){
+        try{
+          // تحميل Firebase فقط عند الحاجة (بدون ما نأثر على نمط جهاز واحد)
+          const fb = await import("./data/firebase.js");
+          const { ensureRoom, roomRef, db } = fb;
+
+          const firestore = await import("https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js");
+          const { updateDoc, serverTimestamp, increment } = firestore;
+
+          await ensureRoom(multiRoomId);
+
+          await updateDoc(roomRef(multiRoomId), {
+            updatedAt: serverTimestamp(),
+            status: "playing",
+            categoryKey: selectedKey,
+            categoryLabel: selectedLabel || "",
+            phase: "ready",   // ✅ المرحلة القادمة: صفحة جاهز/البطاقة
+            tick: increment(1)
+          });
+
+          // ✅ المقدم يروح لصفحة جاهز (بننشئها لاحقًا)
+          window.location.href = "ready.html?room=" + encodeURIComponent(multiRoomId);
+          return;
+
+        }catch(e){
+          console.warn(e);
+          alert("صار خطأ في الاتصال. جرّب تحدّث الصفحة ثم حاول مرة ثانية.");
+          return;
+        }
+      }
+
+      // ✅ نمط جهاز واحد (كما كان)
       const players = normalizePlayersToExpectedKeys();
       if(players.length < 3){
         alert("الأسماء غير موجودة. ارجع وأدخل الأسماء.");
         window.location.href = "single.html";
-        return;
-      }
-      if(!selectedKey){
-        alert("اختر نوع السالفة أولاً.");
         return;
       }
 
@@ -441,4 +502,4 @@
 </body>
 </html>
 
-<!-- categories.html برا السالفة – إصدار 4 -->
+<!-- categories.html برا السالفة – إصدار 5 -->
