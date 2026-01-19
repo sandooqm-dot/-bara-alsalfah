@@ -196,6 +196,9 @@
     }
     .homeBtn svg{ width: 34px; height: 34px; fill: #111; }
 
+    /* =========================
+       ✅ مودال المشاركة (ستايل اللعبة)
+       ========================= */
     .modalBack{
       position: fixed;
       inset:0;
@@ -208,10 +211,10 @@
     }
     .modal{
       width: min(520px, 94vw);
-      background:#fff;
-      border: 5px solid #000;
-      border-radius: 18px;
-      box-shadow: 0 12px 0 rgba(0,0,0,0.25);
+      background: var(--bg);
+      border: 6px solid var(--green);
+      border-radius: 22px;
+      box-shadow: 0 12px 0 rgba(0,0,0,0.22);
       overflow:hidden;
       position: relative;
     }
@@ -220,23 +223,30 @@
       text-align:center;
       font-weight: 1000;
       font-size: 26px;
-      color:#111;
+      color: var(--green);
       position: relative;
     }
     .closeX{
       position:absolute;
       left: 10px;
       top: 10px;
-      width: 40px;
-      height: 40px;
-      border:0;
-      background: transparent;
-      font-size: 34px;
-      font-weight: 900;
-      color:#1f4fa3;
+      width: 44px;
+      height: 44px;
+      border: 4px solid #000;
+      border-radius: 14px;
+      background: var(--blue);
+      font-size: 30px;
+      font-weight: 1000;
+      color:#111;
       cursor:pointer;
+      box-shadow: 0 7px 0 rgba(0,0,0,0.18);
       -webkit-tap-highlight-color:transparent;
+      line-height: 1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
     }
+    .closeX:active{ transform: translateY(1px); box-shadow: 0 6px 0 rgba(0,0,0,0.18); }
 
     .tabs{
       display:flex;
@@ -252,38 +262,39 @@
       font-size: 20px;
       box-shadow: 0 7px 0 rgba(0,0,0,0.20);
       cursor:pointer;
-      background:#f7f7f7;
+      background:#fff;
       -webkit-tap-highlight-color:transparent;
       min-width: 92px;
       text-align:center;
+      color:#111;
     }
-    .tab.active{
-      background: #1aa354;
-      color:#fff;
-    }
-    .tab.yellow{ background: #f2c300; }
+    .tab.yellow{ background: var(--yellow); }
     .tab.orange{ background: #f29b1a; }
-    .tab.orange.active{ background:#f29b1a; color:#111; }
-    .tab.yellow.active{ background:#f2c300; color:#111; }
+    .tab.active{
+      outline: 0;
+      filter: brightness(0.98);
+      transform: translateY(0);
+    }
 
     .modalBody{ padding: 10px 16px 16px; }
+
     .panel{
-      background:#f3f3f3;
-      border: 3px solid rgba(0,0,0,0.15);
-      border-radius: 14px;
+      background: rgba(63,91,42,0.75);
+      border: 4px solid rgba(0,0,0,0.18);
+      border-radius: 18px;
       padding: 12px;
     }
     .labelSmall{
       text-align:center;
-      font-weight: 900;
-      color:#333;
+      font-weight: 1000;
+      color:#fff;
       margin: 6px 0 8px;
       font-size: 18px;
     }
     .roomCode{
       background:#fff;
-      border: 3px solid rgba(0,0,0,0.15);
-      border-radius: 14px;
+      border: 4px solid var(--green2);
+      border-radius: 16px;
       padding: 12px 10px;
       font-size: 40px;
       font-weight: 1000;
@@ -293,16 +304,17 @@
     }
     .linkBox{
       background:#fff;
-      border: 3px solid rgba(0,0,0,0.15);
-      border-radius: 14px;
+      border: 4px solid var(--green2);
+      border-radius: 16px;
       padding: 10px 10px;
       font-size: 15px;
-      font-weight: 800;
+      font-weight: 900;
       color:#111;
       word-break: break-all;
       text-align:left;
       direction:ltr;
     }
+
     .qrWrap{
       display:flex;
       align-items:center;
@@ -322,6 +334,7 @@
       box-shadow: 0 8px 0 rgba(0,0,0,0.18);
       overflow:hidden;
     }
+
     .modalActions{
       display:flex;
       gap:12px;
@@ -330,27 +343,34 @@
     }
     .miniBtn{
       border: 4px solid #000;
-      border-radius: 16px;
+      border-radius: 18px;
       padding: 10px 18px;
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 1000;
       cursor:pointer;
-      background:#fff;
+      background: var(--blue);
       box-shadow: 0 7px 0 rgba(0,0,0,0.18);
       -webkit-tap-highlight-color:transparent;
-      min-width: 150px;
-      color:#1f4fa3;
+      min-width: 160px;
+      color:#111;
+      transition: background .12s ease, transform .12s ease, box-shadow .12s ease;
     }
     .miniBtn:active{ transform: translateY(1px); box-shadow: 0 6px 0 rgba(0,0,0,0.18); }
+    .miniBtn.copied{
+      background: var(--yellow);
+      color:#111;
+    }
+
     .modalNote{
       text-align:center;
       font-weight: 900;
-      color:#666;
+      color: rgba(255,255,255,0.92);
       margin-top: 10px;
       font-size: 15px;
       line-height: 1.4;
     }
 
+    /* (اختياري) توست - نتركه موجود لكن ما نعتمد عليه */
     .toast{
       position: fixed;
       left: 50%;
@@ -378,6 +398,7 @@
       .namesTitle{ font-size: 30px; }
       .actionBtn{ font-size: 26px; }
       .roomCode{ font-size: 36px; }
+      .miniBtn{ font-size: 20px; }
     }
   </style>
 </head>
@@ -494,11 +515,10 @@
     const qrBox        = document.getElementById("qrBox");
 
     const toast = document.getElementById("toast");
-
     function showToast(){
       toast.classList.add("show");
       clearTimeout(showToast._t);
-      showToast._t = setTimeout(()=> toast.classList.remove("show"), 1200);
+      showToast._t = setTimeout(()=> toast.classList.remove("show"), 900);
     }
 
     document.addEventListener('focusin', (e) => {
@@ -519,41 +539,23 @@
       return String(Math.floor(100000 + Math.random() * 900000));
     }
 
-    const KEY_ROOM = "bara_roomId_multi_v3";
-    const KEY_HOST = "bara_hostName_multi_v3";
-    const KEY_HOST_ADDED = "bara_hostAdded_multi_v3";
-
-    function getNavType(){
-      try{
-        const nav = performance.getEntriesByType("navigation")[0];
-        return nav?.type || "navigate";
-      }catch(e){
-        return "navigate";
-      }
-    }
-    const NAV_TYPE = getNavType();
+    // ✅ تثبيت الغرفة: localStorage بدل sessionStorage
+    const KEY_ROOM = "bara_roomId_multi_v2";
+    const KEY_HOST = "bara_hostName_multi_v2";
+    const KEY_HOST_ADDED = "bara_hostAdded_multi_v2";
 
     const params = new URLSearchParams(location.search);
     const roomFromUrl = (params.get("room") || "").trim();
 
-    function normalizeName(x){ return String(x||"").trim(); }
-
     let roomId = "";
-
     if(roomFromUrl){
       roomId = roomFromUrl;
-      sessionStorage.setItem(KEY_ROOM, roomId);
+      localStorage.setItem(KEY_ROOM, roomId);
     }else{
-      const existing = (sessionStorage.getItem(KEY_ROOM) || "").trim();
-      if(existing && NAV_TYPE === "reload"){
-        roomId = existing;
-      }else{
+      roomId = (localStorage.getItem(KEY_ROOM) || "").trim();
+      if(!roomId){
         roomId = genRoomId();
-        sessionStorage.setItem(KEY_ROOM, roomId);
-
-        localStorage.removeItem(KEY_HOST);
-        sessionStorage.removeItem(KEY_HOST_ADDED);
-        hostInput.value = "";
+        localStorage.setItem(KEY_ROOM, roomId);
       }
     }
 
@@ -562,12 +564,14 @@
       return base + "join.html?room=" + encodeURIComponent(roomId);
     }
 
-    let joinUrl = buildJoinUrl();
+    const joinUrl = buildJoinUrl();
     roomCodeEl.textContent = roomId;
     joinLinkBox.textContent = joinUrl;
 
     const savedHost = (localStorage.getItem(KEY_HOST) || "").trim();
     if(savedHost) hostInput.value = savedHost;
+
+    function normalizeName(x){ return String(x||"").trim(); }
 
     function sortPlayers(list){
       return (list || []).slice().sort((a,b)=>{
@@ -608,104 +612,17 @@
       startBtn.disabled = !(hostName && total >= 3);
     }
 
-    function openModal(){
-      joinUrl = buildJoinUrl();
-      joinLinkBox.textContent = joinUrl;
-      roomCodeEl.textContent = roomId;
-
-      modalBack.style.display = "flex";
-      modalBack.setAttribute("aria-hidden", "false");
-      setTab("code");
-      renderQR(joinUrl);
-    }
-    function closeIt(){
-      modalBack.style.display = "none";
-      modalBack.setAttribute("aria-hidden", "true");
-    }
-
-    closeModal.addEventListener("click", closeIt);
-    modalBack.addEventListener("click", (e) => { if(e.target === modalBack) closeIt(); });
-
-    function setTab(which){
-      [tabQR, tabCode, tabLink].forEach(t => t.classList.remove("active"));
-      panelQR.style.display = "none";
-      panelCode.style.display = "none";
-      panelLink.style.display = "none";
-
-      if(which === "qr"){
-        tabQR.classList.add("active");
-        panelQR.style.display = "block";
-        renderQR(joinUrl);
-      }else if(which === "link"){
-        tabLink.classList.add("active");
-        panelLink.style.display = "block";
-      }else{
-        tabCode.classList.add("active");
-        panelCode.style.display = "block";
-      }
-    }
-
-    tabQR.addEventListener("click", () => setTab("qr"));
-    tabCode.addEventListener("click", () => setTab("code"));
-    tabLink.addEventListener("click", () => setTab("link"));
-
-    // ✅ (تعديل مهم) إضافة المقدم لقائمة اللاعبين وقت المشاركة (عشان يظهر اسمه عند اللاعبين مباشرة)
-    async function ensureHostAddedNow(){
-      const hostName = normalizeName(hostInput.value);
-      if(!hostName) return;
-
-      localStorage.setItem(KEY_HOST, hostName);
-
-      if(!firebaseReady) return;
-
-      const hostAdded = sessionStorage.getItem(KEY_HOST_ADDED) === "1";
-      if(hostAdded) return;
-
-      const exists = (currentPlayers || []).some(p => normalizeName(p?.name) === hostName);
-      if(!exists){
-        try{
-          await addPlayer(roomId, hostName);
-        }catch(e){
-          console.warn("Add host failed:", e);
-          return;
-        }
-      }
-      sessionStorage.setItem(KEY_HOST_ADDED, "1");
-    }
-
-    shareBtn.addEventListener("click", async () => {
-      await ensureHostAddedNow();
-      openModal();
-    });
-
-    async function copyText(text){
-      try{
-        await navigator.clipboard.writeText(text);
-        showToast();
-        return true;
-      }catch(e){
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        ta.style.position = "fixed";
-        ta.style.opacity = "0";
-        document.body.appendChild(ta);
-        ta.select();
-        try{
-          document.execCommand("copy");
-          showToast();
-          document.body.removeChild(ta);
-          return true;
-        }catch(err){
-          document.body.removeChild(ta);
-          alert("ما قدرت أنسخ الرابط. انسخه يدويًا.");
-          return false;
-        }
-      }
-    }
-    copyBtn.addEventListener("click", () => copyText(joinUrl));
-
+    /* =========================
+       ✅ QR Render (بدون تعطيل فتح المودال)
+       ========================= */
+    let lastQRText = "";
     function renderQR(text){
+      if(!text) return;
+      if(text === lastQRText && qrBox.childNodes.length) return;
+
       qrBox.innerHTML = "";
+      lastQRText = text;
+
       try{
         // eslint-disable-next-line no-undef
         new QRCode(qrBox, {
@@ -723,6 +640,111 @@
         qrBox.appendChild(img);
       }
     }
+
+    function openModal(){
+      // ✅ فتح فوري
+      modalBack.style.display = "flex";
+      modalBack.setAttribute("aria-hidden", "false");
+
+      // ✅ لا تولّد QR الآن (عشان ما يعلّق)
+      setTab("code");
+
+      // حدّث البيانات فورًا
+      joinLinkBox.textContent = joinUrl;
+      roomCodeEl.textContent = roomId;
+
+      // ✅ حضّر QR بالخلفية بعد فتح المودال (غير مُعطّل)
+      setTimeout(() => {
+        // جاهز لو فتح تبويب الباركود مباشرة
+        renderQR(joinUrl);
+      }, 120);
+    }
+
+    function closeIt(){
+      modalBack.style.display = "none";
+      modalBack.setAttribute("aria-hidden", "true");
+    }
+
+    closeModal.addEventListener("click", closeIt);
+    modalBack.addEventListener("click", (e) => { if(e.target === modalBack) closeIt(); });
+
+    function setTab(which){
+      [tabQR, tabCode, tabLink].forEach(t => t.classList.remove("active"));
+      panelQR.style.display = "none";
+      panelCode.style.display = "none";
+      panelLink.style.display = "none";
+
+      if(which === "qr"){
+        tabQR.classList.add("active");
+        panelQR.style.display = "block";
+        // ✅ توليد/تحديث QR فقط عند فتح تبويب الباركود
+        setTimeout(() => renderQR(joinUrl), 0);
+      }else if(which === "link"){
+        tabLink.classList.add("active");
+        panelLink.style.display = "block";
+      }else{
+        tabCode.classList.add("active");
+        panelCode.style.display = "block";
+      }
+    }
+
+    tabQR.addEventListener("click", () => setTab("qr"));
+    tabCode.addEventListener("click", () => setTab("code"));
+    tabLink.addEventListener("click", () => setTab("link"));
+
+    shareBtn.addEventListener("click", () => {
+      // حفظ الاسم محليًا
+      const hostName = normalizeName(hostInput.value);
+      localStorage.setItem(KEY_HOST, hostName);
+
+      // ✅ افتح المودال فورًا
+      openModal();
+    });
+
+    async function copyText(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        return true;
+      }catch(e){
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        try{
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+          return true;
+        }catch(err){
+          document.body.removeChild(ta);
+          return false;
+        }
+      }
+    }
+
+    // ✅ زر النسخ: أصفر + "تم النسخ" لمدة ثانية ثم يرجع
+    const copyOrigText = copyBtn.textContent;
+    function flashCopied(){
+      copyBtn.classList.add("copied");
+      copyBtn.textContent = "تم النسخ";
+      clearTimeout(flashCopied._t);
+      flashCopied._t = setTimeout(() => {
+        copyBtn.classList.remove("copied");
+        copyBtn.textContent = copyOrigText;
+      }, 1000);
+    }
+
+    copyBtn.addEventListener("click", async () => {
+      const ok = await copyText(joinUrl);
+      if(ok){
+        flashCopied();
+        // اختياري (لو تبي التوست)
+        // showToast();
+      }else{
+        alert("ما قدرت أنسخ الرابط. انسخه يدويًا.");
+      }
+    });
 
     async function initFirebaseSafe(){
       try{
@@ -769,8 +791,14 @@
         return;
       }
 
-      // تأكيد إضافة المقدم (لو ما صار وقت المشاركة)
-      await ensureHostAddedNow();
+      const hostAdded = localStorage.getItem(KEY_HOST_ADDED) === "1";
+      if(!hostAdded){
+        const exists = (currentPlayers || []).some(p => normalizeName(p?.name) === hostName);
+        if(!exists){
+          await addPlayer(roomId, hostName);
+        }
+        localStorage.setItem(KEY_HOST_ADDED, "1");
+      }
 
       await setRoomStatus(roomId, "playing");
       window.location.href = "categories.html";
@@ -778,9 +806,9 @@
 
     function clearMultiState(){
       if(unsub) try{ unsub(); }catch(e){}
-      sessionStorage.removeItem(KEY_ROOM);
+      localStorage.removeItem(KEY_ROOM);
       localStorage.removeItem(KEY_HOST);
-      sessionStorage.removeItem(KEY_HOST_ADDED);
+      localStorage.removeItem(KEY_HOST_ADDED);
     }
 
     homeBtn.addEventListener("click", () => {
