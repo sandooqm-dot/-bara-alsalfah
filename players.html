@@ -52,7 +52,6 @@
       overflow:hidden;
     }
 
-    /* ✅ رأس الصفحة: اللوجو يسار + العنوان يمين بنفس مستوى اللوجو (بدون أي إطار) */
     .topRow{
       position: relative;
       min-height: 86px;
@@ -81,12 +80,10 @@
       pointer-events:none;
     }
 
-    /* ✅ صندوق الأسماء */
     .namesCard{
       background: rgba(63,91,42,0.75);
       border-radius: 22px;
       padding: 14px 14px 16px;
-      box-shadow: inset 0 0 0 0 rgba(0,0,0,0);
       border: 0;
       margin-top: 4px;
     }
@@ -107,7 +104,6 @@
       border: 0;
     }
 
-    /* نفس شكل حق جهاز واحد */
     .nameBox{
       width: 100%;
       padding: 14px 14px;
@@ -150,11 +146,10 @@
       padding: 8px 8px 2px;
     }
 
-    /* ✅ منطقة الأزرار: تبقى بالأسفل لكن مرفوعة عشان ما تتداخل مع زر البيت */
     .bottomArea{
       margin-top: auto;
       padding-top: 14px;
-      padding-bottom: calc(96px + env(safe-area-inset-bottom)); /* مساحة آمنة لزر البيت */
+      padding-bottom: calc(96px + env(safe-area-inset-bottom));
       display:flex;
       flex-direction:column;
       gap:14px;
@@ -182,7 +177,6 @@
       transform:none;
     }
 
-    /* زر الرئيسية */
     .homeBtn{
       position:absolute;
       left: var(--homeSide);
@@ -202,7 +196,6 @@
     }
     .homeBtn svg{ width: 34px; height: 34px; fill: #111; }
 
-    /* ========== مودال المشاركة ========== */
     .modalBack{
       position: fixed;
       inset:0;
@@ -273,9 +266,7 @@
     .tab.orange.active{ background:#f29b1a; color:#111; }
     .tab.yellow.active{ background:#f2c300; color:#111; }
 
-    .modalBody{
-      padding: 10px 16px 16px;
-    }
+    .modalBody{ padding: 10px 16px 16px; }
     .panel{
       background:#f3f3f3;
       border: 3px solid rgba(0,0,0,0.15);
@@ -366,7 +357,6 @@
       line-height: 1.4;
     }
 
-    /* Toast */
     .toast{
       position: fixed;
       left: 50%;
@@ -411,7 +401,6 @@
         <div class="namesTitle">اسماء اللاعبين</div>
 
         <div class="list" id="list">
-          <!-- مربع المقدم داخل القائمة -->
           <input id="hostInput" class="nameBox" type="text" placeholder="اكتب اسمك هنا" autocomplete="off" />
           <div class="emptyHint" id="emptyHint">بعد مشاركة الرابط، أسماء اللاعبين راح تظهر هنا</div>
           <div id="playersWrap"></div>
@@ -431,7 +420,6 @@
     </div>
   </div>
 
-  <!-- Modal -->
   <div class="modalBack" id="modalBack" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-label="مشاركة اللعبة">
       <div class="modalHeader">
@@ -446,14 +434,12 @@
       </div>
 
       <div class="modalBody">
-        <!-- Code panel -->
         <div class="panel" id="panelCode">
           <div class="labelSmall">رمز الغرفة</div>
           <div class="roomCode" id="roomCode">------</div>
           <div class="modalNote" id="noteCode">شارك رمز الغرفة مع اللاعبين للدخول.</div>
         </div>
 
-        <!-- QR panel -->
         <div class="panel" id="panelQR" style="display:none;">
           <div class="labelSmall">امسح الباركود للدخول</div>
           <div class="qrWrap">
@@ -462,7 +448,6 @@
           <div class="modalNote">إذا ما فتح عنده الرابط من الكاميرا، ينسخ الرابط من تبويب "رابط".</div>
         </div>
 
-        <!-- Link panel -->
         <div class="panel" id="panelLink" style="display:none;">
           <div class="labelSmall">رابط الدخول</div>
           <div class="linkBox" id="joinLinkBox"></div>
@@ -481,11 +466,9 @@
 
   <div class="toast" id="toast">تم النسخ ✓</div>
 
-  <!-- QR lib (خفيف) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <script type="module">
-    // ✅ تعديل مهم: Dynamic import عشان الصفحة ما تتعطل لو firebase.js ما انقرأ
     let ensureRoom   = async () => {};
     let listenRoom   = () => () => {};
     let addPlayer    = async () => {};
@@ -524,7 +507,6 @@
       showToast._t = setTimeout(()=> toast.classList.remove("show"), 1200);
     }
 
-    // Placeholder hide like single.html
     document.addEventListener('focusin', (e) => {
       if (e.target === hostInput) {
         hostInput.dataset.ph = hostInput.placeholder;
@@ -544,21 +526,33 @@
       return String(n);
     }
 
-    // مفاتيح جلسة
     const KEY_ROOM = "bara_roomId_multi";
     const KEY_HOST = "bara_hostName_multi";
     const KEY_HOST_ADDED = "bara_hostAdded_multi";
 
-    let roomId = sessionStorage.getItem(KEY_ROOM);
+    // ✅ تثبيت الغرفة عبر الرابط + sessionStorage
+    const urlParams = new URLSearchParams(location.search);
+    const urlRoom = (urlParams.get("room") || "").trim();
+
+    let roomId = urlRoom || (sessionStorage.getItem(KEY_ROOM) || "").trim();
     if(!roomId){
       roomId = genRoomId();
-      sessionStorage.setItem(KEY_ROOM, roomId);
+    }
+    sessionStorage.setItem(KEY_ROOM, roomId);
+
+    // ✅ لو الرابط ما فيه room نضيفه بدون إعادة تحميل (عشان ما تتغير الغرفة لاحقًا)
+    if(!urlRoom){
+      const newUrl = new URL(location.href);
+      newUrl.searchParams.set("room", roomId);
+      history.replaceState({}, "", newUrl.toString());
     }
 
-    // رابط الدخول (join.html) — لازم الملف موجود
+    function baseDir(){
+      return window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, "/");
+    }
+
     function buildJoinUrl(){
-      const base = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, "/");
-      return base + "join.html?room=" + encodeURIComponent(roomId);
+      return baseDir() + "join.html?room=" + encodeURIComponent(roomId);
     }
 
     const joinUrl = buildJoinUrl();
@@ -568,9 +562,7 @@
     const savedHost = (sessionStorage.getItem(KEY_HOST) || "").trim();
     if(savedHost) hostInput.value = savedHost;
 
-    function normalizeName(x){
-      return String(x||"").trim();
-    }
+    function normalizeName(x){ return String(x||"").trim(); }
 
     function renderPlayers(list){
       playersWrap.innerHTML = "";
@@ -581,11 +573,7 @@
         .filter(Boolean)
         .filter(n => !hostName || n !== hostName);
 
-      if(others.length === 0){
-        emptyHint.style.display = "block";
-      }else{
-        emptyHint.style.display = "none";
-      }
+      emptyHint.style.display = (others.length === 0) ? "block" : "none";
 
       for(const name of others){
         const div = document.createElement("div");
@@ -598,7 +586,6 @@
       startBtn.disabled = !(hostName && total >= 3);
     }
 
-    // ========== مودال المشاركة ==========
     function openModal(){
       modalBack.style.display = "flex";
       modalBack.setAttribute("aria-hidden", "false");
@@ -640,6 +627,12 @@
     tabCode.addEventListener("click", () => setTab("code"));
     tabLink.addEventListener("click", () => setTab("link"));
 
+    shareBtn.addEventListener("click", () => {
+      const hostName = normalizeName(hostInput.value);
+      sessionStorage.setItem(KEY_HOST, hostName);
+      openModal();
+    });
+
     async function copyText(text){
       try{
         await navigator.clipboard.writeText(text);
@@ -670,12 +663,7 @@
       qrBox.innerHTML = "";
       try{
         // eslint-disable-next-line no-undef
-        new QRCode(qrBox, {
-          text,
-          width: 220,
-          height: 220,
-          correctLevel: QRCode.CorrectLevel.M
-        });
+        new QRCode(qrBox, { text, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
       }catch(e){
         const img = document.createElement("img");
         img.alt = "QR";
@@ -686,7 +674,6 @@
       }
     }
 
-    // ========== Firebase (محمي) ==========
     let currentPlayers = [];
     let unsub = null;
 
@@ -710,53 +697,18 @@
       }catch(e){
         firebaseReady = false;
         console.warn("Firebase load failed:", e);
-        // خل الصفحة شغالة UI فقط
         currentPlayers = [];
         renderPlayers(currentPlayers);
       }
     }
     initFirebaseSafe();
 
-    // تحديث اسم المقدم وحفظه
     hostInput.addEventListener("input", () => {
       const v = normalizeName(hostInput.value);
       sessionStorage.setItem(KEY_HOST, v);
       renderPlayers(currentPlayers);
     });
 
-    // ✅ التعديل الأساسي: عند مشاركة اللاعبين نضيف المقدم مباشرة داخل الغرفة
-    shareBtn.addEventListener("click", async () => {
-      const hostName = normalizeName(hostInput.value);
-      sessionStorage.setItem(KEY_HOST, hostName);
-
-      if(!hostName){
-        alert("اكتب اسمك أولاً.");
-        hostInput.focus();
-        return;
-      }
-
-      // إذا الفايربيس جاهز: نضمن أن اسم المقدم موجود ضمن players قبل دخول أي لاعب
-      if(firebaseReady){
-        try{
-          await ensureRoom(roomId);
-
-          const hostAdded = sessionStorage.getItem(KEY_HOST_ADDED) === "1";
-          const exists = (currentPlayers || []).some(p => normalizeName(p?.name) === hostName);
-
-          if(!hostAdded && !exists){
-            await addPlayer(roomId, hostName);
-            sessionStorage.setItem(KEY_HOST_ADDED, "1");
-          }
-        }catch(e){
-          console.warn("Host add on share failed:", e);
-          // نكمل فتح المشاركة حتى لو صار خطأ مؤقت
-        }
-      }
-
-      openModal();
-    });
-
-    // زر ابدأ اللعب (لو firebase مو جاهز نعطي تنبيه بدل ما “ما يصير شيء”)
     startBtn.addEventListener("click", async () => {
       const hostName = normalizeName(hostInput.value);
       if(!hostName){
@@ -782,7 +734,6 @@
       window.location.href = "categories.html";
     });
 
-    // تنظيف والعودة للرئيسية
     function clearMultiState(){
       if(unsub) try{ unsub(); }catch(e){}
       sessionStorage.removeItem(KEY_ROOM);
