@@ -3,34 +3,41 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover" />
-  <title>لعبة برا السالفة - التصويت</title>
+  <title>لعبة برا السالفة - التصويت (أجهزة متعددة)</title>
 
   <style>
     :root{
       --bg:#e9e4d6;
       --frame:#3f5a2a;
       --card:#6a8450;
-      --cardInset:#d8cfb1;
+      --card2:#d8cfb1;
       --text:#1b1b1b;
       --white:#ffffff;
 
       --yellow:#f2c21b;
       --yellowText:#111;
 
-      --blue:#bfe3ff;
-
       --shadow: 0 10px 0 rgba(0,0,0,.25);
 
       --containerMax: 520px;
       --radiusBig: 26px;
-      --radiusMid: 18px;
+
+      --boxPad: 22px;
+      --boxMinH: 260px;
+
+      --titleSize: 18px;
+      --headerSize: 30px;
 
       --btnH: 62px;
       --btnRadius: 26px;
 
       --homeSize: 60px;
       --homeGap: 12px;
+
       --bottomGap: 34px;
+
+      --blue:#8fcaff;
+      --blue2:#bfe3ff;
     }
 
     *{box-sizing:border-box}
@@ -63,7 +70,7 @@
       margin-bottom:10px;
     }
     .brandTitle{
-      font-size:18px;
+      font-size:var(--titleSize);
       font-weight:700;
       color:#2f3f22;
       opacity:.95;
@@ -81,8 +88,8 @@
       border-radius: 22px;
       background: rgba(216,207,177,.9);
       color:#395427;
-      font-weight:1000;
-      font-size: 28px;
+      font-weight:900;
+      font-size: var(--headerSize);
       line-height:1;
       text-align:center;
     }
@@ -91,62 +98,67 @@
       background:var(--card);
       color:var(--white);
       border-radius: var(--radiusBig);
-      padding: 18px 18px 18px;
+      padding: var(--boxPad);
+      min-height: var(--boxMinH);
       box-shadow: 0 0 0 8px rgba(216,207,177,.75) inset;
       text-align:center;
+      position:relative;
     }
 
-    .titleLine{
-      font-size: 26px;
-      font-weight: 1000;
-      line-height:1.25;
-      margin: 2px 0 10px;
+    .subTitle{
+      font-size: 22px;
+      font-weight: 900;
+      margin: 2px 0 8px;
+      opacity: .95;
+      line-height: 1.4;
     }
     .countLine{
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 1000;
       color: var(--yellow);
       margin: 0 0 14px;
     }
 
     .list{
-      width:100%;
-      max-width: 420px;
-      margin: 0 auto;
       display:flex;
       flex-direction:column;
       gap: 12px;
-      padding: 6px 0 0;
+      margin-top: 10px;
     }
-
     .nameBtn{
-      width:100%;
-      height: 64px;
-      border-radius: 18px;
+      width: 92%;
+      max-width: 420px;
+      margin: 0 auto;
+      height: 62px;
+      border-radius: 20px;
       border: 4px solid #000;
       background:#fff;
-      color:#111;
-      font-size: 28px;
+      color:#000;
+      font-size: 30px;
       font-weight: 1000;
-      cursor:pointer;
       box-shadow: 0 8px 0 rgba(0,0,0,0.18);
+      cursor:pointer;
+      user-select:none;
       -webkit-tap-highlight-color:transparent;
     }
     .nameBtn:active{ transform: translateY(1px); box-shadow: 0 7px 0 rgba(0,0,0,0.18); }
     .nameBtn.selected{
+      background: var(--blue2);
+    }
+    .nameBtn.voted{
       background: var(--blue);
     }
-    .nameBtn:disabled{
-      opacity:.6;
+    .nameBtn.disabled{
+      opacity:.55;
       cursor:not-allowed;
-      filter: grayscale(.1);
+      filter: grayscale(.15);
     }
 
     .ctaArea{
       width:100%;
       display:flex;
       justify-content:center;
-      margin-top: 14px;
+      margin-top: 16px;
     }
     .cta{
       height: var(--btnH);
@@ -155,14 +167,13 @@
       color: var(--yellowText);
       border:4px solid #000;
       box-shadow: var(--shadow);
-      font-size: 28px;
+      font-size: 30px;
       font-weight:1000;
       display:flex;
       align-items:center;
       justify-content:center;
       width: 86%;
       max-width: 420px;
-      margin: 0 auto;
       cursor:pointer;
       user-select:none;
       text-align:center;
@@ -173,8 +184,12 @@
       cursor:not-allowed;
       filter: grayscale(.15);
     }
+    .cta.compact{
+      height: 62px;
+      border-radius: 26px;
+    }
 
-    /* زر شراء للاعبين فقط (يظهر بعد التصويت) */
+    /* زر شراء للاعبين فقط */
     .buyArea{
       width:100%;
       display:flex;
@@ -193,10 +208,9 @@
       cursor:pointer;
       -webkit-tap-highlight-color:transparent;
       text-align:center;
-      background: var(--blue);
+      background: var(--blue2);
       color:#111;
     }
-    .buyBtn:active{ transform: translateY(1px); box-shadow: 0 7px 0 rgba(0,0,0,0.18); }
 
     .err{
       width:100%;
@@ -245,7 +259,7 @@
       .logo{ width:80px;height:80px; }
       .homeBtn{ width:56px;height:56px; }
       .homeBtn svg{ width:30px;height:30px; }
-      .nameBtn{ font-size: 26px; height: 62px; }
+      .nameBtn{ font-size: 28px; }
     }
   </style>
 </head>
@@ -261,15 +275,12 @@
 
       <div class="badgeTitle" id="pageTitle">التصويت</div>
 
-      <div id="content"></div>
-
-      <!-- زر المقدم فقط -->
-      <div class="ctaArea" id="ctaArea">
-        <button class="cta" id="ctaBtn" disabled>التالي</button>
+      <div class="bigCard" id="card">
+        <!-- ديناميكي -->
       </div>
 
-      <!-- زر الشراء للاعبين فقط (بعد التصويت) -->
-      <div class="buyArea hidden" id="buyArea">
+      <!-- زر شراء للاعبين فقط -->
+      <div class="buyArea" id="buyArea">
         <button class="buyBtn" id="buyBtn">لشراء اللعبة اضغط هنا</button>
       </div>
 
@@ -298,16 +309,11 @@
     } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
     const pageTitle = document.getElementById("pageTitle");
-    const content   = document.getElementById("content");
-    const ctaArea   = document.getElementById("ctaArea");
-    const ctaBtn    = document.getElementById("ctaBtn");
+    const card      = document.getElementById("card");
     const buyArea   = document.getElementById("buyArea");
     const buyBtn    = document.getElementById("buyBtn");
     const homeBtn   = document.getElementById("homeBtn");
     const errBox    = document.getElementById("err");
-
-    const KEY_PLAYER_NAME = "bara_playerName_multi"; // نفس wait.html
-    const KEY_VOTED_ROOM  = "bara_votedRoom_multi";
 
     function showErr(msg){
       errBox.textContent = msg;
@@ -318,34 +324,54 @@
       errBox.style.display = "none";
     }
     function cleanName(x){ return String(x || "").trim(); }
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
 
-    // room from URL
     const params = new URLSearchParams(location.search);
     const roomId = cleanName(params.get("room"));
 
-    // تحديد هل هذا الجهاز مقدم
-    const HOST_KEYS = [
-      "bara_hostName_multi_v4",
-      "bara_hostName_multi_v3",
-      "bara_hostName_multi_v2",
-      "bara_hostName_multi_v1"
-    ];
+    // ✅ تحديد المقدم (نفس اللي اعتمدناه)
+    const HOST_ROOM_KEY = "bara_roomId_multi_v4";
+    const hostRoomId = cleanName(sessionStorage.getItem(HOST_ROOM_KEY));
+    const isHost = !!hostRoomId && hostRoomId === roomId;
+
+    // اسم المقدم (لإضافة/مطابقة التصويت لو المقدم ضمن القائمة أو لا)
+    const HOST_NAME_KEYS = ["bara_hostName_multi_v4","bara_hostName_multi_v3","bara_hostName_multi_v2","bara_hostName_multi_v1"];
     function getHostName(){
-      for(const k of HOST_KEYS){
+      for(const k of HOST_NAME_KEYS){
         const v = cleanName(localStorage.getItem(k));
         if(v) return v;
       }
       return "";
     }
-    const hostNameLocal = getHostName();
-    const isHost = !!hostNameLocal;
+    const hostName = getHostName();
 
-    // اسم المصوّت (لاعب أو مقدم)
-    const voterName = cleanName(isHost ? hostNameLocal : sessionStorage.getItem(KEY_PLAYER_NAME));
+    // اسم اللاعب
+    const PLAYER_NAME_KEYS = [
+      "bara_playerName_multi_v4","bara_playerName_multi_v3","bara_playerName_multi_v2","bara_playerName_multi_v1",
+      "bara_name_multi_v4","bara_name_multi_v3"
+    ];
+    function getMyName(){
+      if(isHost && hostName) return hostName;
 
-    // زر المقدم فقط
-    ctaArea.style.display = isHost ? "flex" : "none";
+      for(const k of PLAYER_NAME_KEYS){
+        const v1 = cleanName(sessionStorage.getItem(k));
+        if(v1) return v1;
+        const v2 = cleanName(localStorage.getItem(k));
+        if(v2) return v2;
+      }
+      return "";
+    }
+    const myName = getMyName();
 
+    // زر شراء للاعبين فقط
+    buyArea.classList.toggle("hidden", isHost);
     buyBtn.addEventListener("click", () => {
       window.open("https://sandooq-m.com", "_blank", "noopener,noreferrer");
     });
@@ -357,280 +383,223 @@
       localStorage.removeItem("bara_hostName_multi_v4");
     }
     homeBtn.addEventListener("click", () => {
-      clearMultiState();
+      if(isHost) clearMultiState();
       window.location.href = "index.html";
     });
 
-    function uniqKeepOrder(arr){
-      const s = new Set();
-      const out = [];
-      for(const x of (arr || [])){
-        const v = cleanName(x);
-        if(!v) continue;
-        if(s.has(v)) continue;
-        s.add(v);
-        out.push(v);
-      }
-      return out;
-    }
-
-    function sortPlayers(list){
-      return (list || []).slice().sort((a,b)=>{
-        const aa = Number(a?.joinedAt || 0);
-        const bb = Number(b?.joinedAt || 0);
-        return aa - bb;
-      });
-    }
-
-    function renderVoteUI(names, votesCount, totalCount, selected){
-      pageTitle.textContent = "التصويت";
-      const listHtml = names.map(n => {
-        const sel = (selected === n) ? "selected" : "";
-        return `<button class="nameBtn ${sel}" data-name="${encodeURIComponent(n)}">${n}</button>`;
-      }).join("");
-
-      content.innerHTML = `
-        <div class="bigCard">
-          <div class="titleLine">بانتظار تصويت اللاعبين...</div>
-          <div class="countLine">الواصل: ${votesCount} من ${totalCount}</div>
-          <div class="list">${listHtml}</div>
-        </div>
-      `;
-
-      // لا نظهر زر الشراء أثناء التصويت
-      buyArea.classList.add("hidden");
-
-      // ربط أزرار الأسماء
-      const btns = Array.from(content.querySelectorAll(".nameBtn"));
-      for(const b of btns){
-        b.addEventListener("click", async () => {
-          if(!voterName){
-            showErr("اسمك غير موجود. ارجع صفحة الدخول ثم ادخل اسمك.");
-            return;
-          }
-
-          const already = cleanName(sessionStorage.getItem(KEY_VOTED_ROOM));
-          if(already === roomId) return;
-
-          const chosen = decodeURIComponent(b.getAttribute("data-name") || "");
-          if(!chosen) return;
-
-          hideErr();
-
-          // تحديث اختيار شكليًا فورًا
-          btns.forEach(x => x.classList.toggle("selected", x === b));
-
-          // منع الضغط المتكرر أثناء الإرسال
-          btns.forEach(x => x.disabled = true);
-
-          try{
-            const ref = roomRef(roomId);
-
-            await runTransaction(db, async (tx) => {
-              const snap = await tx.get(ref);
-              if(!snap.exists()) return;
-
-              const d = snap.data() || {};
-              const votes = (d.votes && typeof d.votes === "object") ? d.votes : {};
-
-              // إذا صوّت من قبل، لا نغير
-              const prev = cleanName(votes[voterName]);
-              if(prev) return;
-
-              votes[voterName] = chosen;
-
-              tx.update(ref, {
-                updatedAt: serverTimestamp(),
-                tick: increment(1),
-                votes
-              });
-            });
-
-            sessionStorage.setItem(KEY_VOTED_ROOM, roomId);
-
-          }catch(e){
-            console.warn(e);
-            btns.forEach(x => x.disabled = false);
-            showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
-          }
-        });
-      }
-    }
-
-    function renderWaitingAfterVote(votesCount, totalCount){
-      // نفس فكرة الصورة الثانية (بانتظار المقدم)
-      pageTitle.textContent = "ما تأكدت صح ؟";
-      content.innerHTML = `
-        <div class="bigCard" style="min-height:320px;">
-          <div style="font-size:24px;font-weight:1000;line-height:1.7;">
-            بانتظار المقدم...
-            <div style="margin-top:14px;font-size:20px;color:var(--yellow);">
-              الواصل: ${votesCount} من ${totalCount}
-            </div>
-          </div>
-        </div>
-      `;
-
-      // بعد التصويت: يظهر زر الشراء للاعبين فقط
-      if(!isHost){
-        buyArea.classList.remove("hidden");
-      }else{
-        buyArea.classList.add("hidden");
-      }
-
-      // زر التالي للمقدم (ينتقل للمرحلة التالية لاحقًا)
-      if(isHost){
-        ctaBtn.textContent = "التالي";
-      }
-    }
-
-    async function setPhase(newPhase){
-      const ref = roomRef(roomId);
-      await runTransaction(db, async (tx) => {
-        const snap = await tx.get(ref);
-        if(!snap.exists()) return;
-        tx.update(ref, {
-          updatedAt: serverTimestamp(),
-          tick: increment(1),
-          phase: newPhase
-        });
-      });
-    }
-
-    ctaBtn.addEventListener("click", async () => {
-      if(!isHost) return;
-      hideErr();
-
-      try{
-        const d = window.__lastRoomData || {};
-        const phase = cleanName(d?.phase);
-
-        // بعد اكتمال التصويت، نحول الجميع لصفحة "انتظار بعد التصويت" داخل نفس vote.html
-        if(phase === "vote"){
-          await setPhase("vote_wait");
-          return;
-        }
-
-        // المرحلة التالية بنسويها بعدين (النتيجة/الكشف)
-        if(phase === "vote_wait"){
-          // مؤقتًا: لا شيء
-          return;
-        }
-
-      }catch(e){
-        console.warn(e);
-        showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
-      }
-    });
+    let selected = "";
+    let lastRoom = null;
 
     function getAllNamesFromRoom(data){
       const players = Array.isArray(data?.players) ? data.players : [];
-      const ordered = sortPlayers(players);
-      const firestoreNames = ordered.map(p => cleanName(p?.name)).filter(Boolean);
+      const names = players.map(p => cleanName(p?.name)).filter(Boolean);
 
-      const hostName =
-        cleanName(data?.hostName) ||
-        cleanName(data?.host?.name) ||
-        cleanName(data?.host) ||
-        "";
+      // لو المقدم مو موجود ضمن اللاعبين، نضيفه (عشان المقدم يقدر يصوت وينحسب)
+      if(hostName && !names.includes(hostName)){
+        names.unshift(hostName);
+      }
+      // إزالة التكرارات
+      const unique = [];
+      for(const n of names){
+        if(n && !unique.includes(n)) unique.push(n);
+      }
+      return unique;
+    }
 
-      let all = [];
-      if(hostName) all.push(hostName);
-      all = all.concat(firestoreNames);
+    function getVotesObj(data){
+      const v = data?.votes;
+      if(v && typeof v === "object") return v;
+      return {};
+    }
 
-      return uniqKeepOrder(all);
+    function hasVoted(data){
+      const votes = getVotesObj(data);
+      return !!(myName && votes[myName]);
+    }
+
+    function renderVoting(data){
+      pageTitle.textContent = "التصويت";
+
+      const names = getAllNamesFromRoom(data);
+      const votes = getVotesObj(data);
+      const total = names.length;
+      const arrived = Object.keys(votes).length;
+
+      card.innerHTML = `
+        <div class="subTitle">اختر الشخص اللي تشك انه برا السالفة!</div>
+        <div class="countLine">الواصل: <span>${arrived}</span> من <span>${total}</span></div>
+        <div class="list" id="list"></div>
+        <div class="ctaArea">
+          <button class="cta compact" id="voteBtn" disabled>تصويت</button>
+        </div>
+      `;
+
+      const list = document.getElementById("list");
+      const voteBtn = document.getElementById("voteBtn");
+
+      // لو ما عنده اسم محفوظ
+      if(!myName){
+        showErr("اسم اللاعب غير محفوظ في هذا الجهاز. ارجع وادخل الاسم من جديد.");
+        voteBtn.disabled = true;
+      }
+
+      // بناء الأزرار
+      names.forEach(n => {
+        const btn = document.createElement("button");
+        btn.className = "nameBtn";
+        btn.type = "button";
+        btn.textContent = n;
+
+        // تلوين إذا الشخص صوّت (دلالة وصول)
+        if(Object.prototype.hasOwnProperty.call(votes, n)){
+          btn.classList.add("voted");
+        }
+
+        if(selected === n) btn.classList.add("selected");
+
+        btn.addEventListener("click", () => {
+          hideErr();
+          if(!myName) return;
+          selected = n;
+
+          // تحديث تمييز الاختيار
+          [...list.querySelectorAll(".nameBtn")].forEach(b => b.classList.remove("selected"));
+          btn.classList.add("selected");
+
+          voteBtn.disabled = !selected;
+        });
+
+        list.appendChild(btn);
+      });
+
+      voteBtn.disabled = !selected || !myName;
+
+      voteBtn.addEventListener("click", async () => {
+        hideErr();
+        if(!myName || !selected) return;
+
+        const ref = roomRef(roomId);
+
+        try{
+          voteBtn.disabled = true;
+
+          await runTransaction(db, async (tx) => {
+            const snap = await tx.get(ref);
+            if(!snap.exists()) return;
+
+            const d = snap.data() || {};
+            const votesNow = (d.votes && typeof d.votes === "object") ? d.votes : {};
+
+            // لو صوّت قبل لا نغير
+            if(votesNow[myName]) return;
+
+            const nextVotes = { ...votesNow, [myName]: selected };
+
+            tx.update(ref, {
+              updatedAt: serverTimestamp(),
+              tick: increment(1),
+              votes: nextVotes
+            });
+          });
+
+          // بعد التصويت نعرض الانتظار فوراً على نفس الصفحة
+          renderWaiting(lastRoom || data, true);
+
+        }catch(e){
+          console.warn(e);
+          showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
+          voteBtn.disabled = false;
+        }
+      });
+    }
+
+    function renderWaiting(data, forceVoted = false){
+      pageTitle.textContent = "ما تأكدت صح ؟";
+
+      const names = getAllNamesFromRoom(data);
+      const votes = getVotesObj(data);
+      const total = names.length;
+      const arrived = Object.keys(votes).length;
+
+      const iVoted = forceVoted ? true : hasVoted(data);
+
+      card.innerHTML = `
+        <div class="subTitle">بانتظار اللاعبين...</div>
+        <div class="countLine">الواصل: <span>${arrived}</span> من <span>${total}</span></div>
+
+        <div class="list" id="waitList"></div>
+
+        ${isHost ? `
+          <div class="ctaArea">
+            <button class="cta compact" id="nextBtn" ${arrived >= total ? "" : "disabled"}>التالي</button>
+          </div>
+        ` : `
+          <div class="ctaArea">
+            <button class="cta compact" disabled>بانتظار المقدم…</button>
+          </div>
+        `}
+      `;
+
+      const waitList = document.getElementById("waitList");
+
+      names.forEach(n => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "nameBtn disabled";
+
+        // إذا هذا اللاعب صوّت (وصل) نخليه سماوي مثل الصورة
+        const voted = Object.prototype.hasOwnProperty.call(votes, n);
+        btn.classList.toggle("voted", voted);
+
+        btn.textContent = n;
+        waitList.appendChild(btn);
+      });
+
+      // لو ما صوّت وهو لاعب، نرجعه لصفحة التصويت
+      if(!iVoted && !isHost){
+        // اللاعب ما صوّت: نعرض التصويت بدل الانتظار
+        renderVoting(data);
+        return;
+      }
+
+      if(isHost){
+        const nextBtn = document.getElementById("nextBtn");
+        nextBtn?.addEventListener("click", () => {
+          // الصفحة الجاية بنسويها بالخطوة القادمة
+          // حالياً نخليها ثابتة عشان ما يصير 404
+          showErr("تمام. الخطوة الجاية (نتيجة التصويت) بنضيفها بالملف القادم.");
+        });
+      }
     }
 
     function renderByRoom(data){
-      window.__lastRoomData = data || {};
+      lastRoom = data || lastRoom;
 
-      const phase = cleanName(data?.phase);
-
-      // الأصوات
-      const votesObj = (data?.votes && typeof data.votes === "object") ? data.votes : {};
-      const votesCount = Object.keys(votesObj).length;
-
-      // إجمالي المصوتين (نحسبها من الأسماء الموجودة)
-      const allNames = getAllNamesFromRoom(data);
-      const totalCount = allNames.length || 0;
-
-      // إذا ما وصل للـ vote لسه، نخليه ينتظر
-      if(phase !== "vote" && phase !== "vote_wait"){
-        pageTitle.textContent = "التصويت";
-        content.innerHTML = `
-          <div class="bigCard" style="min-height:280px;">
-            <div style="font-size:24px;font-weight:1000;line-height:1.7;">
-              بانتظار المقدم...
-            </div>
-          </div>
-        `;
-        if(!isHost){
-          buyArea.classList.remove("hidden");
-        }else{
-          buyArea.classList.add("hidden");
-        }
+      // إذا اللاعب/المقدم صوّت -> يظل على الانتظار
+      if(hasVoted(data)){
+        renderWaiting(data);
         return;
       }
 
-      // قائمة التصويت: كل الأسماء ما عدا المصوّت نفسه
-      const options = allNames.filter(n => n && n !== voterName);
-
-      // إذا المصوّت صوّت من قبل (على نفس الغرفة)
-      const already = cleanName(sessionStorage.getItem(KEY_VOTED_ROOM)) === roomId;
-      const votedChoice = cleanName(votesObj[voterName]);
-
-      if(phase === "vote"){
-        // المقدم: زر التالي لا يفتح إلا بعد اكتمال التصويت من الكل
-        if(isHost){
-          ctaBtn.disabled = !(totalCount > 0 && votesCount >= totalCount);
-        }
-
-        // اللاعب بعد التصويت نعرض له انتظار مباشرة (بدون يقدر يصوت مرة ثانية)
-        if(already || votedChoice){
-          renderWaitingAfterVote(votesCount, totalCount);
-          return;
-        }
-
-        renderVoteUI(options, votesCount, totalCount, "");
-        return;
-      }
-
-      if(phase === "vote_wait"){
-        if(isHost){
-          // هنا نقدر نفتح التالي لاحقًا لصفحة النتائج
-          ctaBtn.disabled = false;
-        }
-        renderWaitingAfterVote(votesCount, totalCount);
-        return;
-      }
+      // غير مصوّت -> يطلع له التصويت
+      renderVoting(data);
     }
 
     (async () => {
       if(!roomId){
         showErr("الرابط غير صحيح: رمز الغرفة غير موجود.");
-        ctaBtn.disabled = true;
         return;
-      }
-
-      if(!voterName){
-        // نتركه يفتح الصفحة لكن نوضح المشكلة عند محاولة التصويت
       }
 
       try{
         await ensureRoom(roomId);
 
         // عرض مبدئي
-        pageTitle.textContent = "التصويت";
-        content.innerHTML = `
-          <div class="bigCard" style="min-height:280px;">
-            <div style="font-size:24px;font-weight:1000;line-height:1.7;">
-              بانتظار المقدم...
-            </div>
-          </div>
-        `;
+        card.innerHTML = `<div class="subTitle">جاري التحميل…</div>`;
 
         listenRoom(roomId, (data) => {
           if(!data) return;
+          hideErr();
           renderByRoom(data);
         });
 
