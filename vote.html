@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover" />
+  <title>لعبة برا السالفة - التصويت (أجهزة متعددة)</title>
+
+  <style>
+    :root{
+      --bg:#e9e4d6;
+      --frame:#3f5a2a;
+      --card:#6a8450;
+      --card2:#d8cfb1;
+      --text:#1b1b1b;
+      --white:#ffffff;
+
+      --yellow:#f2c21b;
+      --yellowText:#111;
+
+      --blue:#bfe3ff;
+      --shadow: 0 10px 0 rgba(0,0,0,.25);
+
+      --containerMax: 520px;
+      --radiusBig: 26px;
+      --radiusMid: 18px;
+
+      --btnH: 62px;
+      --btnRadius: 26px;
+
+      --homeSize: 60px;
+      --homeGap: 12px;
+
+      --bottomGap: 34px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:var(--bg);
+      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;
+      color:var(--text);
+    }
+
+    .wrap{
+      min-height:100vh;
+      display:flex;
+      justify-content:center;
+      padding:18px 14px 180px;
+    }
+    .frame{
+      width:min(var(--containerMax), 100%);
+      border:10px solid var(--frame);
+      border-radius: var(--radiusBig);
+      background:transparent;
+      padding:18px 16px 24px;
+      position:relative;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:10px;
+    }
+    .brandTitle{
+      font-size:18px;
+      font-weight:700;
+      color:#2f3f22;
+      opacity:.95;
+    }
+    .logo{
+      width:86px;height:86px;
+      object-fit:contain;
+    }
+
+    .badgeTitle{
+      margin:14px auto 16px;
+      width:fit-content;
+      max-width:100%;
+      padding:14px 26px;
+      border-radius: 22px;
+      background: rgba(216,207,177,.9);
+      color:#395427;
+      font-weight:900;
+      font-size: 26px;
+      line-height:1;
+      text-align:center;
+      display:block;
+    }
+
+    .bigCard{
+      background:var(--card);
+      color:var(--white);
+      border-radius: var(--radiusBig);
+      padding: 22px;
+      min-height: 300px;
+      box-shadow: 0 0 0 8px rgba(216,207,177,.75) inset;
+      text-align:center;
+      position:relative;
+    }
+
+    .msgText{
+      font-size: 22px;
+      font-weight:900;
+      line-height:1.6;
+      padding: 0 10px;
+      margin-bottom: 12px;
+    }
+
+    .subNote{
+      font-size: 18px;
+      font-weight:900;
+      opacity:.95;
+      margin-top: 8px;
+      line-height:1.6;
+    }
+
+    .list{
+      width:100%;
+      max-width: 420px;
+      margin: 14px auto 0;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .nameBtn{
+      width:100%;
+      border:4px solid #000;
+      border-radius: 20px;
+      padding: 14px 16px;
+      font-size: 22px;
+      font-weight:1000;
+      background: rgba(255,255,255,.96);
+      color:#111;
+      box-shadow: 0 8px 0 rgba(0,0,0,.20);
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      user-select:none;
+    }
+    .nameBtn:active{ transform: translateY(1px); box-shadow: 0 7px 0 rgba(0,0,0,.20); }
+
+    .nameBtn.selected{
+      background: var(--blue);
+      box-shadow: 0 8px 0 rgba(0,0,0,.20), 0 0 0 6px rgba(0,0,0,.18) inset;
+    }
+
+    .ctaArea{
+      width:100%;
+      display:flex;
+      justify-content:center;
+      margin-top: 14px;
+    }
+    .ctaArea.hidden{ display:none; }
+
+    .cta{
+      height: var(--btnH);
+      border-radius: var(--btnRadius);
+      background: var(--yellow);
+      color: var(--yellowText);
+      border:4px solid #000;
+      box-shadow: var(--shadow);
+      font-size: 28px;
+      font-weight:1000;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width: 86%;
+      max-width: 420px;
+      margin: 0 auto;
+      cursor:pointer;
+      user-select:none;
+      text-align:center;
+      padding: 0 14px;
+    }
+    .cta:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      filter: grayscale(.15);
+    }
+
+    /* زر شراء للاعبين فقط */
+    .buyArea{
+      width:100%;
+      display:flex;
+      justify-content:center;
+      margin-top: 14px;
+    }
+    .buyArea.hidden{ display:none; }
+    .buyBtn{
+      width: min(360px, 82%);
+      border: 4px solid #000;
+      border-radius: 22px;
+      padding: 14px 18px;
+      font-size: 28px;
+      font-weight: 1000;
+      box-shadow: 0 8px 0 rgba(0,0,0,0.18);
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      text-align:center;
+      background: var(--blue);
+      color:#111;
+    }
+    .buyBtn:active{ transform: translateY(1px); box-shadow: 0 7px 0 rgba(0,0,0,0.18); }
+
+    .err{
+      width:100%;
+      max-width: 420px;
+      margin: 10px auto 0;
+      color:#b00020;
+      font-weight:900;
+      text-align:center;
+      display:none;
+      line-height:1.4;
+    }
+
+    .bottomBar{
+      position:fixed;
+      left:0; right:0;
+      bottom: calc(var(--bottomGap) + env(safe-area-inset-bottom));
+      display:flex;
+      justify-content:center;
+      pointer-events:none;
+      z-index:9999;
+    }
+    .bottomInner{
+      width:min(var(--containerMax), calc(100% - 28px));
+      position:relative;
+      pointer-events:none;
+    }
+    .homeBtn{
+      position:absolute;
+      left: var(--homeGap);
+      bottom:0;
+      width: var(--homeSize);
+      height: var(--homeSize);
+      border-radius: 50%;
+      background: #bfe7ff;
+      border:4px solid #000;
+      box-shadow: var(--shadow);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events:auto;
+      cursor:pointer;
+    }
+    .homeBtn svg{ width:34px;height:34px; }
+
+    @media (max-width: 360px){
+      .logo{ width:80px;height:80px; }
+      .homeBtn{ width:56px;height:56px; }
+      .homeBtn svg{ width:30px;height:30px; }
+      .cta{ font-size: 26px; }
+      .nameBtn{ font-size: 20px; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="wrap">
+    <div class="frame">
+      <div class="topbar">
+        <div class="brandTitle">لعبة برا السالفة</div>
+        <img class="logo" src="logo.PNG" alt="logo" />
+      </div>
+
+      <div class="badgeTitle" id="pageTitle">التصويت</div>
+
+      <div class="bigCard" id="card">
+        <div class="msgText" id="msg">
+          اختر من تعتقد أنه <span style="color:var(--yellow);">برا السالفة</span>
+        </div>
+
+        <div class="subNote" id="subNote">
+          اضغط على اسم واحد فقط
+        </div>
+
+        <div class="list" id="list"></div>
+
+        <!-- زر تثبيت التصويت (للاعبين) -->
+        <div class="ctaArea" id="voteArea">
+          <button class="cta" id="voteBtn" disabled>تصويت</button>
+        </div>
+
+        <!-- زر التالي (للمقدم) -->
+        <div class="ctaArea hidden" id="nextArea">
+          <button class="cta" id="nextBtn" disabled>التالي</button>
+        </div>
+
+        <!-- زر الشراء للاعبين -->
+        <div class="buyArea" id="buyArea">
+          <button class="buyBtn" id="buyBtn">لشراء اللعبة اضغط هنا</button>
+        </div>
+
+        <div class="err" id="err"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottomBar">
+    <div class="bottomInner">
+      <button class="homeBtn" id="homeBtn" aria-label="الرئيسية" title="الرئيسية">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M3 11.5L12 4l9 7.5" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6.5 10.5V20h11V10.5" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { ensureRoom, listenRoom, roomRef, updateRoomFields } from "./data/firebase.js";
+    import { db } from "./data/firebase.js";
+    import {
+      runTransaction,
+      serverTimestamp,
+      increment
+    } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+    const pageTitle = document.getElementById("pageTitle");
+    const listEl    = document.getElementById("list");
+    const voteArea  = document.getElementById("voteArea");
+    const voteBtn   = document.getElementById("voteBtn");
+    const nextArea  = document.getElementById("nextArea");
+    const nextBtn   = document.getElementById("nextBtn");
+    const buyArea   = document.getElementById("buyArea");
+    const buyBtn    = document.getElementById("buyBtn");
+    const homeBtn   = document.getElementById("homeBtn");
+    const errBox    = document.getElementById("err");
+    const subNote   = document.getElementById("subNote");
+    const msgEl     = document.getElementById("msg");
+
+    function showErr(msg){
+      errBox.textContent = msg;
+      errBox.style.display = "block";
+    }
+    function hideErr(){
+      errBox.textContent = "";
+      errBox.style.display = "none";
+    }
+    function cleanName(x){ return String(x || "").trim(); }
+
+    // room from URL
+    const params = new URLSearchParams(location.search);
+    const roomId = cleanName(params.get("room"));
+
+    // تحديد هل هذا الجهاز مقدم
+    const HOST_KEYS = [
+      "bara_hostName_multi_v4",
+      "bara_hostName_multi_v3",
+      "bara_hostName_multi_v2",
+      "bara_hostName_multi_v1"
+    ];
+    function getHostName(){
+      for(const k of HOST_KEYS){
+        const v = cleanName(localStorage.getItem(k));
+        if(v) return v;
+      }
+      return "";
+    }
+    const hostName = getHostName();
+    const isHost = !!hostName;
+
+    // اسم اللاعب (للأجهزة) من الجوين
+    const KEY_PLAYER_NAME = "bara_playerName_multi";
+    const playerName = cleanName(sessionStorage.getItem(KEY_PLAYER_NAME));
+
+    // زر الشراء للاعبين فقط
+    buyArea.classList.toggle("hidden", isHost);
+    buyBtn.addEventListener("click", () => {
+      window.open("https://sandooq-m.com", "_blank", "noopener,noreferrer");
+    });
+
+    // ترتيب الواجهة: المقدم يظهر له "التالي" فقط، اللاعب يظهر له "تصويت" فقط
+    voteArea.classList.toggle("hidden", isHost);
+    nextArea.classList.toggle("hidden", !isHost);
+
+    // الرئيسية: تنظيف بسيط
+    function clearMultiState(){
+      sessionStorage.removeItem("bara_roomId_multi_v4");
+      sessionStorage.removeItem("bara_roomTs_multi_v4");
+      sessionStorage.removeItem("bara_hostAdded_multi_v4");
+      localStorage.removeItem("bara_hostName_multi_v4");
+      sessionStorage.removeItem("bara_roomId_multi_join");
+      sessionStorage.removeItem("bara_playerName_multi");
+    }
+    homeBtn.addEventListener("click", () => {
+      clearMultiState();
+      window.location.href = "index.html";
+    });
+
+    let selected = "";
+    let lastNames = [];
+    let lastData = null;
+
+    function renderNames(names, votedTarget){
+      lastNames = (names || []).slice();
+      listEl.innerHTML = "";
+
+      const viewer = isHost ? "" : playerName;
+      const canVote = !isHost && !!viewer;
+
+      // لا نعرض الشخص نفسه للتصويت (اختياري)
+      const filtered = names.filter(n => {
+        const nn = cleanName(n);
+        if(!nn) return false;
+        if(canVote && nn === viewer) return false;
+        return true;
+      });
+
+      filtered.forEach(n => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "nameBtn";
+        btn.textContent = n;
+
+        const isSelected = (cleanName(votedTarget) ? cleanName(votedTarget) : cleanName(selected)) === cleanName(n);
+        if(isSelected) btn.classList.add("selected");
+
+        btn.addEventListener("click", () => {
+          if(!canVote) return;
+
+          // إذا سبق وصوّت خلاص
+          const already = cleanName(votedTarget);
+          if(already) return;
+
+          selected = cleanName(n);
+          Array.from(listEl.querySelectorAll(".nameBtn")).forEach(x => x.classList.remove("selected"));
+          btn.classList.add("selected");
+          voteBtn.disabled = !selected;
+        });
+
+        listEl.appendChild(btn);
+      });
+
+      // زر التصويت
+      if(!isHost){
+        voteBtn.disabled = !selected || !!cleanName(votedTarget);
+      }
+    }
+
+    async function castVote(roomId, voterName, targetName){
+      const v = cleanName(voterName);
+      const t = cleanName(targetName);
+      if(!v || !t) return;
+
+      const ref = roomRef(roomId);
+
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if(!snap.exists()) return;
+
+        const d = snap.data() || {};
+        const votes = (d.votes && typeof d.votes === "object") ? d.votes : {};
+
+        // منع التصويت مرتين
+        if(cleanName(votes[v])) return;
+
+        const nextVotes = { ...votes, [v]: t };
+
+        tx.update(ref, {
+          updatedAt: serverTimestamp(),
+          tick: increment(1),
+          votes: nextVotes
+        });
+      });
+    }
+
+    function computeVoteProgress(data){
+      const votes = (data?.votes && typeof data.votes === "object") ? data.votes : {};
+      const voteCount = Object.keys(votes).length;
+
+      // المشاركين = اللاعبين فقط (بدون المقدم) لأن المقدم غالباً ليس داخل players[]
+      const players = Array.isArray(data?.players) ? data.players : [];
+      const playerNames = players.map(p => cleanName(p?.name)).filter(Boolean);
+
+      const total = playerNames.length || 0;
+      return { voteCount, total };
+    }
+
+    function getViewerVotedTarget(data){
+      if(isHost) return "";
+      const v = cleanName(playerName);
+      if(!v) return "";
+      const votes = (data?.votes && typeof data.votes === "object") ? data.votes : {};
+      return cleanName(votes[v] || "");
+    }
+
+    function renderHeaderAndText(data){
+      pageTitle.textContent = "التصويت";
+
+      if(isHost){
+        const pr = computeVoteProgress(data);
+        msgEl.innerHTML = `بانتظار تصويت اللاعبين…`;
+        subNote.innerHTML = `الواصل: <span style="color:var(--yellow);">${pr.voteCount}</span> من <span style="color:var(--yellow);">${pr.total}</span>`;
+      }else{
+        const votedTarget = getViewerVotedTarget(data);
+        if(votedTarget){
+          msgEl.innerHTML = `تم التصويت ✅`;
+          subNote.innerHTML = `اخترت: <span style="color:var(--yellow);">${votedTarget}</span><br/>انتظر الباقين…`;
+        }else{
+          msgEl.innerHTML = `اختر من تعتقد أنه <span style="color:var(--yellow);">برا السالفة</span>`;
+          subNote.innerHTML = `اضغط على اسم واحد فقط`;
+        }
+      }
+    }
+
+    async function hostSetVotePhaseIfNeeded(data){
+      if(!isHost) return;
+      if(!data) return;
+
+      // لا نغيّر مرحلة متقدمة
+      const phase = cleanName(data?.phase);
+      const advanced = new Set([
+        "vote_wait",
+        "vote_results",
+        "reveal_bara",
+        "final_choice",
+        "results",
+        "end_round"
+      ]);
+      if(advanced.has(phase)) return;
+
+      if(phase !== "vote"){
+        // نخلي المرحلة vote ليجينا كل اللاعبين هنا تلقائيًا إذا كانوا يتابعون phase
+        try{
+          await updateRoomFields(roomId, { phase: "vote", phaseAt: Date.now() });
+        }catch(e){}
+      }
+    }
+
+    nextBtn.addEventListener("click", async () => {
+      if(!isHost) return;
+      hideErr();
+
+      try{
+        const d = lastData || {};
+        const pr = computeVoteProgress(d);
+
+        // لا نسمح التالي إلا إذا كل اللاعبين صوّتوا
+        if(pr.total > 0 && pr.voteCount < pr.total){
+          showErr("بانتظار تصويت جميع اللاعبين…");
+          return;
+        }
+
+        // المرحلة الجاية (بنرسلها بالملف القادم)
+        await updateRoomFields(roomId, { phase: "vote_wait", phaseAt: Date.now() });
+        window.location.href = "vote_wait.html?room=" + encodeURIComponent(roomId);
+      }catch(e){
+        console.warn(e);
+        showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
+      }
+    });
+
+    voteBtn.addEventListener("click", async () => {
+      if(isHost) return;
+      hideErr();
+
+      if(!playerName){
+        showErr("اسم اللاعب غير موجود. ارجع لصفحة الدخول وجرب مرة ثانية.");
+        return;
+      }
+      if(!selected){
+        showErr("اختر اسم أولاً.");
+        return;
+      }
+
+      voteBtn.disabled = true;
+
+      try{
+        await castVote(roomId, playerName, selected);
+      }catch(e){
+        console.warn(e);
+        showErr("صار خطأ في الاتصال. جرّب مرة ثانية.");
+        voteBtn.disabled = false;
+      }
+    });
+
+    (async () => {
+      if(!roomId){
+        showErr("الرابط غير صحيح: رمز الغرفة غير موجود.");
+        voteBtn.disabled = true;
+        nextBtn.disabled = true;
+        return;
+      }
+
+      try{
+        await ensureRoom(roomId);
+
+        listenRoom(roomId, async (data) => {
+          if(!data) return;
+          lastData = data;
+
+          // المقدم يثبت مرحلة vote (مرة واحدة) عشان كل اللاعبين يتزامنون
+          try{ await hostSetVotePhaseIfNeeded(data); }catch(e){}
+
+          // إذا صار انتقال لمرحلة بعد التصويت
+          const phase = cleanName(data?.phase);
+          if(phase === "vote_wait"){
+            window.location.href = "vote_wait.html?room=" + encodeURIComponent(roomId);
+            return;
+          }
+
+          // جهّز الأسماء من الغرفة
+          const players = Array.isArray(data?.players) ? data.players : [];
+          const names = players
+            .slice()
+            .sort((a,b)=> Number(a?.joinedAt||0) - Number(b?.joinedAt||0))
+            .map(p => cleanName(p?.name))
+            .filter(Boolean);
+
+          // عرض النص العلوي
+          renderHeaderAndText(data);
+
+          // اختيار سابق للاعب (لو صوّت)
+          const votedTarget = getViewerVotedTarget(data);
+
+          // رندر القائمة
+          renderNames(names, votedTarget);
+
+          // زر التالي للمقدم يتفعل بعد اكتمال التصويت
+          if(isHost){
+            const pr = computeVoteProgress(data);
+            nextBtn.disabled = !(pr.total > 0 && pr.voteCount >= pr.total);
+          }
+        });
+
+      }catch(e){
+        console.warn(e);
+        showErr("تعذر الاتصال. حدّث الصفحة وجرب مرة ثانية.");
+      }
+    })();
+  </script>
+</body>
+</html>
+
+<!-- vote.html برا السالفة – إصدار 1 -->
