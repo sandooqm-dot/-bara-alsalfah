@@ -742,9 +742,10 @@
 
           const phase = clean(data?.phase);
 
-          // ✅ إذا انتقلنا للكشف: نروح reveal.html للجميع
-          if(phase === "reveal"){
-            window.location.href = "reveal.html?room=" + encodeURIComponent(roomId);
+          // ✅ (التعديل الوحيد) إذا انتقلنا للكشف: نروح reveal.html للجميع
+          // حتى لو صارت phase = reveal_done بسرعة، نضمن أن الكل ينتقل
+          if(phase === "reveal" || phase === "reveal_done"){
+            window.location.replace("reveal.html?room=" + encodeURIComponent(roomId));
             return;
           }
 
@@ -771,4 +772,4 @@
 </body>
 </html>
 
-<!-- vote.html برا السالفة – إصدار 4 -->
+<!-- vote.html برا السالفة – إصدار 5 -->
