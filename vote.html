@@ -355,6 +355,7 @@
     import {
       runTransaction,
       updateDoc,
+      getDoc,
       serverTimestamp,
       increment
     } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
@@ -464,7 +465,6 @@
       return Object.keys(votesBy || {}).length;
     }
 
-    // ✅ (جديد) تتبع وصول اللاعبين لصفحة عرض النتائج
     function getVoteArrived(data){
       return (data?.voteArrived && typeof data.voteArrived === "object") ? data.voteArrived : {};
     }
@@ -472,7 +472,6 @@
       return Object.keys(arrObj || {}).length;
     }
 
-    // ✅ (جديد) تهيئة التصويت مرة واحدة لكل جولة: تنظيف votesBy + voteArrived
     async function ensureVoteSetupIfHost(data){
       if(!isHost) return;
       const roundId = clean(data?.roundId);
@@ -493,7 +492,6 @@
         const vr = clean(d?.voteRoundId);
         if(vr === r) return;
 
-        // نبدأ تصويت جديد للجولة
         tx.update(ref, {
           voteRoundId: r,
           votesBy: {},
@@ -504,7 +502,6 @@
       });
     }
 
-    // ✅ (جديد) تسجيل وصولي لصفحة النتائج والانتظار بعد التصويت
     let markedArrive = false;
     async function markArrivedIfNeeded(data){
       if(markedArrive) return;
@@ -594,7 +591,6 @@
         try{
           await submitVote(selectedTarget);
           hasVotedLocal = true;
-          // بعدها listenRoom يعرض صفحة النتائج تلقائيًا
         }catch(e){
           console.warn(e);
           showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
@@ -610,7 +606,6 @@
       const arrivedObj = getVoteArrived(data);
       const arrived    = countArrived(arrivedObj);
 
-      // ✅ عبارة الانتظار تختفي فقط إذا الكل وصل صفحة النتائج
       const waitingText = (arrived < total) ? "بانتظار اللاعبين..." : "";
 
       const lines = Object.entries(votesBy || {}).map(([voter, target]) => {
@@ -639,8 +634,6 @@
         </div>
       `;
 
-      // ✅ تفعيل زر التالي للمقدم فقط إذا:
-      // 1) الكل صوّت  2) الكل وصل صفحة النتائج
       if(isHost){
         const hostNext = document.getElementById("hostNext");
         const allVoted = countVotes(votesBy) >= total;
@@ -654,7 +647,6 @@
 
           hideErr();
           try{
-            // ✅ ننقل الجميع لمرحلة الكشف
             await updateDoc(roomRef(roomId), {
               phase: "reveal",
               updatedAt: serverTimestamp(),
@@ -726,6 +718,43 @@
       }
     }
 
+    // ✅ (جديد) حارس انتقال احتياطي: لو onSnapshot علّق عند اللاعبين، نفحص phase بـ getDoc كل ثانية
+    let __redirected = false;
+    let __phaseGuardTimer = null;
+
+    function goReveal(){
+      if(__redirected) return;
+      __redirected = true;
+      if(__phaseGuardTimer) clearInterval(__phaseGuardTimer);
+      __phaseGuardTimer = null;
+      window.location.replace("reveal.html?room=" + encodeURIComponent(roomId));
+    }
+
+    async function checkPhaseOnce(){
+      if(__redirected) return;
+      try{
+        const snap = await getDoc(roomRef(roomId));
+        if(!snap.exists()) return;
+        const d = snap.data() || {};
+        const phase = clean(d?.phase);
+        if(phase === "reveal" || phase === "reveal_done"){
+          goReveal();
+        }
+      }catch(e){
+        // نتجاهل أي خطأ مؤقت
+      }
+    }
+
+    function startPhaseGuard(){
+      if(__phaseGuardTimer) return;
+      __phaseGuardTimer = setInterval(checkPhaseOnce, 1000);
+      document.addEventListener("visibilitychange", () => {
+        if(document.visibilityState === "visible"){
+          checkPhaseOnce();
+        }
+      });
+    }
+
     (async () => {
       if(!roomId){
         showErr("الرابط غير صحيح: رمز الغرفة غير موجود.");
@@ -737,22 +766,24 @@
         await ensureRoom(roomId);
         renderLoading();
 
+        // ✅ تشغيل الحارس الاحتياطي
+        startPhaseGuard();
+        // فحص فوري
+        checkPhaseOnce();
+
         listenRoom(roomId, async (data) => {
           if(!data) return;
 
           const phase = clean(data?.phase);
 
-          // ✅ (التعديل الوحيد) إذا انتقلنا للكشف: نروح reveal.html للجميع
-          // حتى لو صارت phase = reveal_done بسرعة، نضمن أن الكل ينتقل
+          // ✅ إذا انتقلنا للكشف: نروح reveal.html للجميع
           if(phase === "reveal" || phase === "reveal_done"){
-            window.location.replace("reveal.html?room=" + encodeURIComponent(roomId));
+            goReveal();
             return;
           }
 
-          // ✅ تهيئة التصويت للجولة (تنظيف أصوات قديمة) - المقدم فقط
           try{ await ensureVoteSetupIfHost(data); }catch(e){}
 
-          // ✅ إذا أنا وصلت لصفحة النتائج: سجل وصولي (حتى يختفي "بانتظار اللاعبين" عند اكتمالهم)
           const votesBy = getVotesBy(data);
           const iVotedNow = !!getMyName() && (votesBy[getMyName()] != null);
           if(iVotedNow || hasVotedLocal){
@@ -772,4 +803,4 @@
 </body>
 </html>
 
-<!-- vote.html برا السالفة – إصدار 5 -->
+<!-- vote.html برا السالفة – إصدار 6 -->
