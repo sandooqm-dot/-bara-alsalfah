@@ -126,18 +126,52 @@ export async function updateRoomFields(roomId, fields = {}) {
   });
 }
 
-// ✅ استماع للتحديثات مع تسجيل أي خطأ في الكونسول
+// ✅ استماع للتحديثات (Snapshot) + ✅ فحص احتياطي (Polling) لضمان وصول التغييرات للجميع
 export function listenRoom(roomId, cb) {
   const ref = roomRef(roomId);
 
-  return onSnapshot(
+  let lastJson = null;
+  const emitIfChanged = (data) => {
+    const j = data ? JSON.stringify(data) : null;
+    if (j === lastJson) return;
+    lastJson = j;
+    cb(data);
+  };
+
+  // Snapshot (مع metadata changes)
+  const unsub = onSnapshot(
     ref,
+    { includeMetadataChanges: true },
     (snap) => {
-      cb(snap.exists() ? snap.data() : null);
+      emitIfChanged(snap.exists() ? snap.data() : null);
     },
     (err) => {
       console.error("listenRoom error:", err);
       cb(null);
     }
   );
+
+  // Polling احتياطي (لو انقطع snapshot أو iOS علّق التحديثات)
+  let stopped = false;
+
+  const pollOnce = async () => {
+    if (stopped) return;
+    try {
+      const snap = await getDoc(ref);
+      emitIfChanged(snap.exists() ? snap.data() : null);
+    } catch (e) {
+      console.error("listenRoom poll error:", e);
+    }
+  };
+
+  // تنفيذ مرة مباشرة + كل 1.5 ثانية
+  pollOnce();
+  const pollId = setInterval(pollOnce, 1500);
+
+  // نرجع unsubscribe حقيقي يوقف الاثنين
+  return () => {
+    stopped = true;
+    clearInterval(pollId);
+    try { unsub(); } catch (e) {}
+  };
 }
