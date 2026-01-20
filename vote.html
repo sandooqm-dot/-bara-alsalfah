@@ -211,7 +211,7 @@
       font-weight:1000;
       margin: 6px 0 12px;
       color:#fff;
-      min-height: 36px; /* يحافظ على المساحة حتى لو اختفى النص */
+      min-height: 36px;
     }
 
     .lines{
@@ -327,11 +327,8 @@
 
       <div class="badgeTitle">التصويت</div>
 
-      <div class="bigCard" id="card">
-        <!-- يُملأ بالجافاسكربت -->
-      </div>
+      <div class="bigCard" id="card"></div>
 
-      <!-- زر الشراء للاعبين فقط -->
       <div class="buyArea" id="buyArea">
         <button class="buyBtn" id="buyBtn">لشراء اللعبة اضغط هنا</button>
       </div>
@@ -386,22 +383,18 @@
         .replaceAll("'","&#039;");
     }
 
-    // room from URL
     const params = new URLSearchParams(location.search);
     const roomId = clean(params.get("room"));
 
-    // ✅ تحديد المقدم (نفس multi_questions)
     const HOST_ROOM_KEY = "bara_roomId_multi_v4";
     const hostRoomId = clean(sessionStorage.getItem(HOST_ROOM_KEY));
     const isHost = !!hostRoomId && hostRoomId === roomId;
 
-    // زر شراء للاعبين فقط
     buyArea.classList.toggle("hidden", isHost);
     buyBtn.addEventListener("click", () => {
       window.open("https://sandooq-m.com", "_blank", "noopener,noreferrer");
     });
 
-    // الرئيسية
     function clearMultiState(){
       sessionStorage.removeItem("bara_roomId_multi_v4");
       sessionStorage.removeItem("bara_roomTs_multi_v4");
@@ -413,35 +406,22 @@
       window.location.href = "index.html";
     });
 
-    // ✅ اسم اللاعب لكل جهاز (نقرأ من أكثر من مفتاح عشان ما يضيع)
     const MY_NAME_KEYS = [
-      "bara_myName_multi_v4",
-      "bara_playerName_multi_v4",
-      "bara_name_multi_v4",
-      "bara_myName_multi_v3",
-      "bara_playerName_multi_v3",
-      "bara_myName_multi_v2",
-      "bara_playerName_multi_v2",
-      "bara_myName_multi_v1",
-      "bara_playerName_multi_v1",
-      "bara_myName_multi",
-      "bara_playerName_multi",
-      "bara_myName",
-      "bara_playerName"
+      "bara_myName_multi_v4","bara_playerName_multi_v4","bara_name_multi_v4",
+      "bara_myName_multi_v3","bara_playerName_multi_v3",
+      "bara_myName_multi_v2","bara_playerName_multi_v2",
+      "bara_myName_multi_v1","bara_playerName_multi_v1",
+      "bara_myName_multi","bara_playerName_multi",
+      "bara_myName","bara_playerName"
     ];
     const HOST_NAME_KEYS = [
-      "bara_hostName_multi_v4",
-      "bara_hostName_multi_v3",
-      "bara_hostName_multi_v2",
-      "bara_hostName_multi_v1"
+      "bara_hostName_multi_v4","bara_hostName_multi_v3","bara_hostName_multi_v2","bara_hostName_multi_v1"
     ];
 
     function getMyName(){
-      // 1) من URL لو موجود
       const qn = clean(params.get("name"));
       if(qn) return qn;
 
-      // 2) sessionStorage ثم localStorage
       for(const k of MY_NAME_KEYS){
         const v1 = clean(sessionStorage.getItem(k));
         if(v1) return v1;
@@ -449,20 +429,16 @@
         if(v2) return v2;
       }
 
-      // 3) المقدم: من مفاتيح اسم المقدم
       if(isHost){
         for(const k of HOST_NAME_KEYS){
           const v = clean(localStorage.getItem(k));
           if(v) return v;
         }
       }
-
       return "";
     }
 
     let myName = getMyName();
-
-    // حالة محلية
     let selectedTarget = "";
     let hasVotedLocal  = false;
 
@@ -470,7 +446,6 @@
       const players = Array.isArray(data?.players) ? data.players : [];
       const names = players.map(p => clean(p?.name)).filter(Boolean);
 
-      // إزالة التكرارات مع الحفاظ على الترتيب
       const seen = new Set();
       const unique = [];
       for(const n of names){
@@ -483,18 +458,92 @@
     }
 
     function getVotesBy(data){
-      const v = data?.votesBy && typeof data.votesBy === "object" ? data.votesBy : {};
-      return v;
+      return (data?.votesBy && typeof data.votesBy === "object") ? data.votesBy : {};
     }
-
     function countVotes(votesBy){
       return Object.keys(votesBy || {}).length;
+    }
+
+    // ✅ (جديد) تتبع وصول اللاعبين لصفحة عرض النتائج
+    function getVoteArrived(data){
+      return (data?.voteArrived && typeof data.voteArrived === "object") ? data.voteArrived : {};
+    }
+    function countArrived(arrObj){
+      return Object.keys(arrObj || {}).length;
+    }
+
+    // ✅ (جديد) تهيئة التصويت مرة واحدة لكل جولة: تنظيف votesBy + voteArrived
+    async function ensureVoteSetupIfHost(data){
+      if(!isHost) return;
+      const roundId = clean(data?.roundId);
+      if(!roundId) return;
+
+      const voteRoundId = clean(data?.voteRoundId);
+      if(voteRoundId === roundId) return;
+
+      const ref = roomRef(roomId);
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if(!snap.exists()) return;
+        const d = snap.data() || {};
+
+        const r = clean(d?.roundId);
+        if(!r) return;
+
+        const vr = clean(d?.voteRoundId);
+        if(vr === r) return;
+
+        // نبدأ تصويت جديد للجولة
+        tx.update(ref, {
+          voteRoundId: r,
+          votesBy: {},
+          voteArrived: {},
+          updatedAt: serverTimestamp(),
+          tick: increment(1)
+        });
+      });
+    }
+
+    // ✅ (جديد) تسجيل وصولي لصفحة النتائج والانتظار بعد التصويت
+    let markedArrive = false;
+    async function markArrivedIfNeeded(data){
+      if(markedArrive) return;
+      if(!myName) return;
+
+      const names = getPlayersNames(data);
+      if(!names.includes(myName)) return;
+
+      const voteArrived = getVoteArrived(data);
+      if(voteArrived?.[myName]){ markedArrive = true; return; }
+
+      const ref = roomRef(roomId);
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if(!snap.exists()) return;
+        const d = snap.data() || {};
+
+        const players = Array.isArray(d.players) ? d.players : [];
+        const ns = players.map(p => clean(p?.name)).filter(Boolean);
+        if(!ns.includes(myName)) return;
+
+        const va = (d?.voteArrived && typeof d.voteArrived === "object") ? {...d.voteArrived} : {};
+        if(va[myName]) return;
+
+        va[myName] = true;
+
+        tx.update(ref, {
+          voteArrived: va,
+          updatedAt: serverTimestamp(),
+          tick: increment(1)
+        });
+      });
+
+      markedArrive = true;
     }
 
     function renderVoteUI(data){
       const names = getPlayersNames(data);
 
-      // إذا ما قدرنا نجيب اسم اللاعب، نعطي رسالة واضحة
       if(!myName){
         card.innerHTML = `
           <div class="nameBadge">التصويت</div>
@@ -506,7 +555,6 @@
         return;
       }
 
-      // خيارات التصويت = الجميع ما عدا نفسه
       const options = names.filter(n => n !== myName);
 
       card.innerHTML = `
@@ -514,16 +562,11 @@
         <div class="hint">اختر الشخص الي تشك انه برا السالفة!</div>
         <div class="options" id="options"></div>
         <button class="voteBtn" id="voteBtn" disabled>تصويت</button>
-
-        <div class="hostNextArea hidden" id="hostNextArea">
-          <button class="hostNext" id="hostNext" disabled>التالي</button>
-        </div>
       `;
 
       const optionsEl = document.getElementById("options");
       const voteBtn   = document.getElementById("voteBtn");
 
-      // بناء الأزرار
       for(const n of options){
         const b = document.createElement("button");
         b.className = "pickBtn" + (selectedTarget === n ? " selected" : "");
@@ -532,19 +575,16 @@
         b.addEventListener("click", () => {
           selectedTarget = (selectedTarget === n) ? "" : n;
 
-          // تحديث التحديد
           [...optionsEl.querySelectorAll(".pickBtn")].forEach(btn => btn.classList.remove("selected"));
           if(selectedTarget){
             b.classList.add("selected");
           }
-
           voteBtn.disabled = !selectedTarget;
         });
 
         optionsEl.appendChild(b);
       }
 
-      // تفعيل زر تصويت
       voteBtn.disabled = !selectedTarget;
 
       voteBtn.addEventListener("click", async () => {
@@ -554,8 +594,7 @@
         try{
           await submitVote(selectedTarget);
           hasVotedLocal = true;
-          // بعد التصويت مباشرة نعرض صفحة الانتظار/عرض الأصوات (بنفس vote.html)
-          // (listenRoom راح يعيد رسم الصفحة تلقائيًا)
+          // بعدها listenRoom يعرض صفحة النتائج تلقائيًا
         }catch(e){
           console.warn(e);
           showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
@@ -567,12 +606,13 @@
       const votesBy = getVotesBy(data);
       const names   = getPlayersNames(data);
       const total   = Math.max(names.length, 1);
-      const arrived = countVotes(votesBy);
 
-      // ✅ عبارة الانتظار تختفي عند اكتمال الجميع
+      const arrivedObj = getVoteArrived(data);
+      const arrived    = countArrived(arrivedObj);
+
+      // ✅ عبارة الانتظار تختفي فقط إذا الكل وصل صفحة النتائج
       const waitingText = (arrived < total) ? "بانتظار اللاعبين..." : "";
 
-      // خطوط عرض التصويتات
       const lines = Object.entries(votesBy || {}).map(([voter, target]) => {
         const v = clean(voter);
         const t = clean(target);
@@ -587,32 +627,36 @@
       }).filter(Boolean).join("");
 
       card.innerHTML = `
-        <!-- ✅ تغيير العنوان -->
         <div class="nameBadge">نتائج التصويت</div>
-
-        <!-- ✅ تظهر فقط إذا ما اكتملوا -->
         <div class="resultTitle">${waitingText}</div>
-
-        <!-- ✅ تم حذف سطر الواصل نهائياً -->
 
         <div class="lines">
           ${lines || `<div class="line"><span class="accent">بانتظار أول تصويت...</span></div>`}
         </div>
 
         <div class="hostNextArea ${isHost ? "" : "hidden"}" id="hostNextArea" style="margin-top:18px;">
-          <button class="hostNext" id="hostNext" ${arrived >= total ? "" : "disabled"}>التالي</button>
+          <button class="hostNext" id="hostNext" disabled>التالي</button>
         </div>
       `;
 
-      // زر التالي للمقدم فقط + لا يعمل إلا إذا الكل صوّت
+      // ✅ تفعيل زر التالي للمقدم فقط إذا:
+      // 1) الكل صوّت  2) الكل وصل صفحة النتائج
       if(isHost){
         const hostNext = document.getElementById("hostNext");
+        const allVoted = countVotes(votesBy) >= total;
+        const allArrived = arrived >= total;
+        hostNext.disabled = !(allVoted && allArrived);
+
         hostNext.addEventListener("click", async () => {
-          if(arrived < total) return;
+          const allVotedNow = countVotes(getVotesBy(window.__lastData || data)) >= total;
+          const allArrivedNow = countArrived(getVoteArrived(window.__lastData || data)) >= total;
+          if(!(allVotedNow && allArrivedNow)) return;
+
           hideErr();
           try{
+            // ✅ ننقل الجميع لمرحلة الكشف
             await updateDoc(roomRef(roomId), {
-              phase: "vote_done",
+              phase: "reveal",
               updatedAt: serverTimestamp(),
               tick: increment(1)
             });
@@ -638,13 +682,12 @@
         const players = Array.isArray(d.players) ? d.players : [];
         const names = players.map(p => clean(p?.name)).filter(Boolean);
 
-        // حماية: لازم يكون الاسم موجود ضمن قائمة اللاعبين
         if(!names.includes(myName)) throw new Error("name not in players");
         if(!names.includes(targetName)) throw new Error("target not in players");
         if(targetName === myName) throw new Error("self vote");
 
         const votesBy = (d.votesBy && typeof d.votesBy === "object") ? {...d.votesBy} : {};
-        votesBy[myName] = targetName; // صوت واحد لكل لاعب (يستبدل لو أعاد التصويت)
+        votesBy[myName] = targetName;
 
         tx.update(ref, {
           votesBy,
@@ -669,16 +712,13 @@
     }
 
     function decideAndRender(data){
-      // نحدّث اسمي كل مرة (لو حفظه جاء متأخر)
-      myName = getMyName();
+      window.__lastData = data || {};
 
+      myName = getMyName();
       const votesBy = getVotesBy(data);
 
-      // إذا أنا صوتت بالفعل (سواء محلياً أو موجودة في قاعدة البيانات)
       const iVoted = !!myName && !!votesBy && (votesBy[myName] != null);
 
-      // صفحة التصويت تظهر إذا ما صوتت
-      // صفحة عرض الأصوات/الانتظار تظهر إذا صوتت
       if(iVoted || hasVotedLocal){
         renderWaitAndResults(data);
       }else{
@@ -697,10 +737,27 @@
         await ensureRoom(roomId);
         renderLoading();
 
-        listenRoom(roomId, (data) => {
+        listenRoom(roomId, async (data) => {
           if(!data) return;
 
-          // مهم: نعرض التصويت دائماً لمن فتح الصفحة (حتى لو phase ما تغير)
+          const phase = clean(data?.phase);
+
+          // ✅ إذا انتقلنا للكشف: نروح reveal.html للجميع
+          if(phase === "reveal"){
+            window.location.href = "reveal.html?room=" + encodeURIComponent(roomId);
+            return;
+          }
+
+          // ✅ تهيئة التصويت للجولة (تنظيف أصوات قديمة) - المقدم فقط
+          try{ await ensureVoteSetupIfHost(data); }catch(e){}
+
+          // ✅ إذا أنا وصلت لصفحة النتائج: سجل وصولي (حتى يختفي "بانتظار اللاعبين" عند اكتمالهم)
+          const votesBy = getVotesBy(data);
+          const iVotedNow = !!getMyName() && (votesBy[getMyName()] != null);
+          if(iVotedNow || hasVotedLocal){
+            try{ await markArrivedIfNeeded(data); }catch(e){}
+          }
+
           decideAndRender(data);
         });
 
@@ -714,4 +771,4 @@
 </body>
 </html>
 
-<!-- vote.html برا السالفة – إصدار 3 -->
+<!-- vote.html برا السالفة – إصدار 4 -->
