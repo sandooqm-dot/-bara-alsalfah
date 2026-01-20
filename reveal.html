@@ -21,14 +21,15 @@
 
       --containerMax: 520px;
       --radiusBig: 26px;
-      --radiusMid: 18px;
 
       --boxPad: 22px;
-      --boxMinH: 320px;
+      --boxMinH: 360px;
 
       --titleSize: 18px;
-      --headerSize: 30px;
-      --nameBadgeSize: 56px;
+      --headerSize: 26px;
+
+      --revealTitle: 34px;
+      --revealName: 68px;
 
       --btnH: 66px;
       --btnRadius: 26px;
@@ -38,11 +39,7 @@
 
       --bottomGap: 34px;
 
-      --blue:#bfe3ff;
-
-      --lineBg:#4f662f;
-      --lineText:#fff;
-      --lineAccent:#f2c21b;
+      --innerBg:#5f7a46; /* نفس روح الصورة */
     }
 
     *{box-sizing:border-box}
@@ -85,86 +82,50 @@
       object-fit:contain;
     }
 
-    .badgeTitle{
-      margin:14px auto 16px;
-      width:fit-content;
-      max-width:100%;
-      padding:14px 26px;
-      border-radius: 22px;
-      background: rgba(216,207,177,.9);
-      color:#395427;
-      font-weight:900;
-      font-size: var(--headerSize);
-      line-height:1;
-      text-align:center;
+    .bigCard{
+      background:transparent;
+      border-radius: var(--radiusBig);
+      padding: 0;
+      min-height: var(--boxMinH);
+      position:relative;
     }
 
-    .bigCard{
-      background:var(--card);
-      color:var(--white);
+    /* نفس الشكل بالصورة: مربع أخضر كبير داخلي */
+    .innerCard{
+      background: var(--card);
       border-radius: var(--radiusBig);
       padding: var(--boxPad);
       min-height: var(--boxMinH);
       box-shadow: 0 0 0 8px rgba(216,207,177,.75) inset;
-      text-align:center;
-      position:relative;
-      display:flex;
-      flex-direction:column;
-      justify-content:flex-start;
-      align-items:center;
-    }
-
-    .hintTop{
-      font-size: 22px;
-      font-weight:1000;
-      line-height:1.4;
-      margin: 4px 0 14px;
-      color:#fff;
-    }
-
-    .nameBadge{
-      margin: 4px auto 10px;
-      width:fit-content;
-      max-width:100%;
-      padding: 14px 28px;
-      border-radius: 22px;
-      background: rgba(216,207,177,.95);
-      color:#395427;
-      font-weight:1000;
-      font-size: var(--nameBadgeSize);
-      line-height:1;
-      min-width: 220px;
-    }
-
-    .animName{
-      margin-top: 10px;
-      width: min(440px, 96%);
-      padding: 16px 18px;
-      border-radius: 22px;
-      background: rgba(0,0,0,.10);
-      color:#fff;
-      font-size: 44px;
-      font-weight:1000;
-      line-height:1.1;
-      min-height: 84px;
       display:flex;
       align-items:center;
       justify-content:center;
-      letter-spacing: .5px;
+      text-align:center;
+      position:relative;
+      color:#fff;
+    }
+    .innerPanel{
+      width: 100%;
+      max-width: 460px;
+      border-radius: 26px;
+      background: rgba(0,0,0,.08);
+      padding: 22px 18px;
     }
 
-    .waiting{
-      margin-top: 14px;
-      font-size: 22px;
-      font-weight:1000;
+    .revealTitle{
+      font-size: var(--revealTitle);
+      font-weight: 1000;
+      line-height: 1.25;
+      margin-bottom: 26px;
       color:#fff;
-      opacity:.95;
     }
-    .arrived{
-      margin-top: 8px;
-      font-size: 22px;
-      font-weight:1000;
-      color: var(--lineAccent);
+    .revealName{
+      font-size: var(--revealName);
+      font-weight: 1000;
+      line-height: 1.1;
+      color:#fff;
+      margin: 0;
+      padding: 0 8px;
     }
 
     .hostNextArea{
@@ -174,6 +135,7 @@
       margin-top: 18px;
     }
     .hostNextArea.hidden{ display:none; }
+
     .hostNext{
       width: min(420px, 92%);
       height: var(--btnH);
@@ -193,28 +155,13 @@
       filter: grayscale(.15);
     }
 
-    .buyArea{
-      width:100%;
-      display:flex;
-      justify-content:center;
-      margin-top: 14px;
+    .hint{
+      font-size: 22px;
+      font-weight: 900;
+      line-height:1.5;
+      color:#fff;
+      opacity:.95;
     }
-    .buyArea.hidden{ display:none; }
-    .buyBtn{
-      width: min(360px, 82%);
-      border: 4px solid #000;
-      border-radius: 22px;
-      padding: 14px 18px;
-      font-size: 28px;
-      font-weight: 1000;
-      box-shadow: 0 8px 0 rgba(0,0,0,0.18);
-      cursor:pointer;
-      -webkit-tap-highlight-color:transparent;
-      text-align:center;
-      background: var(--blue);
-      color:#111;
-    }
-    .buyBtn:active{ transform: translateY(1px); box-shadow: 0 7px 0 rgba(0,0,0,0.18); }
 
     .err{
       width:100%;
@@ -226,6 +173,7 @@
       display:none;
       line-height:1.4;
     }
+
     .spacerBottom{ height: 18px; }
 
     .bottomBar{
@@ -264,8 +212,8 @@
       .logo{ width:80px;height:80px; }
       .homeBtn{ width:56px;height:56px; }
       .homeBtn svg{ width:30px;height:30px; }
-      .nameBadge{ font-size: 46px; min-width: 200px; }
-      .animName{ font-size: 40px; min-height: 78px; }
+      .revealTitle{ font-size: 28px; }
+      .revealName{ font-size: 54px; }
       .hostNext{ font-size: 30px; }
     }
   </style>
@@ -279,13 +227,16 @@
         <img class="logo" src="logo.PNG" alt="logo" />
       </div>
 
-      <div class="badgeTitle">كشف برا السالفة</div>
+      <div class="bigCard" id="card">
+        <div class="innerCard">
+          <div class="innerPanel">
+            <div class="hint">جاري التحميل...</div>
+          </div>
+        </div>
+      </div>
 
-      <div class="bigCard" id="card"></div>
-
-      <!-- زر الشراء للاعبين فقط -->
-      <div class="buyArea" id="buyArea">
-        <button class="buyBtn" id="buyBtn">لشراء اللعبة اضغط هنا</button>
+      <div class="hostNextArea hidden" id="hostNextArea">
+        <button class="hostNext" id="hostNext" disabled>التالي</button>
       </div>
 
       <div class="err" id="err"></div>
@@ -308,17 +259,17 @@
     import { ensureRoom, listenRoom, roomRef } from "./data/firebase.js";
     import { db } from "./data/firebase.js";
     import {
-      runTransaction,
       updateDoc,
       serverTimestamp,
       increment
     } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-    const card    = document.getElementById("card");
-    const errBox  = document.getElementById("err");
-    const buyArea = document.getElementById("buyArea");
-    const buyBtn  = document.getElementById("buyBtn");
+    const cardEl = document.getElementById("card");
+    const errBox = document.getElementById("err");
     const homeBtn = document.getElementById("homeBtn");
+
+    const hostNextArea = document.getElementById("hostNextArea");
+    const hostNext = document.getElementById("hostNext");
 
     function showErr(msg){
       errBox.textContent = msg;
@@ -341,16 +292,10 @@
     const params = new URLSearchParams(location.search);
     const roomId = clean(params.get("room"));
 
-    // ✅ تحديد المقدم (نفس الملفات السابقة)
+    // ✅ تحديد المقدم (نفس الصفحات السابقة)
     const HOST_ROOM_KEY = "bara_roomId_multi_v4";
     const hostRoomId = clean(sessionStorage.getItem(HOST_ROOM_KEY));
     const isHost = !!hostRoomId && hostRoomId === roomId;
-
-    // زر شراء للاعبين فقط
-    buyArea.classList.toggle("hidden", isHost);
-    buyBtn.addEventListener("click", () => {
-      window.open("https://sandooq-m.com", "_blank", "noopener,noreferrer");
-    });
 
     function clearMultiState(){
       sessionStorage.removeItem("bara_roomId_multi_v4");
@@ -363,41 +308,7 @@
       window.location.href = "index.html";
     });
 
-    // ✅ اسم اللاعب لكل جهاز (نفس vote.html)
-    const MY_NAME_KEYS = [
-      "bara_myName_multi_v4","bara_playerName_multi_v4","bara_name_multi_v4",
-      "bara_myName_multi_v3","bara_playerName_multi_v3",
-      "bara_myName_multi_v2","bara_playerName_multi_v2",
-      "bara_myName_multi_v1","bara_playerName_multi_v1",
-      "bara_myName_multi","bara_playerName_multi",
-      "bara_myName","bara_playerName"
-    ];
-    const HOST_NAME_KEYS = [
-      "bara_hostName_multi_v4","bara_hostName_multi_v3","bara_hostName_multi_v2","bara_hostName_multi_v1"
-    ];
-
-    function getMyName(){
-      const qn = clean(params.get("name"));
-      if(qn) return qn;
-
-      for(const k of MY_NAME_KEYS){
-        const v1 = clean(sessionStorage.getItem(k));
-        if(v1) return v1;
-        const v2 = clean(localStorage.getItem(k));
-        if(v2) return v2;
-      }
-
-      if(isHost){
-        for(const k of HOST_NAME_KEYS){
-          const v = clean(localStorage.getItem(k));
-          if(v) return v;
-        }
-      }
-      return "";
-    }
-
-    let myName = getMyName();
-
+    // ✅ استخراج أسماء اللاعبين
     function getPlayersNames(data){
       const players = Array.isArray(data?.players) ? data.players : [];
       const names = players.map(p => clean(p?.name)).filter(Boolean);
@@ -412,227 +323,120 @@
       return unique;
     }
 
-    function computeSuspectName(names, votesBy){
-      // votesBy: { voterName: targetName }
-      const tally = new Map();
-      for(const n of names) tally.set(n, 0);
+    // ✅ محاولة ذكية لمعرفة اسم "برا السالفة" من أكثر من مكان
+    function findBaraName(data){
+      // 1) حقول محتملة في الدوك
+      const directKeys = [
+        "baraName","baraPlayer","baraPlayerName",
+        "impostorName","impostor","spyName","spy",
+        "outsiderName","outName","outPlayer","outPlayerName"
+      ];
+      for(const k of directKeys){
+        const v = clean(data?.[k]);
+        if(v) return v;
+      }
 
-      for(const [voter, target] of Object.entries(votesBy || {})){
-        const t = clean(target);
-        if(t && tally.has(t)){
-          tally.set(t, (tally.get(t) || 0) + 1);
+      // 2) داخل players: أعلام/خصائص محتملة
+      const players = Array.isArray(data?.players) ? data.players : [];
+      for(const p of players){
+        const name = clean(p?.name);
+        if(!name) continue;
+        if(p?.isBara === true || p?.isImpostor === true || p?.isSpy === true || p?.outsider === true || p?.isOut === true){
+          return name;
+        }
+        const role = clean(p?.role);
+        if(role && (role === "bara" || role === "impostor" || role === "spy" || role === "out")){
+          return name;
         }
       }
 
-      let bestName = "";
-      let bestCount = -1;
-
-      // tie-break: حسب ترتيب names
-      for(const n of names){
-        const c = tally.get(n) || 0;
-        if(c > bestCount){
-          bestCount = c;
-          bestName = n;
-        }
-      }
-      return bestName || (names[0] || "");
+      return "";
     }
 
-    // ✅ تجهيز كشف الاسم مرة واحدة (يخزن في الغرفة)
-    async function ensureRevealSetupIfHost(data){
-      if(!isHost) return;
-      if(!data) return;
+    // ✅ أنيميشن 3 ثواني ثم تثبيت الاسم
+    let started = false;
+    let done = false;
+    let timerId = null;
+    let intervalId = null;
 
-      const names = getPlayersNames(data);
-      if(names.length < 3) return;
-
-      const currentRoundId = clean(data?.roundId);
-      if(!currentRoundId) return;
-
-      const revealRoundId = clean(data?.revealRoundId);
-      const revealName = clean(data?.revealName);
-
-      if(revealRoundId === currentRoundId && revealName) return;
-
-      const votesBy = (data?.votesBy && typeof data.votesBy === "object") ? data.votesBy : {};
-      const suspect = computeSuspectName(names, votesBy);
-      if(!suspect) return;
-
-      const ref = roomRef(roomId);
-      await runTransaction(db, async (tx) => {
-        const snap = await tx.get(ref);
-        if(!snap.exists()) return;
-        const d = snap.data() || {};
-
-        const rId = clean(d?.roundId);
-        if(!rId) return;
-
-        const rr = clean(d?.revealRoundId);
-        const rn = clean(d?.revealName);
-        if(rr === rId && rn) return;
-
-        const players = Array.isArray(d.players) ? d.players : [];
-        const ns = players.map(p => clean(p?.name)).filter(Boolean);
-        if(ns.length < 3) return;
-
-        const vBy = (d?.votesBy && typeof d.votesBy === "object") ? d.votesBy : {};
-        const sus = computeSuspectName(ns, vBy);
-        if(!sus) return;
-
-        tx.update(ref, {
-          revealRoundId: rId,
-          revealName: sus,
-          revealStartedAt: serverTimestamp(),
-          revealArrived: {},               // نبدأها فاضية للجولة
-          updatedAt: serverTimestamp(),
-          tick: increment(1)
-        });
-      });
-    }
-
-    // ✅ تسجيل وصول كل لاعب لهذه الصفحة
-    let markedArrive = false;
-    async function markArrivedIfNeeded(data){
-      if(markedArrive) return;
-      if(!myName) return;
-      const names = getPlayersNames(data);
-      if(!names.includes(myName)) return;
-
-      const arrivedObj = (data?.revealArrived && typeof data.revealArrived === "object") ? data.revealArrived : {};
-      if(arrivedObj[myName]){ markedArrive = true; return; }
-
-      const ref = roomRef(roomId);
-      await runTransaction(db, async (tx) => {
-        const snap = await tx.get(ref);
-        if(!snap.exists()) return;
-        const d = snap.data() || {};
-        const players = Array.isArray(d.players) ? d.players : [];
-        const ns = players.map(p => clean(p?.name)).filter(Boolean);
-        if(!ns.includes(myName)) return;
-
-        const ra = (d?.revealArrived && typeof d.revealArrived === "object") ? {...d.revealArrived} : {};
-        if(ra[myName]) return;
-
-        ra[myName] = true;
-
-        tx.update(ref, {
-          revealArrived: ra,
-          updatedAt: serverTimestamp(),
-          tick: increment(1)
-        });
-      });
-
-      markedArrive = true;
-    }
-
-    // --- أنيميشن الأسماء ---
-    let animTimer = null;
-    let animDone = false;
-
-    function stopAnim(){
-      if(animTimer){
-        clearInterval(animTimer);
-        animTimer = null;
-      }
-    }
-
-    function startAnim(names, finalName){
-      stopAnim();
-      animDone = false;
-
-      const animEl = document.getElementById("animName");
-      if(!animEl) return;
-
-      let i = 0;
-      animTimer = setInterval(() => {
-        if(!names.length) return;
-        animEl.textContent = names[i % names.length];
-        i++;
-      }, 120);
-
-      setTimeout(() => {
-        stopAnim();
-        animEl.textContent = finalName || "";
-        animDone = true;
-        updateHostNextState();
-      }, 2000);
-    }
-
-    let lastRenderKey = "";
-    let lastArrived = 0;
-    let lastTotal = 0;
-
-    function updateHostNextState(){
-      const btn = document.getElementById("hostNext");
-      if(!btn) return;
-      btn.disabled = !(animDone && lastArrived >= lastTotal);
-    }
-
-    function renderReveal(data){
-      const names = getPlayersNames(data);
-      const total = Math.max(names.length, 1);
-
-      const revealName = clean(data?.revealName);
-      const arrivedObj = (data?.revealArrived && typeof data.revealArrived === "object") ? data.revealArrived : {};
-      const arrived = Object.keys(arrivedObj || {}).length;
-
-      lastArrived = arrived;
-      lastTotal = total;
-
-      const waitingText = (arrived >= total) ? "" : "بانتظار اللاعبين...";
-      const arrivedText = (arrived >= total) ? "" : `الواصل: ${arrived} من ${total}`;
-
-      card.innerHTML = `
-        <div class="hintTop">الآن راح نكشف مين هو برا السالفة</div>
-        <div class="nameBadge" id="finalBadge">برا السالفة هو</div>
-
-        <div class="animName" id="animName">${escapeHtml(revealName || "")}</div>
-
-        ${waitingText ? `<div class="waiting" id="waitingText">${waitingText}</div>` : ``}
-        ${arrivedText ? `<div class="arrived" id="arrivedText">${arrivedText}</div>` : ``}
-
-        <div class="hostNextArea ${isHost ? "" : "hidden"}" id="hostNextArea">
-          <button class="hostNext" id="hostNext" disabled>التالي</button>
+    function renderRevealUI(displayName){
+      cardEl.innerHTML = `
+        <div class="innerCard">
+          <div class="innerPanel">
+            <div class="revealTitle">الي برا السالفة هو :</div>
+            <div class="revealName" id="revealName">${escapeHtml(displayName || "…")}</div>
+          </div>
         </div>
       `;
-
-      // تشغيل الأنيميشن مرة واحدة لكل حالة
-      const key = (revealName || "") + "|" + names.join(",");
-      if(key && key !== lastRenderKey && revealName){
-        lastRenderKey = key;
-        startAnim(names, revealName);
-      }else{
-        // لو ما في أنيميشن جديد: حدّث حالة الزر حسب الوصول
-        updateHostNextState();
-      }
-
-      // زر التالي للمقدم فقط (لا يعمل إلا إذا الكل وصل + الأنيميشن خلص)
-      if(isHost){
-        const hostNext = document.getElementById("hostNext");
-        hostNext.addEventListener("click", async () => {
-          if(hostNext.disabled) return;
-          hideErr();
-          try{
-            // المرحلة التالية (بننشئ صفحتها بعدين)
-            await updateDoc(roomRef(roomId), {
-              phase: "final_pick",
-              updatedAt: serverTimestamp(),
-              tick: increment(1)
-            });
-            // توجيه الجميع لصفحة الاختيار النهائي (بنضيفها بالخطوة الجاية)
-            window.location.href = "final_pick.html?room=" + encodeURIComponent(roomId);
-          }catch(e){
-            console.warn(e);
-            showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
-          }
-        });
-      }
     }
 
+    function startReveal(names, finalName){
+      if(started) return;
+      started = true;
+
+      // زر التالي للمقدم فقط (يُفعّل بعد التثبيت)
+      hostNextArea.classList.toggle("hidden", !isHost);
+      hostNext.disabled = true;
+
+      // لو ما عندنا أسماء كفاية
+      const pool = (Array.isArray(names) ? names.filter(Boolean) : []).slice();
+      if(pool.length === 0){
+        renderRevealUI(finalName || "…");
+        done = true;
+        hostNext.disabled = false;
+        return;
+      }
+
+      // أثناء الأنيميشن: نبدّل أسماء عشوائية
+      renderRevealUI(pool[Math.floor(Math.random() * pool.length)]);
+
+      const nameEl = () => document.getElementById("revealName");
+
+      intervalId = setInterval(() => {
+        const el = nameEl();
+        if(!el) return;
+        const rnd = pool[Math.floor(Math.random() * pool.length)];
+        el.textContent = rnd;
+      }, 120);
+
+      timerId = setTimeout(() => {
+        if(intervalId) clearInterval(intervalId);
+        intervalId = null;
+
+        const el = nameEl();
+        if(el){
+          el.textContent = finalName ? finalName : pool[Math.floor(Math.random() * pool.length)];
+        }
+        done = true;
+        hostNext.disabled = false;
+      }, 3000);
+    }
+
+    // زر التالي للمقدم فقط (حالياً يغيّر phase لمرحلة لاحقة — نكملها بعدين)
+    hostNext.addEventListener("click", async () => {
+      if(!isHost) return;
+      if(!done) return;
+
+      hideErr();
+      try{
+        await updateDoc(roomRef(roomId), {
+          phase: "reveal_done",
+          updatedAt: serverTimestamp(),
+          tick: increment(1)
+        });
+      }catch(e){
+        console.warn(e);
+        showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
+      }
+    });
+
     function renderLoading(){
-      card.innerHTML = `
-        <div class="hintTop">جاري التحميل...</div>
-        <div class="animName" style="opacity:.9;">...</div>
+      cardEl.innerHTML = `
+        <div class="innerCard">
+          <div class="innerPanel">
+            <div class="hint">جاري التحميل...</div>
+          </div>
+        </div>
       `;
     }
 
@@ -647,29 +451,20 @@
         await ensureRoom(roomId);
         renderLoading();
 
-        listenRoom(roomId, async (data) => {
+        listenRoom(roomId, (data) => {
           if(!data) return;
 
-          myName = getMyName();
+          // ملاحظة: التزامن الكامل يعتمد على تغيير phase من صفحة التصويت (بنعدّله بعد ما ترفع هذا الملف)
+          const names = getPlayersNames(data);
+          const baraName = findBaraName(data);
 
-          // لو انتقلنا للمرحلة التالية، نروح لصفحتها
-          const phase = clean(data?.phase);
-          if(phase === "final_pick"){
-            window.location.href = "final_pick.html?room=" + encodeURIComponent(roomId);
-            return;
-          }
-
-          try{ await ensureRevealSetupIfHost(data); }catch(e){}
-          try{ await markArrivedIfNeeded(data); }catch(e){}
-
-          // بعد التأكد من التخزين، ارسم
-          renderReveal(data);
+          // نبدأ الأنيميشن مرة وحدة فقط
+          startReveal(names, baraName);
         });
 
       }catch(e){
         console.warn(e);
         showErr("تعذر الاتصال. حدّث الصفحة وجرب مرة ثانية.");
-        renderLoading();
       }
     })();
   </script>
