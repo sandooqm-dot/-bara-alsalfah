@@ -647,7 +647,7 @@
 
           hideErr();
           try{
-            // ✅ (الحل الجذري) إشارة انتقال واضحة للجميع + تسلسل
+            // ✅ إشارة انتقال واضحة للجميع
             await updateDoc(roomRef(roomId), {
               phase: "reveal_show",
               navPage: "reveal_show",
@@ -657,7 +657,7 @@
               tick: increment(1)
             });
 
-            // ✅ المقدم ينتقل فورًا بدون انتظار
+            // ✅ المقدم ينتقل فورًا
             goReveal();
           }catch(e){
             console.warn(e);
@@ -725,11 +725,11 @@
       }
     }
 
-    // ✅ انتقال موحّد لصفحة كشف برا السالفة (ملف جديد)
+    // ✅ انتقال موحّد لصفحة كشف برا السالفة (تصحيح: الملف الصحيح reveal.html)
     let pollId = null;
     const goReveal = () => {
       try{ if(pollId) clearInterval(pollId); }catch(e){}
-      const url = "reveal_show.html?room=" + encodeURIComponent(roomId) + "&v=" + Date.now();
+      const url = "reveal.html?room=" + encodeURIComponent(roomId) + "&v=" + Date.now();
       window.location.replace(url);
     };
 
@@ -791,4 +791,4 @@
 </body>
 </html>
 
-<!-- vote.html برا السالفة – إصدار 9 -->
+<!-- vote.html برا السالفة – إصدار 10 -->
