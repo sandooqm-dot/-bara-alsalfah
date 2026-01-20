@@ -109,13 +109,20 @@ export async function setRoomStatus(roomId, status) {
   });
 }
 
-// ✅ (إضافة مطلوبة فقط) تحديث أي حقول داخل الغرفة (مثل phase / categoryKey ...)
+// ✅ (جديد) تحديث حقول الغرفة لأي صفحة مثل categories.html
 export async function updateRoomFields(roomId, fields = {}) {
   const ref = await ensureRoom(roomId);
+
+  // ننظف أي قيم undefined
+  const cleanFields = {};
+  for (const k of Object.keys(fields || {})) {
+    if (typeof fields[k] !== "undefined") cleanFields[k] = fields[k];
+  }
+
   await updateDoc(ref, {
-    ...fields,
     updatedAt: serverTimestamp(),
-    tick: increment(1)
+    tick: increment(1),
+    ...cleanFields
   });
 }
 
