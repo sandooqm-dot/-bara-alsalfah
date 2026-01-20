@@ -1,5 +1,5 @@
 // data/firebase.js
-// Firebase (Firestore) setup for "bara-alsalfah" project
+// Firebase (Firestore) setup for "bara-alsalfah-eu" project
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import {
@@ -14,15 +14,15 @@ import {
   runTransaction
 } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-// ✅ إعدادات مشروعك (كما ظهرت لك في Firebase)
+// ✅ إعدادات مشروعك الجديد (bara-alsalfah-eu)
 const firebaseConfig = {
-  apiKey: "AIzaSyDQx4gF2qJZMNHWQBeMYsU4fknZHG0WFJ_ckc",
-  authDomain: "bara-alsalfah.firebaseapp.com",
-  projectId: "bara-alsalfah",
-  storageBucket: "bara-alsalfah.firebasestorage.app",
-  messagingSenderId: "658748312832",
-  appId: "1:658748312832:web:3e0c970ba54bb25c0437e5",
-  measurementId: "G-82ZV2RDDDP"
+  apiKey: "AIzaSyDYxoP7QEy3ShH_KOTx19jqj3IbWGTEOd0",
+  authDomain: "bara-alsalfah-eu.firebaseapp.com",
+  projectId: "bara-alsalfah-eu",
+  storageBucket: "bara-alsalfah-eu.firebasestorage.app",
+  messagingSenderId: "657928540352",
+  appId: "1:657928540352:web:dcf15096ac8501326e9d25",
+  measurementId: "G-HKJGX94BJD"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -109,7 +109,7 @@ export async function setRoomStatus(roomId, status) {
   });
 }
 
-// ✅ (جديد) تحديث حقول الغرفة لأي صفحة مثل categories.html
+// ✅ تحديث حقول الغرفة لأي صفحة مثل categories.html
 export async function updateRoomFields(roomId, fields = {}) {
   const ref = await ensureRoom(roomId);
 
