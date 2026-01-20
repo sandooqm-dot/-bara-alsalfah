@@ -82,7 +82,6 @@
       background:var(--green);
       border-radius:18px;
       padding:16px 14px;
-      box-shadow: inset 0 0 0 0 rgba(0,0,0,0);
       margin:0 auto 16px;
     }
 
@@ -225,11 +224,9 @@
   </div>
 
   <script type="module">
-    import { updateRoomFields, ensureRoom } from "./data/firebase.js";
+    // ✅ كسر الكاش (مهم)
+    import { updateRoomFields, ensureRoom } from "./data/firebase.js?v=6";
 
-    /**************************************************************
-     * قائمة مقاسات الصور
-     **************************************************************/
     const IMAGE_SIZES = {
       eat:  { file: "eat.PNG",  w: 190, h: 120  },
       zoo:  { file: "zoo.PNG",  w: 260, h: 130  },
@@ -248,26 +245,11 @@
       { key:"cola", label:"مشروبات" },
     ];
 
-    /* =========================
-       مفاتيح التخزين (جهاز واحد)
-       ========================= */
     const KEY_PLAYERS = "players";
     const KEY_CATEGORY = "categoryKey";
 
-    const ALT_PLAYER_KEYS = [
-      "bara_players",
-      "bara_players_list",
-      "baraPlayers",
-      "bara_players_names",
-      "bara_players_v1"
-    ];
-
-    const ALT_CAT_KEYS = [
-      "bara_category_id",
-      "bara_selectedCategory",
-      "bara_category",
-      "bara_category_key"
-    ];
+    const ALT_PLAYER_KEYS = ["bara_players","bara_players_list","baraPlayers","bara_players_names","bara_players_v1"];
+    const ALT_CAT_KEYS = ["bara_category_id","bara_selectedCategory","bara_category","bara_category_key"];
 
     const grid = document.getElementById("grid");
     const startBtn = document.getElementById("startBtn");
@@ -276,9 +258,7 @@
     let selectedKey = null;
     let selectedLabel = "";
 
-    function safeJSONParse(v){
-      try { return JSON.parse(v); } catch(e){ return null; }
-    }
+    function safeJSONParse(v){ try { return JSON.parse(v); } catch(e){ return null; } }
 
     function getPlayersFromSession(){
       const v1 = sessionStorage.getItem(KEY_PLAYERS);
@@ -306,16 +286,15 @@
       return players;
     }
 
-    // ✅ كشف نمط الأجهزة المتعددة (المقدم) بدون تغيير أي صفحات أخرى
+    // ✅ نمط الأجهزة المتعددة (المقدم)
     const MULTI_ROOM_KEY = "bara_roomId_multi_v4";
     const multiRoomId = String(sessionStorage.getItem(MULTI_ROOM_KEY) || "").trim();
-    const isMultiHost = !!multiRoomId; // وجود roomId الخاص بالمقدم يعني Multi
+    const isMultiHost = !!multiRoomId;
 
     function setCategoryEverywhere(key, label){
       selectedKey = key;
       selectedLabel = String(label || "");
 
-      // نخزن محليًا (يفيد للجهاز الواحد + ما يضر للأجهزة المتعددة)
       sessionStorage.setItem(KEY_CATEGORY, key);
       sessionStorage.setItem("bara_category_id", key);
       sessionStorage.setItem("bara_category_label", selectedLabel);
@@ -327,7 +306,6 @@
 
     function buildGrid(){
       grid.innerHTML = "";
-
       CATEGORIES.forEach(cat => {
         const size = IMAGE_SIZES[cat.key] || { file: "", w: 170, h: 95 };
 
@@ -360,9 +338,7 @@
         const k = sessionStorage.key(i);
         if(k) ssKeys.push(k);
       }
-      ssKeys.forEach(k => {
-        if(k.startsWith("bara_")) sessionStorage.removeItem(k);
-      });
+      ssKeys.forEach(k => { if(k.startsWith("bara_")) sessionStorage.removeItem(k); });
 
       sessionStorage.removeItem(KEY_PLAYERS);
       sessionStorage.removeItem(KEY_CATEGORY);
@@ -373,9 +349,7 @@
         const k = localStorage.key(i);
         if(k) lsKeys.push(k);
       }
-      lsKeys.forEach(k => {
-        if(k.startsWith("bara_")) localStorage.removeItem(k);
-      });
+      lsKeys.forEach(k => { if(k.startsWith("bara_")) localStorage.removeItem(k); });
     }
 
     homeBtn.addEventListener("click", () => {
@@ -386,10 +360,9 @@
     (function init(){
       buildGrid();
 
-      // ✅ جهاز واحد فقط: لازم أسماء
+      // جهاز واحد فقط: لازم أسماء
       if(!isMultiHost){
         const players = normalizePlayersToExpectedKeys();
-
         if(players.length < 3){
           alert("الأسماء غير موجودة. ارجع للصفحة السابقة وأدخل الأسماء ثم جرّب مرة ثانية.");
           window.location.href = "single.html";
@@ -416,14 +389,25 @@
       }
     })();
 
+    function explainErr(e){
+      const code = (e && e.code) ? String(e.code) : "";
+      const msg  = (e && e.message) ? String(e.message) : String(e || "");
+      return (code ? (code + " - ") : "") + (msg || "Unknown error");
+    }
+
     startBtn.addEventListener("click", async () => {
       if(!selectedKey){
         alert("اختر نوع السالفة أولاً.");
         return;
       }
 
-      // ✅ نمط الأجهزة المتعددة (المقدم): ثبت الكتاغوري وابدأ مرحلة ready
+      // ✅ الأجهزة المتعددة (المقدم)
       if(isMultiHost){
+        if(!multiRoomId){
+          alert("ما تم العثور على رقم الغرفة في هذا الجهاز. ارجع لصفحة المقدم وجرب مرة ثانية.");
+          return;
+        }
+
         try{
           startBtn.disabled = true;
 
@@ -435,11 +419,12 @@
             phaseAt: Date.now()
           });
 
-          window.location.href = "ready.html";
+          // ✅ مهم: مرر roomId
+          window.location.href = "ready.html?room=" + encodeURIComponent(multiRoomId);
+
         }catch(e){
-          console.warn(e);
           startBtn.disabled = false;
-          alert("صار خطأ في الاتصال. جرّب مرة ثانية.");
+          alert("صار خطأ في الاتصال:\n" + explainErr(e));
         }
         return;
       }
@@ -459,4 +444,4 @@
 </body>
 </html>
 
-<!-- categories.html برا السالفة – إصدار 5 -->
+<!-- categories.html برا السالفة – إصدار 6 -->
