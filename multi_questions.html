@@ -358,7 +358,6 @@
     });
 
     function clearMultiState(){
-      // نخليها تنظيف خفيف مثل ما كانت
       sessionStorage.removeItem("bara_roomId_multi_v4");
       sessionStorage.removeItem("bara_roomTs_multi_v4");
       sessionStorage.removeItem("bara_hostAdded_multi_v4");
@@ -509,6 +508,50 @@
       });
     }
 
+    // ✅ جديد: تجهيز التصويت مرة واحدة عند التحويل لمرحلة vote
+    async function ensureVoteSetupIfHost(data){
+      if(!isHost) return;
+      if(!data) return;
+
+      const ref = roomRef(roomId);
+      const phase = cleanName(data?.phase);
+
+      // ما نجهز إلا لما ندخل التصويت فعليًا
+      if(phase !== "vote") return;
+
+      const currentRoundId = cleanName(data?.roundId);
+      if(!currentRoundId) return;
+
+      // إذا تم تجهيز التصويت لنفس الجولة لا نعيد
+      const voteRoundId = cleanName(data?.voteRoundId);
+      const hasVotesObj = (data?.votes && typeof data.votes === "object");
+
+      if(voteRoundId === currentRoundId && hasVotesObj) return;
+
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if(!snap.exists()) return;
+
+        const d = snap.data() || {};
+        const rId = cleanName(d?.roundId);
+        if(!rId) return;
+
+        const vRid = cleanName(d?.voteRoundId);
+        const okVotes = (d?.votes && typeof d.votes === "object");
+
+        if(vRid === rId && okVotes) return;
+
+        // مهم: نفرغ الأصوات عند بداية التصويت
+        tx.update(ref, {
+          updatedAt: serverTimestamp(),
+          tick: increment(1),
+          voteRoundId: rId,
+          votes: {},
+          phase: "vote"
+        });
+      });
+    }
+
     ctaBtn.addEventListener("click", async () => {
       if(!isHost) return;
       hideErr();
@@ -533,8 +576,10 @@
           return;
         }
 
+        // ✅ تعديل أساسي: بدل ما نروح vote.html على جهاز واحد
+        // نخلي الكل يدخل التصويت بنفس الوقت عن طريق phase = "vote"
         if(phase === "suspect"){
-          window.location.href = "vote.html?room=" + encodeURIComponent(roomId);
+          await setRoom({ phase: "vote" });
           return;
         }
 
@@ -550,6 +595,12 @@
       const phase = cleanName(data?.phase) || "questions_intro";
       const pairs = Array.isArray(data?.questionPairs) ? data.questionPairs : [];
       const idx = Number(data?.askIndex || 0);
+
+      // ✅ إذا دخلنا التصويت: الكل يتحول تلقائيًا لصفحة vote.html
+      if(phase === "vote" || phase === "vote_wait"){
+        window.location.href = "vote.html?room=" + encodeURIComponent(roomId);
+        return;
+      }
 
       if(phase === "questions_intro"){
         renderIntro();
@@ -591,7 +642,12 @@
         listenRoom(roomId, async (data) => {
           if(!data) return;
 
+          // تجهيز الأزواج (مرة واحدة) بواسطة المقدم فقط
           try{ await ensureQuestionsSetupIfHost(data); }catch(e){}
+
+          // ✅ تجهيز التصويت (مرة واحدة) بواسطة المقدم فقط
+          try{ await ensureVoteSetupIfHost(data); }catch(e){}
+
           renderByRoom(data);
         });
 
@@ -604,4 +660,4 @@
 </body>
 </html>
 
-<!-- multi_questions.html برا السالفة – إصدار 2 -->
+<!-- multi_questions.html برا السالفة – إصدار 3 -->
