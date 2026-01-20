@@ -647,14 +647,18 @@
 
           hideErr();
           try{
-            // ✅ (التعديل الجذري الوحيد هنا)
-            // بدل phase: "reveal" نخليه مباشرة "reveal_done"
-            // لأنه هذا اللي يلتقطه اللاعبون بشكل مؤكد
+            // ✅ (الحل الجذري) إشارة انتقال واضحة للجميع + تسلسل
             await updateDoc(roomRef(roomId), {
-              phase: "reveal_done",
+              phase: "reveal_show",
+              navPage: "reveal_show",
+              navTs: Date.now(),
+              navSeq: increment(1),
               updatedAt: serverTimestamp(),
               tick: increment(1)
             });
+
+            // ✅ المقدم ينتقل فورًا بدون انتظار
+            goReveal();
           }catch(e){
             console.warn(e);
             showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
@@ -721,6 +725,14 @@
       }
     }
 
+    // ✅ انتقال موحّد لصفحة كشف برا السالفة (ملف جديد)
+    let pollId = null;
+    const goReveal = () => {
+      try{ if(pollId) clearInterval(pollId); }catch(e){}
+      const url = "reveal_show.html?room=" + encodeURIComponent(roomId) + "&v=" + Date.now();
+      window.location.replace(url);
+    };
+
     (async () => {
       if(!roomId){
         showErr("الرابط غير صحيح: رمز الغرفة غير موجود.");
@@ -732,30 +744,28 @@
         await ensureRoom(roomId);
         renderLoading();
 
-        let pollId = null;
-        const goReveal = () => {
-          try{ if(pollId) clearInterval(pollId); }catch(e){}
-          const url = "reveal.html?room=" + encodeURIComponent(roomId) + "&v=" + Date.now();
-          window.location.replace(url);
-        };
-
+        // ✅ Polling من السيرفر (بدون كاش) عشان نضمن استلام التحويل
         pollId = setInterval(async () => {
           try{
             const snap = await getDocFromServer(roomRef(roomId));
             if(!snap.exists()) return;
-            const ph = clean((snap.data() || {})?.phase);
-            if(ph === "reveal" || ph === "reveal_done"){
+            const d = snap.data() || {};
+            const ph = clean(d?.phase);
+            const nav = clean(d?.navPage);
+            if(ph === "reveal_show" || nav === "reveal_show"){
               goReveal();
             }
           }catch(e){}
-        }, 800);
+        }, 600);
 
         listenRoom(roomId, async (data) => {
           if(!data) return;
 
           const phase = clean(data?.phase);
+          const navPage = clean(data?.navPage);
 
-          if(phase === "reveal" || phase === "reveal_done"){
+          // ✅ إذا وصلتنا إشارة التحويل: نروح كشف برا السالفة فورًا
+          if(phase === "reveal_show" || navPage === "reveal_show"){
             goReveal();
             return;
           }
@@ -781,4 +791,4 @@
 </body>
 </html>
 
-<!-- vote.html برا السالفة – إصدار 8 -->
+<!-- vote.html برا السالفة – إصدار 9 -->
