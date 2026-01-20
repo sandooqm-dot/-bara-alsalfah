@@ -23,13 +23,12 @@
       --radiusBig: 26px;
 
       --boxPad: 22px;
-      --boxMinH: 360px;
+      --boxMinH: 540px;
 
       --titleSize: 18px;
-      --headerSize: 26px;
 
       --revealTitle: 34px;
-      --revealName: 68px;
+      --revealName: 78px;
 
       --btnH: 66px;
       --btnRadius: 26px;
@@ -38,8 +37,6 @@
       --homeGap: 12px;
 
       --bottomGap: 34px;
-
-      --innerBg:#5f7a46; /* نفس روح الصورة */
     }
 
     *{box-sizing:border-box}
@@ -82,43 +79,38 @@
       object-fit:contain;
     }
 
+    /* ✅ شكل البطاقة مثل الصورة (مربع أخضر كبير بداخل الإطار) */
     .bigCard{
-      background:transparent;
-      border-radius: var(--radiusBig);
-      padding: 0;
-      min-height: var(--boxMinH);
-      position:relative;
-    }
-
-    /* نفس الشكل بالصورة: مربع أخضر كبير داخلي */
-    .innerCard{
-      background: var(--card);
+      background:var(--card);
+      color:var(--white);
       border-radius: var(--radiusBig);
       padding: var(--boxPad);
       min-height: var(--boxMinH);
       box-shadow: 0 0 0 8px rgba(216,207,177,.75) inset;
       display:flex;
+      flex-direction:column;
       align-items:center;
-      justify-content:center;
+      justify-content:flex-start;
       text-align:center;
-      position:relative;
-      color:#fff;
-    }
-    .innerPanel{
-      width: 100%;
-      max-width: 460px;
-      border-radius: 26px;
-      background: rgba(0,0,0,.08);
-      padding: 22px 18px;
     }
 
     .revealTitle{
       font-size: var(--revealTitle);
       font-weight: 1000;
       line-height: 1.25;
-      margin-bottom: 26px;
+      margin: 12px 0 0;
       color:#fff;
     }
+
+    .revealNameWrap{
+      flex:1;
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 10px 0;
+    }
+
     .revealName{
       font-size: var(--revealName);
       font-weight: 1000;
@@ -161,6 +153,7 @@
       line-height:1.5;
       color:#fff;
       opacity:.95;
+      margin-top: 18px;
     }
 
     .err{
@@ -213,8 +206,9 @@
       .homeBtn{ width:56px;height:56px; }
       .homeBtn svg{ width:30px;height:30px; }
       .revealTitle{ font-size: 28px; }
-      .revealName{ font-size: 54px; }
+      .revealName{ font-size: 58px; }
       .hostNext{ font-size: 30px; }
+      .bigCard{ min-height: 500px; }
     }
   </style>
 </head>
@@ -228,13 +222,10 @@
       </div>
 
       <div class="bigCard" id="card">
-        <div class="innerCard">
-          <div class="innerPanel">
-            <div class="hint">جاري التحميل...</div>
-          </div>
-        </div>
+        <div class="hint">جاري التحميل...</div>
       </div>
 
+      <!-- زر التالي للمقدم فقط -->
       <div class="hostNextArea hidden" id="hostNextArea">
         <button class="hostNext" id="hostNext" disabled>التالي</button>
       </div>
@@ -257,7 +248,6 @@
 
   <script type="module">
     import { ensureRoom, listenRoom, roomRef } from "./data/firebase.js";
-    import { db } from "./data/firebase.js";
     import {
       updateDoc,
       serverTimestamp,
@@ -292,7 +282,7 @@
     const params = new URLSearchParams(location.search);
     const roomId = clean(params.get("room"));
 
-    // ✅ تحديد المقدم (نفس الصفحات السابقة)
+    // ✅ تحديد المقدم
     const HOST_ROOM_KEY = "bara_roomId_multi_v4";
     const hostRoomId = clean(sessionStorage.getItem(HOST_ROOM_KEY));
     const isHost = !!hostRoomId && hostRoomId === roomId;
@@ -308,7 +298,6 @@
       window.location.href = "index.html";
     });
 
-    // ✅ استخراج أسماء اللاعبين
     function getPlayersNames(data){
       const players = Array.isArray(data?.players) ? data.players : [];
       const names = players.map(p => clean(p?.name)).filter(Boolean);
@@ -323,9 +312,8 @@
       return unique;
     }
 
-    // ✅ محاولة ذكية لمعرفة اسم "برا السالفة" من أكثر من مكان
+    // ✅ استخراج اسم برا السالفة من الداتا (كما هو عندك)
     function findBaraName(data){
-      // 1) حقول محتملة في الدوك
       const directKeys = [
         "baraName","baraPlayer","baraPlayerName",
         "impostorName","impostor","spyName","spy",
@@ -336,11 +324,11 @@
         if(v) return v;
       }
 
-      // 2) داخل players: أعلام/خصائص محتملة
       const players = Array.isArray(data?.players) ? data.players : [];
       for(const p of players){
         const name = clean(p?.name);
         if(!name) continue;
+
         if(p?.isBara === true || p?.isImpostor === true || p?.isSpy === true || p?.outsider === true || p?.isOut === true){
           return name;
         }
@@ -349,7 +337,6 @@
           return name;
         }
       }
-
       return "";
     }
 
@@ -359,13 +346,11 @@
     let timerId = null;
     let intervalId = null;
 
-    function renderRevealUI(displayName){
+    function renderBase(titleText, nameText){
       cardEl.innerHTML = `
-        <div class="innerCard">
-          <div class="innerPanel">
-            <div class="revealTitle">الي برا السالفة هو :</div>
-            <div class="revealName" id="revealName">${escapeHtml(displayName || "…")}</div>
-          </div>
+        <div class="revealTitle">${escapeHtml(titleText)}</div>
+        <div class="revealNameWrap">
+          <div class="revealName" id="revealName">${escapeHtml(nameText || "…")}</div>
         </div>
       `;
     }
@@ -374,29 +359,25 @@
       if(started) return;
       started = true;
 
-      // زر التالي للمقدم فقط (يُفعّل بعد التثبيت)
       hostNextArea.classList.toggle("hidden", !isHost);
       hostNext.disabled = true;
 
-      // لو ما عندنا أسماء كفاية
       const pool = (Array.isArray(names) ? names.filter(Boolean) : []).slice();
       if(pool.length === 0){
-        renderRevealUI(finalName || "…");
+        renderBase("الي برا السالفة هو :", finalName || "…");
         done = true;
         hostNext.disabled = false;
         return;
       }
 
-      // أثناء الأنيميشن: نبدّل أسماء عشوائية
-      renderRevealUI(pool[Math.floor(Math.random() * pool.length)]);
+      renderBase("الي برا السالفة هو :", pool[Math.floor(Math.random() * pool.length)]);
 
       const nameEl = () => document.getElementById("revealName");
 
       intervalId = setInterval(() => {
         const el = nameEl();
         if(!el) return;
-        const rnd = pool[Math.floor(Math.random() * pool.length)];
-        el.textContent = rnd;
+        el.textContent = pool[Math.floor(Math.random() * pool.length)];
       }, 120);
 
       timerId = setTimeout(() => {
@@ -412,7 +393,7 @@
       }, 3000);
     }
 
-    // زر التالي للمقدم فقط (حالياً يغيّر phase لمرحلة لاحقة — نكملها بعدين)
+    // ✅ التالي للمقدم فقط (نكمل ربطه بالصفحة القادمة بعدين)
     hostNext.addEventListener("click", async () => {
       if(!isHost) return;
       if(!done) return;
@@ -431,13 +412,12 @@
     });
 
     function renderLoading(){
-      cardEl.innerHTML = `
-        <div class="innerCard">
-          <div class="innerPanel">
-            <div class="hint">جاري التحميل...</div>
-          </div>
-        </div>
-      `;
+      cardEl.innerHTML = `<div class="hint">جاري التحميل...</div>`;
+    }
+
+    function renderWait(){
+      cardEl.innerHTML = `<div class="hint">بانتظار المقدم...</div>`;
+      hostNextArea.classList.add("hidden");
     }
 
     (async () => {
@@ -454,11 +434,16 @@
         listenRoom(roomId, (data) => {
           if(!data) return;
 
-          // ملاحظة: التزامن الكامل يعتمد على تغيير phase من صفحة التصويت (بنعدّله بعد ما ترفع هذا الملف)
+          // ✅ مهم: ما نبدأ الكشف إلا لما phase = reveal (تزامن كامل)
+          const phase = clean(data?.phase);
+          if(phase !== "reveal" && phase !== "reveal_done"){
+            renderWait();
+            return;
+          }
+
           const names = getPlayersNames(data);
           const baraName = findBaraName(data);
 
-          // نبدأ الأنيميشن مرة وحدة فقط
           startReveal(names, baraName);
         });
 
@@ -471,4 +456,4 @@
 </body>
 </html>
 
-<!-- reveal.html برا السالفة – إصدار 1 -->
+<!-- reveal.html برا السالفة – إصدار 2 -->
