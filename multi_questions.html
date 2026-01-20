@@ -344,7 +344,7 @@
     const params = new URLSearchParams(location.search);
     const roomId = cleanName(params.get("room"));
 
-    // ✅ تحديد المقدم بشكل صحيح (بدون ما نخلي لاعب ينحسب مقدم)
+    // ✅ تحديد المقدم بشكل صحيح
     const HOST_ROOM_KEY = "bara_roomId_multi_v4";
     const hostRoomId = cleanName(sessionStorage.getItem(HOST_ROOM_KEY));
     const isHost = !!hostRoomId && hostRoomId === roomId;
@@ -367,11 +367,6 @@
       if(isHost) clearMultiState();
       window.location.href = "index.html";
     });
-
-    function goVote(){
-      // انتقال للجميع (المقدم + اللاعبين) بنفس اللحظة
-      window.location.href = "vote.html?room=" + encodeURIComponent(roomId);
-    }
 
     function renderIntro(){
       pageTitle.textContent = "وقت الاسئلة";
@@ -513,6 +508,11 @@
       });
     }
 
+    // ✅ مهم: الانتقال للجميع يكون عبر phase وليس عبر redirect للمقدم فقط
+    function goVotePage(){
+      window.location.href = "vote.html?room=" + encodeURIComponent(roomId);
+    }
+
     ctaBtn.addEventListener("click", async () => {
       if(!isHost) return;
       hideErr();
@@ -538,10 +538,8 @@
         }
 
         if(phase === "suspect"){
-          // ✅ المهم: نخلي المرحلة "vote" في الغرفة
-          // وبكذا كل الأجهزة اللي تسمع للغرفة بتنتقل لنفس صفحة التصويت
+          // ✅ بدل ما نحول المقدم فقط: نغيّر المرحلة للجميع
           await setRoom({ phase: "vote" });
-          goVote(); // المقدم ينتقل فوراً
           return;
         }
 
@@ -558,9 +556,9 @@
       const pairs = Array.isArray(data?.questionPairs) ? data.questionPairs : [];
       const idx = Number(data?.askIndex || 0);
 
-      // ✅ إذا دخلنا مرحلة التصويت: كل الأجهزة تنتقل مباشرة
-      if(phase === "vote"){
-        goVote();
+      // ✅ أي وقت الغرفة تتحول للتصويت نطلع كلنا لصفحة vote.html
+      if(phase === "vote" || phase === "vote_wait" || phase === "vote_result"){
+        goVotePage();
         return;
       }
 
