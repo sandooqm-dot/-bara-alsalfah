@@ -211,12 +211,7 @@
       font-weight:1000;
       margin: 6px 0 12px;
       color:#fff;
-    }
-    .arrived{
-      font-size: 22px;
-      font-weight:1000;
-      margin-bottom: 14px;
-      color: var(--lineAccent);
+      min-height: 36px; /* يحافظ على المساحة حتى لو اختفى النص */
     }
 
     .lines{
@@ -574,6 +569,9 @@
       const total   = Math.max(names.length, 1);
       const arrived = countVotes(votesBy);
 
+      // ✅ عبارة الانتظار تختفي عند اكتمال الجميع
+      const waitingText = (arrived < total) ? "بانتظار اللاعبين..." : "";
+
       // خطوط عرض التصويتات
       const lines = Object.entries(votesBy || {}).map(([voter, target]) => {
         const v = clean(voter);
@@ -589,9 +587,13 @@
       }).filter(Boolean).join("");
 
       card.innerHTML = `
-        <div class="nameBadge">ما تأكدت صح ؟</div>
-        <div class="resultTitle">بانتظار اللاعبين...</div>
-        <div class="arrived">الواصل: ${arrived} من ${total}</div>
+        <!-- ✅ تغيير العنوان -->
+        <div class="nameBadge">نتائج التصويت</div>
+
+        <!-- ✅ تظهر فقط إذا ما اكتملوا -->
+        <div class="resultTitle">${waitingText}</div>
+
+        <!-- ✅ تم حذف سطر الواصل نهائياً -->
 
         <div class="lines">
           ${lines || `<div class="line"><span class="accent">بانتظار أول تصويت...</span></div>`}
@@ -609,7 +611,6 @@
           if(arrived < total) return;
           hideErr();
           try{
-            // حالياً فقط نثبت أن التصويت اكتمل (بدون نقل لصفحة غير موجودة)
             await updateDoc(roomRef(roomId), {
               phase: "vote_done",
               updatedAt: serverTimestamp(),
@@ -699,12 +700,6 @@
         listenRoom(roomId, (data) => {
           if(!data) return;
 
-          // إذا ما بعد بدأ التصويت (حسب المرحلة)، نظهر انتظار
-          const phase = clean(data?.phase);
-          if(phase && phase !== "vote" && phase !== "vote_wait" && phase !== "vote_done" && phase !== "suspect" && phase !== "questions" && phase !== "questions_intro"){
-            // مراحل أخرى مستقبلًا
-          }
-
           // مهم: نعرض التصويت دائماً لمن فتح الصفحة (حتى لو phase ما تغير)
           decideAndRender(data);
         });
@@ -719,4 +714,4 @@
 </body>
 </html>
 
-<!-- vote.html برا السالفة – إصدار 2 -->
+<!-- vote.html برا السالفة – إصدار 3 -->
