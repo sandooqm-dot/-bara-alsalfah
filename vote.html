@@ -385,13 +385,13 @@
     }
 
     const params = new URLSearchParams(location.search);
-    const roomId = clean(params.get("room"));
+    let roomId = clean(params.get("room"));
 
     const HOST_ROOM_KEY = "bara_roomId_multi_v4";
-    const hostRoomId = clean(sessionStorage.getItem(HOST_ROOM_KEY));
-    const isHost = !!hostRoomId && hostRoomId === roomId;
+    const hostRoomIdRaw = clean(sessionStorage.getItem(HOST_ROOM_KEY));
 
-    buyArea.classList.toggle("hidden", isHost);
+    let isHost = false;
+
     buyBtn.addEventListener("click", () => {
       window.open("https://sandooq-m.com", "_blank", "noopener,noreferrer");
     });
@@ -430,12 +430,11 @@
         if(v2) return v2;
       }
 
-      if(isHost){
-        for(const k of HOST_NAME_KEYS){
-          const v = clean(localStorage.getItem(k));
-          if(v) return v;
-        }
+      for(const k of HOST_NAME_KEYS){
+        const v = clean(localStorage.getItem(k));
+        if(v) return v;
       }
+
       return "";
     }
 
@@ -718,41 +717,97 @@
       }
     }
 
-    // ✅ (جديد) حارس انتقال احتياطي: لو onSnapshot علّق عند اللاعبين، نفحص phase بـ getDoc كل ثانية
-    let __redirected = false;
-    let __phaseGuardTimer = null;
+    // ✅ إصلاح المشكلة: توحيد roomId الفعلي (بعض الأجهزة تدخل vote.html بروم مختلف/غلط فينخدمون على غرفة ثانية)
+    function looksLikeRoomId(v){
+      const s = clean(v);
+      if(!s) return false;
+      if(s.length < 3 || s.length > 24) return false;
+      return /^[A-Za-z0-9_-]+$/.test(s);
+    }
 
+    function collectRoomCandidates(){
+      const out = [];
+      const add = (v) => {
+        const s = clean(v);
+        if(!looksLikeRoomId(s)) return;
+        if(!out.includes(s)) out.push(s);
+      };
+
+      add(params.get("room"));
+      add(hostRoomIdRaw);
+
+      // قيم مخزنة قد تحمل رقم الغرفة
+      try{
+        for(let i=0;i<sessionStorage.length;i++){
+          const k = sessionStorage.key(i);
+          add(sessionStorage.getItem(k));
+        }
+      }catch(e){}
+
+      try{
+        for(let i=0;i<localStorage.length;i++){
+          const k = localStorage.key(i);
+          add(localStorage.getItem(k));
+        }
+      }catch(e){}
+
+      return out.slice(0, 25);
+    }
+
+    function docHasPlayerName(d, name){
+      const nm = clean(name);
+      if(!nm) return false;
+      const players = Array.isArray(d?.players) ? d.players : [];
+      return players.some(p => clean(p?.name) === nm);
+    }
+
+    async function resolveRoomIdOrKeep(currentId, name){
+      const candidates = collectRoomCandidates();
+
+      // أولوية للمقدم إذا كان عنده roomId محفوظ
+      if(hostRoomIdRaw){
+        try{
+          const s = await getDoc(roomRef(hostRoomIdRaw));
+          if(s.exists()) return hostRoomIdRaw;
+        }catch(e){}
+      }
+
+      // لو الغرفة الحالية موجودة وبها اسمي، ممتاز
+      if(currentId){
+        try{
+          const s = await getDoc(roomRef(currentId));
+          if(s.exists() && docHasPlayerName(s.data() || {}, name)) return currentId;
+        }catch(e){}
+      }
+
+      // دوّر على غرفة فيها اسمي
+      for(const id of candidates){
+        try{
+          const s = await getDoc(roomRef(id));
+          if(s.exists()){
+            const d = s.data() || {};
+            if(docHasPlayerName(d, name)) return id;
+          }
+        }catch(e){}
+      }
+
+      // كحل أخير: لو الغرفة الحالية موجودة نستخدمها
+      if(currentId){
+        try{
+          const s = await getDoc(roomRef(currentId));
+          if(s.exists()) return currentId;
+        }catch(e){}
+      }
+
+      return currentId;
+    }
+
+    // ✅ تحويل مؤكد للجميع
+    let __redirected = false;
     function goReveal(){
       if(__redirected) return;
       __redirected = true;
-      if(__phaseGuardTimer) clearInterval(__phaseGuardTimer);
-      __phaseGuardTimer = null;
       window.location.replace("reveal.html?room=" + encodeURIComponent(roomId));
-    }
-
-    async function checkPhaseOnce(){
-      if(__redirected) return;
-      try{
-        const snap = await getDoc(roomRef(roomId));
-        if(!snap.exists()) return;
-        const d = snap.data() || {};
-        const phase = clean(d?.phase);
-        if(phase === "reveal" || phase === "reveal_done"){
-          goReveal();
-        }
-      }catch(e){
-        // نتجاهل أي خطأ مؤقت
-      }
-    }
-
-    function startPhaseGuard(){
-      if(__phaseGuardTimer) return;
-      __phaseGuardTimer = setInterval(checkPhaseOnce, 1000);
-      document.addEventListener("visibilitychange", () => {
-        if(document.visibilityState === "visible"){
-          checkPhaseOnce();
-        }
-      });
     }
 
     (async () => {
@@ -763,27 +818,46 @@
       }
 
       try{
-        await ensureRoom(roomId);
-        renderLoading();
+        // ✅ توحيد roomId قبل أي ensureRoom/استماع
+        myName = getMyName();
+        const fixed = await resolveRoomIdOrKeep(roomId, myName);
+        if(fixed) roomId = fixed;
 
-        // ✅ تشغيل الحارس الاحتياطي
-        startPhaseGuard();
-        // فحص فوري
-        checkPhaseOnce();
+        // ✅ تحديد المقدم بعد تثبيت roomId
+        isHost = !!hostRoomIdRaw && hostRoomIdRaw === roomId;
+
+        // ✅ شراء اللعبة يظهر للاعبين فقط
+        buyArea.classList.toggle("hidden", isHost);
+
+        // ✅ مهم: لا ننشئ غرفة جديدة للاعب بالغلط
+        if(isHost){
+          await ensureRoom(roomId);
+        }else{
+          const snap = await getDoc(roomRef(roomId));
+          if(!snap.exists()){
+            showErr("الغرفة غير موجودة. افتح الرابط الصحيح من المقدم.");
+            renderWaitForHost();
+            return;
+          }
+        }
+
+        renderLoading();
 
         listenRoom(roomId, async (data) => {
           if(!data) return;
 
           const phase = clean(data?.phase);
 
-          // ✅ إذا انتقلنا للكشف: نروح reveal.html للجميع
+          // ✅ الانتقال للكشف للجميع
           if(phase === "reveal" || phase === "reveal_done"){
             goReveal();
             return;
           }
 
+          // ✅ تهيئة التصويت للجولة - المقدم فقط
           try{ await ensureVoteSetupIfHost(data); }catch(e){}
 
+          // ✅ تسجيل وصولي لصفحة النتائج
           const votesBy = getVotesBy(data);
           const iVotedNow = !!getMyName() && (votesBy[getMyName()] != null);
           if(iVotedNow || hasVotedLocal){
@@ -803,4 +877,4 @@
 </body>
 </html>
 
-<!-- vote.html برا السالفة – إصدار 6 -->
+<!-- vote.html برا السالفة – إصدار 7 -->
