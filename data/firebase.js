@@ -7,7 +7,6 @@ import {
   doc,
   setDoc,
   getDoc,
-  getDocFromServer, // ✅ مهم: قراءة من السيرفر بدون كاش
   updateDoc,
   onSnapshot,
   serverTimestamp,
@@ -83,6 +82,7 @@ export async function addPlayer(roomId, playerName) {
     // تحقق من وجود الاسم مسبقاً
     const exists = players.some(p => String(p?.name || "").trim() === clean);
     if (exists) {
+      // بس نحدّث updatedAt/tick عشان يصير فيه تحديث خفيف
       tx.update(ref, {
         updatedAt: serverTimestamp(),
         tick: increment(1)
@@ -113,6 +113,7 @@ export async function setRoomStatus(roomId, status) {
 export async function updateRoomFields(roomId, fields = {}) {
   const ref = await ensureRoom(roomId);
 
+  // ننظف أي قيم undefined
   const cleanFields = {};
   for (const k of Object.keys(fields || {})) {
     if (typeof fields[k] !== "undefined") cleanFields[k] = fields[k];
@@ -125,34 +126,19 @@ export async function updateRoomFields(roomId, fields = {}) {
   });
 }
 
-/**
- * ✅ listenRoom (حل جذري):
- * - Snapshot للسرعة
- * - Polling من السيرفر (getDocFromServer) لكسر الكاش نهائيًا
- * - تفعيل poll عند رجوع التطبيق من الخلف (iOS)
- */
+// ✅ استماع للتحديثات (Snapshot) + ✅ فحص احتياطي (Polling) لضمان وصول التغييرات للجميع
 export function listenRoom(roomId, cb) {
   const ref = roomRef(roomId);
 
-  // بدل مقارنة JSON كاملة (قد تسبب مشاكل مع كاش/ترتيب حقول)، نعتمد على tick + navTs
-  let lastTick = null;
-  let lastNavTs = null;
-
+  let lastJson = null;
   const emitIfChanged = (data) => {
-    if (!data) { cb(null); return; }
-
-    const t = typeof data.tick === "number" ? data.tick : null;
-    const n = typeof data.navTs === "number" ? data.navTs : null;
-
-    // إذا تغيّر tick أو navTs نطلق التحديث
-    if (t !== null && t === lastTick && n === lastNavTs) return;
-
-    lastTick = t;
-    lastNavTs = n;
+    const j = data ? JSON.stringify(data) : null;
+    if (j === lastJson) return;
+    lastJson = j;
     cb(data);
   };
 
-  // Snapshot
+  // Snapshot (مع metadata changes)
   const unsub = onSnapshot(
     ref,
     { includeMetadataChanges: true },
@@ -165,39 +151,27 @@ export function listenRoom(roomId, cb) {
     }
   );
 
-  // ✅ Polling من السيرفر (بدون كاش)
+  // Polling احتياطي (لو انقطع snapshot أو iOS علّق التحديثات)
   let stopped = false;
 
-  const pollFromServer = async () => {
+  const pollOnce = async () => {
     if (stopped) return;
     try {
-      const snap = await getDocFromServer(ref);
+      const snap = await getDoc(ref);
       emitIfChanged(snap.exists() ? snap.data() : null);
     } catch (e) {
-      // لو فشل السيرفر لأي سبب، نجرب كاش كخطة أخيرة
-      try {
-        const snap2 = await getDoc(ref);
-        emitIfChanged(snap2.exists() ? snap2.data() : null);
-      } catch (e2) {
-        console.error("listenRoom poll error:", e2);
-      }
+      console.error("listenRoom poll error:", e);
     }
   };
 
-  // مرة مباشرة + كل 700ms (أسرع عشان انتقال الصفحات ما يتأخر)
-  pollFromServer();
-  const pollId = setInterval(pollFromServer, 700);
+  // تنفيذ مرة مباشرة + كل 1.5 ثانية
+  pollOnce();
+  const pollId = setInterval(pollOnce, 1500);
 
-  // ✅ iOS: إذا رجع التطبيق من الخلف، نسوي Poll فورًا
-  const onVis = () => {
-    if (document.visibilityState === "visible") pollFromServer();
-  };
-  document.addEventListener("visibilitychange", onVis);
-
+  // نرجع unsubscribe حقيقي يوقف الاثنين
   return () => {
     stopped = true;
     clearInterval(pollId);
-    document.removeEventListener("visibilitychange", onVis);
     try { unsub(); } catch (e) {}
   };
 }
