@@ -538,6 +538,35 @@
       markedArrive = true;
     }
 
+    // ✅ (جديد) نظام "nav" لضمان انتقال الجميع
+    const NAV_SEEN_KEY = "bara_nav_seen_multi_v1";
+    let lastNavId = Number(sessionStorage.getItem(NAV_SEEN_KEY) || 0) || 0;
+
+    function readNav(data){
+      const nav = (data?.nav && typeof data.nav === "object") ? data.nav : null;
+      const to = clean(nav?.to);
+      const id = Number(nav?.id || 0) || 0;
+      return { to, id };
+    }
+
+    let pollId = null;
+    const goReveal = () => {
+      try{ if(pollId) clearInterval(pollId); }catch(e){}
+      const url = "reveal.html?room=" + encodeURIComponent(roomId) + "&v=" + Date.now();
+      window.location.replace(url);
+    };
+
+    function handleNavFromData(data){
+      const { to, id } = readNav(data);
+      if(to === "reveal" && id && id > lastNavId){
+        lastNavId = id;
+        sessionStorage.setItem(NAV_SEEN_KEY, String(lastNavId));
+        goReveal();
+        return true;
+      }
+      return false;
+    }
+
     function renderVoteUI(data){
       const names = getPlayersNames(data);
 
@@ -647,11 +676,19 @@
 
           hideErr();
           try{
+            // ✅ (التعديل الجذري) اكتب nav بتوكن جديد عشان كل الأجهزة تنتقل فورًا
+            const navId = Date.now();
             await updateDoc(roomRef(roomId), {
-              phase: "reveal_done",
+              nav: { to: "reveal", id: navId },
               updatedAt: serverTimestamp(),
               tick: increment(1)
             });
+
+            // لو الجهاز ذا (المقدم) ما التقط فورًا، نخليه ينتقل بنفسه
+            lastNavId = navId;
+            sessionStorage.setItem(NAV_SEEN_KEY, String(lastNavId));
+            goReveal();
+
           }catch(e){
             console.warn(e);
             showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
@@ -729,32 +766,21 @@
         await ensureRoom(roomId);
         renderLoading();
 
-        let pollId = null;
-        const goReveal = () => {
-          try{ if(pollId) clearInterval(pollId); }catch(e){}
-          const url = "reveal.html?room=" + encodeURIComponent(roomId) + "&v=" + Date.now();
-          window.location.replace(url);
-        };
-
+        // ✅ Polling من السيرفر (زيادة ضمان)
         pollId = setInterval(async () => {
           try{
             const snap = await getDocFromServer(roomRef(roomId));
             if(!snap.exists()) return;
-            const ph = clean((snap.data() || {})?.phase);
-            if(ph === "reveal" || ph === "reveal_done"){
-              goReveal();
-            }
+            const data = snap.data() || {};
+            handleNavFromData(data);
           }catch(e){}
-        }, 800);
+        }, 700);
 
         listenRoom(roomId, async (data) => {
           if(!data) return;
 
-          const phase = clean(data?.phase);
-          if(phase === "reveal" || phase === "reveal_done"){
-            goReveal();
-            return;
-          }
+          // ✅ أول شيء: لو nav جديد = ننتقل فورًا
+          if(handleNavFromData(data)) return;
 
           try{ await ensureVoteSetupIfHost(data); }catch(e){}
 
@@ -777,4 +803,4 @@
 </body>
 </html>
 
-<!-- vote.html برا السالفة – إصدار 8 -->
+<!-- vote.html برا السالفة – إصدار 9 -->
