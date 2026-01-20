@@ -344,7 +344,7 @@
     const params = new URLSearchParams(location.search);
     const roomId = cleanName(params.get("room"));
 
-    // ✅ تحديد المقدم بشكل صحيح
+    // ✅ تحديد المقدم
     const HOST_ROOM_KEY = "bara_roomId_multi_v4";
     const hostRoomId = cleanName(sessionStorage.getItem(HOST_ROOM_KEY));
     const isHost = !!hostRoomId && hostRoomId === roomId;
@@ -508,7 +508,7 @@
       });
     }
 
-    // ✅ مهم: الانتقال للجميع يكون عبر phase وليس عبر redirect للمقدم فقط
+    // ✅ الانتقال للجميع عبر phase
     function goVotePage(){
       window.location.href = "vote.html?room=" + encodeURIComponent(roomId);
     }
@@ -538,8 +538,11 @@
         }
 
         if(phase === "suspect"){
-          // ✅ بدل ما نحول المقدم فقط: نغيّر المرحلة للجميع
-          await setRoom({ phase: "vote" });
+          // ✅ نفتح التصويت للجميع
+          await setRoom({
+            phase: "vote",
+            votesBy: {} // تصفير تصويتات الجولة
+          });
           return;
         }
 
@@ -556,8 +559,8 @@
       const pairs = Array.isArray(data?.questionPairs) ? data.questionPairs : [];
       const idx = Number(data?.askIndex || 0);
 
-      // ✅ أي وقت الغرفة تتحول للتصويت نطلع كلنا لصفحة vote.html
-      if(phase === "vote" || phase === "vote_wait" || phase === "vote_result"){
+      // ✅ إذا تحولت الغرفة للتصويت: الكل يروح vote.html
+      if(phase === "vote" || phase === "vote_wait" || phase === "vote_result" || phase === "vote_done"){
         goVotePage();
         return;
       }
@@ -615,4 +618,4 @@
 </body>
 </html>
 
-<!-- multi_questions.html برا السالفة – إصدار 3 -->
+<!-- multi_questions.html برا السالفة – إصدار 4 -->
