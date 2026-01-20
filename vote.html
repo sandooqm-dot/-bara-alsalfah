@@ -355,7 +355,7 @@
     import {
       runTransaction,
       updateDoc,
-      getDocFromServer,   /* ✅ (التعديل الجذري) نجبر القراءة من السيرفر */
+      getDocFromServer,
       serverTimestamp,
       increment
     } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
@@ -648,7 +648,7 @@
           hideErr();
           try{
             await updateDoc(roomRef(roomId), {
-              phase: "reveal",
+              phase: "reveal_done",
               updatedAt: serverTimestamp(),
               tick: increment(1)
             });
@@ -729,7 +729,6 @@
         await ensureRoom(roomId);
         renderLoading();
 
-        // ✅ تحويل موحّد + كسر كاش
         let pollId = null;
         const goReveal = () => {
           try{ if(pollId) clearInterval(pollId); }catch(e){}
@@ -737,7 +736,6 @@
           window.location.replace(url);
         };
 
-        // ✅ (التعديل الجذري) Polling من السيرفر مباشرة (مو كاش)
         pollId = setInterval(async () => {
           try{
             const snap = await getDocFromServer(roomRef(roomId));
@@ -746,17 +744,13 @@
             if(ph === "reveal" || ph === "reveal_done"){
               goReveal();
             }
-          }catch(e){
-            // إذا الشبكة ضعيفة/فصلت: نكمل المحاولة بدون ما نخرب شيء
-          }
+          }catch(e){}
         }, 800);
 
         listenRoom(roomId, async (data) => {
           if(!data) return;
 
           const phase = clean(data?.phase);
-
-          // ✅ إذا انتقلنا للكشف: نروح reveal.html للجميع
           if(phase === "reveal" || phase === "reveal_done"){
             goReveal();
             return;
@@ -783,4 +777,4 @@
 </body>
 </html>
 
-<!-- vote.html برا السالفة – إصدار 7 -->
+<!-- vote.html برا السالفة – إصدار 8 -->
