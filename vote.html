@@ -647,11 +647,11 @@
 
           hideErr();
           try{
-            // ✅ (التعديل الجذري) نكتب navPage/navAt كإشارة انتقال قوية + نخلي phase للتوافق
+            // ✅ (التعديل الجذري الوحيد هنا)
+            // بدل phase: "reveal" نخليه مباشرة "reveal_done"
+            // لأنه هذا اللي يلتقطه اللاعبون بشكل مؤكد
             await updateDoc(roomRef(roomId), {
-              phase: "reveal",
-              navPage: "reveal2",
-              navAt: Date.now(),
+              phase: "reveal_done",
               updatedAt: serverTimestamp(),
               tick: increment(1)
             });
@@ -732,39 +732,30 @@
         await ensureRoom(roomId);
         renderLoading();
 
-        // ✅ تحويل موحّد + كسر كاش (إلى reveal2)
         let pollId = null;
         const goReveal = () => {
           try{ if(pollId) clearInterval(pollId); }catch(e){}
-          const url = "reveal2.html?room=" + encodeURIComponent(roomId) + "&v=" + Date.now();
+          const url = "reveal.html?room=" + encodeURIComponent(roomId) + "&v=" + Date.now();
           window.location.replace(url);
         };
 
-        // ✅ Polling من السيرفر مباشرة
         pollId = setInterval(async () => {
           try{
             const snap = await getDocFromServer(roomRef(roomId));
             if(!snap.exists()) return;
-            const d = snap.data() || {};
-            const ph = clean(d?.phase);
-            const nav = clean(d?.navPage);
-
-            if(nav === "reveal2" || ph === "reveal" || ph === "reveal_done" || ph.startsWith("reveal")){
+            const ph = clean((snap.data() || {})?.phase);
+            if(ph === "reveal" || ph === "reveal_done"){
               goReveal();
             }
-          }catch(e){
-            // نكمل المحاولة بدون تخريب
-          }
-        }, 700);
+          }catch(e){}
+        }, 800);
 
         listenRoom(roomId, async (data) => {
           if(!data) return;
 
           const phase = clean(data?.phase);
-          const navPage = clean(data?.navPage);
 
-          // ✅ (التعديل الجذري) أي إشارة انتقال واضحة تنقل الجميع فوراً
-          if(navPage === "reveal2" || phase === "reveal" || phase === "reveal_done" || phase.startsWith("reveal")){
+          if(phase === "reveal" || phase === "reveal_done"){
             goReveal();
             return;
           }
