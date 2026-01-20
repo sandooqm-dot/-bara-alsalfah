@@ -17,7 +17,7 @@
       --yellow:#f2c21b;
       --yellowText:#111;
 
-      --vote:#7b1f1f;   /* أحمر داكن */
+      --vote:#7b1f1f;
       --shadow: 0 10px 0 rgba(0,0,0,.25);
 
       --containerMax: 520px;
@@ -222,7 +222,6 @@
     }
     .homeBtn svg{ width:34px;height:34px; }
 
-    /* زر شراء للاعبين فقط */
     .buyArea{
       width:100%;
       display:flex;
@@ -270,7 +269,6 @@
 </head>
 
 <body>
-
   <div class="wrap">
     <div class="frame">
       <div class="topbar">
@@ -282,18 +280,15 @@
 
       <div id="content"></div>
 
-      <!-- زر المقدم فقط -->
       <div class="ctaArea" id="ctaArea">
         <button class="cta compact" id="ctaBtn">التالي</button>
       </div>
 
-      <!-- زر الشراء للاعبين فقط -->
       <div class="buyArea" id="buyArea">
         <button class="buyBtn" id="buyBtn">لشراء اللعبة اضغط هنا</button>
       </div>
 
       <div class="err" id="err"></div>
-
       <div class="spacerBottom"></div>
     </div>
   </div>
@@ -346,46 +341,31 @@
         .replaceAll("'","&#039;");
     }
 
-    // room from URL
     const params = new URLSearchParams(location.search);
     const roomId = cleanName(params.get("room"));
 
-    // تحديد هل هذا الجهاز مقدم
-    const HOST_KEYS = [
-      "bara_hostName_multi_v4",
-      "bara_hostName_multi_v3",
-      "bara_hostName_multi_v2",
-      "bara_hostName_multi_v1"
-    ];
-    function getHostName(){
-      for(const k of HOST_KEYS){
-        const v = cleanName(localStorage.getItem(k));
-        if(v) return v;
-      }
-      return "";
-    }
-    const hostName = getHostName();
-    const isHost = !!hostName;
+    // ✅ تحديد المقدم بشكل صحيح (بدون ما نخلي لاعب ينحسب مقدم)
+    const HOST_ROOM_KEY = "bara_roomId_multi_v4";
+    const hostRoomId = cleanName(sessionStorage.getItem(HOST_ROOM_KEY));
+    const isHost = !!hostRoomId && hostRoomId === roomId;
 
-    // زر شراء للاعبين فقط
+    // زر شراء للاعبين فقط + زر التالي للمقدم فقط
     buyArea.classList.toggle("hidden", isHost);
+    ctaArea.classList.toggle("hidden", !isHost);
 
     buyBtn.addEventListener("click", () => {
       window.open("https://sandooq-m.com", "_blank", "noopener,noreferrer");
     });
 
-    // زر المقدم فقط
-    ctaArea.classList.toggle("hidden", !isHost);
-
-    // الرئيسية: رجوع مع تنظيف خفيف (بدون تخريب ملفات ثانية)
     function clearMultiState(){
+      // نخليها تنظيف خفيف مثل ما كانت
       sessionStorage.removeItem("bara_roomId_multi_v4");
       sessionStorage.removeItem("bara_roomTs_multi_v4");
       sessionStorage.removeItem("bara_hostAdded_multi_v4");
       localStorage.removeItem("bara_hostName_multi_v4");
     }
     homeBtn.addEventListener("click", () => {
-      clearMultiState();
+      if(isHost) clearMultiState();
       window.location.href = "index.html";
     });
 
@@ -481,10 +461,7 @@
 
       const hasPairs = Array.isArray(data?.questionPairs) && data.questionPairs.length >= 3;
 
-      // إذا ما فيه roundId (غالباً ready.html ما اشتغل) لا نسوي شيء
       if(!currentRoundId) return;
-
-      // إذا الإعداد موجود لنفس الجولة، خلاص
       if(hasPairs && questionsRoundId === currentRoundId) return;
 
       await runTransaction(db, async (tx) => {
@@ -507,11 +484,8 @@
 
         const pairs = buildPairs(names);
 
-        // لا نخرب مرحلة متقدمة لو كانت موجودة
         const phase = cleanName(d?.phase);
         let nextPhase = phase;
-
-        // إذا ما كانت مرحلة متقدمة، خلها intro
         if(!phase || phase === "ready" || phase === "ready_wait" || phase === "lobby" || phase === "playing"){
           nextPhase = "questions_intro";
         }
@@ -540,8 +514,6 @@
       hideErr();
 
       try{
-        // نقرأ آخر حالة من المتغير الأخير
-        // (بنستخدم window.__lastRoomData)
         const d = window.__lastRoomData || {};
         const phase = cleanName(d?.phase) || "questions_intro";
         const pairs = Array.isArray(d?.questionPairs) ? d.questionPairs : [];
@@ -562,7 +534,6 @@
         }
 
         if(phase === "suspect"){
-          // الصفحة الجاية (بنرسلها بالخطوة القادمة)
           window.location.href = "vote.html?room=" + encodeURIComponent(roomId);
           return;
         }
@@ -599,7 +570,6 @@
         return;
       }
 
-      // لو وصلنا لمرحلة ثانية مستقبلًا، نخليه ينتظر
       content.innerHTML = `
         <div class="bigCard" style="min-height:280px;">
           <div class="msgText">بانتظار المقدم…</div>
@@ -616,16 +586,12 @@
 
       try{
         await ensureRoom(roomId);
-
-        // عرض مبدئي سريع
         renderIntro();
 
         listenRoom(roomId, async (data) => {
           if(!data) return;
 
-          // تجهيز الأزواج (مرة واحدة) بواسطة المقدم فقط
           try{ await ensureQuestionsSetupIfHost(data); }catch(e){}
-
           renderByRoom(data);
         });
 
@@ -638,4 +604,4 @@
 </body>
 </html>
 
-<!-- multi_questions.html برا السالفة – إصدار 1 -->
+<!-- multi_questions.html برا السالفة – إصدار 2 -->
