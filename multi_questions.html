@@ -335,13 +335,62 @@
         .replaceAll("'","&#039;");
     }
 
+    // -------- room from URL --------
     const params = new URLSearchParams(location.search);
     const roomId = cleanName(params.get("room"));
 
-    // ✅ تحديد المقدم
-    const HOST_ROOM_KEY = "bara_roomId_multi_v4";
-    const hostRoomId = cleanName(sessionStorage.getItem(HOST_ROOM_KEY));
-    const isHost = !!hostRoomId && hostRoomId === roomId;
+    // -------- اسم الجهاز (لاستخدامه في كشف المقدم بشكل أدق) --------
+    const POSSIBLE_PLAYER_KEYS = [
+      "bara_playerName_multi_v4",
+      "bara_playerName_multi_v3",
+      "bara_playerName_multi_v2",
+      "bara_playerName_multi_v1",
+      "bara_playerName_multi"
+    ];
+    const POSSIBLE_HOST_KEYS = [
+      "bara_hostName_multi_v4",
+      "bara_hostName_multi_v3",
+      "bara_hostName_multi_v2",
+      "bara_hostName_multi_v1"
+    ];
+    function getMyName(){
+      for(const k of POSSIBLE_PLAYER_KEYS){
+        const v = cleanName(sessionStorage.getItem(k));
+        if(v) return v;
+      }
+      for(const k of POSSIBLE_HOST_KEYS){
+        const v = cleanName(localStorage.getItem(k));
+        if(v) return v;
+      }
+      return "";
+    }
+    const myName = getMyName();
+
+    // -------- تحديد المقدم (محسّن) --------
+    const HOST_ROOM_KEYS = ["bara_roomId_multi_v4","bara_roomId_multi_v3","bara_roomId_multi_v2","bara_roomId_multi_v1"];
+    function getHostRoomId(){
+      for(const k of HOST_ROOM_KEYS){
+        const v = cleanName(sessionStorage.getItem(k));
+        if(v) return v;
+      }
+      return "";
+    }
+    function isHostByName(){
+      if(!myName) return false;
+      for(const k of POSSIBLE_HOST_KEYS){
+        const v = cleanName(localStorage.getItem(k));
+        if(v && v === myName) return true;
+      }
+      return false;
+    }
+
+    const hostRoomId = getHostRoomId();
+    const isHost = (!!roomId && ((!!hostRoomId && hostRoomId === roomId) || isHostByName()));
+
+    // ✅ تثبيت roomId للمقدم (يحمي من ضياع تحديد المقدم بين الصفحات)
+    if(isHost && roomId){
+      sessionStorage.setItem("bara_roomId_multi_v4", roomId);
+    }
 
     // زر شراء للاعبين فقط + زر التالي للمقدم فقط
     buyArea.classList.toggle("hidden", isHost);
@@ -352,7 +401,7 @@
     });
 
     function clearMultiState(){
-      sessionStorage.removeItem("bara_roomId_multi_v4");
+      for(const k of HOST_ROOM_KEYS) sessionStorage.removeItem(k);
       sessionStorage.removeItem("bara_roomTs_multi_v4");
       sessionStorage.removeItem("bara_hostAdded_multi_v4");
       localStorage.removeItem("bara_hostName_multi_v4");
@@ -363,7 +412,8 @@
     });
 
     function goRoundPage(){
-      window.location.href = "multi_round.html?room=" + encodeURIComponent(roomId);
+      // ✅ replace عشان ما يعلق بالرجوع
+      window.location.replace("multi_round.html?room=" + encodeURIComponent(roomId));
     }
 
     function renderIntro(){
@@ -444,27 +494,32 @@
       return pairs;
     }
 
+    // ✅ تجهيز الجولة/الأسئلة (حتى لو roundId ناقص)
     async function ensureQuestionsSetupIfHost(data){
       if(!isHost) return;
       if(!data) return;
 
       const ref = roomRef(roomId);
 
-      const currentRoundId = cleanName(data?.roundId);
+      const hasPairs = Array.isArray(data?.questionPairs) && data.questionPairs.length >= 3;
+      const existingRoundId = cleanName(data?.roundId);
       const questionsRoundId = cleanName(data?.questionsRoundId);
 
-      const hasPairs = Array.isArray(data?.questionPairs) && data.questionPairs.length >= 3;
-
-      if(!currentRoundId) return;
-      if(hasPairs && questionsRoundId === currentRoundId) return;
+      // إذا عندنا تجهيز صحيح لنفس الجولة: خلاص
+      if(existingRoundId && hasPairs && questionsRoundId === existingRoundId) return;
 
       await runTransaction(db, async (tx) => {
         const snap = await tx.get(ref);
         if(!snap.exists()) return;
 
         const d = snap.data() || {};
-        const rId = cleanName(d?.roundId);
-        if(!rId) return;
+
+        let rId = cleanName(d?.roundId);
+
+        // ✅ لو ما فيه roundId (يحصل أحياناً) نسويه هنا عشان ما يعلق المقدم
+        if(!rId){
+          rId = "r_" + Date.now();
+        }
 
         const qRid = cleanName(d?.questionsRoundId);
         const okPairs = Array.isArray(d?.questionPairs) && d.questionPairs.length >= 3;
@@ -487,6 +542,10 @@
         tx.update(ref, {
           updatedAt: serverTimestamp(),
           tick: increment(1),
+
+          // ✅ تثبيت roundId لو كان ناقص
+          roundId: rId,
+
           questionsRoundId: rId,
           questionPairs: pairs,
           askIndex: 0,
@@ -528,13 +587,22 @@
         }
 
         if(phase === "suspect"){
-          // ✅ الانتقال للتصويت (الصفحات الجديدة داخل multi_round.html)
+          // ✅ الانتقال للتصويت + تهيئة الجولة الجديدة للتخمين/النتائج
           await setRoom({
             phase: "vote",
-            votesBy: {},      // تصفير تصويتات الجولة
-            revealTs: null,   // تهيئة الكشف الجديد (سيضبطه المقدم في الصفحة الجديدة)
-            guessBy: {},      // تهيئة اختيارات التخمين
-            scoresAppliedFor: "" // حماية من تكرار احتساب النتائج
+            votesBy: {},
+
+            // الكشف/التخمين (تتجهز في multi_round.html)
+            revealTs: null,
+            guessBy: {},
+
+            // ✅ مهم جداً: تصفيرها عشان تتولد 6 كلمات عشوائية جديدة كل جولة
+            guessOptions: [],
+            correctWord: "",
+            guessRoundId: "",
+
+            // حماية من تكرار احتساب النتائج
+            scoresAppliedFor: ""
           });
           return;
         }
@@ -552,7 +620,7 @@
       const pairs = Array.isArray(data?.questionPairs) ? data.questionPairs : [];
       const idx = Number(data?.askIndex || 0);
 
-      // ✅ إذا دخلنا مراحل التصويت/الكشف/التخمين/النتائج/نهاية الجولة → نروح للملف الجديد
+      // ✅ إذا دخلنا مراحل التصويت/الكشف/التخمين/النتائج/نهاية الجولة → نروح للملف الجديد (كل الأجهزة)
       if(["vote","reveal","guess","results","round_end"].includes(phase)){
         goRoundPage();
         return;
@@ -567,7 +635,13 @@
         if(pairs.length && pairs[idx]){
           renderPair(pairs[idx]);
         }else{
-          renderIntro();
+          // لو ما تجهزت الأزواج للحين
+          content.innerHTML = `
+            <div class="bigCard" style="min-height:280px;">
+              <div class="msgText">جاري تجهيز ترتيب الأسئلة...</div>
+            </div>
+          `;
+          if(isHost) ctaBtn.disabled = true;
         }
         return;
       }
@@ -582,6 +656,7 @@
           <div class="msgText">بانتظار المقدم…</div>
         </div>
       `;
+      if(isHost) ctaBtn.disabled = true;
     }
 
     (async () => {
@@ -599,6 +674,7 @@
           if(!data) return;
 
           try{ await ensureQuestionsSetupIfHost(data); }catch(e){}
+
           renderByRoom(data);
         });
 
@@ -611,4 +687,4 @@
 </body>
 </html>
 
-<!-- multi_questions.html برا السالفة – إصدار 6 (مرتبط بـ multi_round.html) -->
+<!-- multi_questions.html برا السالفة – إصدار 7 (تحسين تحديد المقدم + تثبيت roundId + تهيئة التخمين كل جولة) -->
