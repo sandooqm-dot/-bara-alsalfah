@@ -175,11 +175,6 @@
       cursor:not-allowed;
       filter: grayscale(.15);
     }
-    .cta.vote{
-      background: var(--vote);
-      color:#fff;
-      max-width: 360px;
-    }
     .cta.compact{
       height: 56px;
       border-radius: 22px;
@@ -381,7 +376,6 @@
       if(isHost){
         ctaBtn.textContent = "التالي";
         ctaBtn.classList.add("compact");
-        ctaBtn.classList.remove("vote");
         ctaBtn.disabled = false;
       }
     }
@@ -410,7 +404,6 @@
       if(isHost){
         ctaBtn.textContent = "التالي";
         ctaBtn.classList.add("compact");
-        ctaBtn.classList.remove("vote");
         ctaBtn.disabled = false;
       }
     }
@@ -422,15 +415,32 @@
           <div class="msgText">
             الحين يقدر أي أحد يسأل شخص يشك إنه هو اللي برا السالفة<br/><br/>
             <div style="font-size:22px; font-weight:1000; opacity:.95;">
-              بعد الانتهاء من الأسئلة اضغط <span style="color:var(--yellow);">تصويت</span>
+              بعد الانتهاء من الأسئلة اضغط <span style="color:var(--yellow);">التالي</span>
             </div>
           </div>
         </div>
       `;
 
       if(isHost){
-        ctaBtn.textContent = "تصويت";
-        ctaBtn.classList.add("vote");
+        ctaBtn.textContent = "التالي";
+        ctaBtn.classList.add("compact");
+        ctaBtn.disabled = false;
+      }
+    }
+
+    function renderEnd(){
+      pageTitle.textContent = "انتهت الجولة";
+      content.innerHTML = `
+        <div class="bigCard" style="min-height:280px;">
+          <div class="msgText">
+            انتهت مرحلة الأسئلة.<br/>
+            (صفحات التصويت وما بعدها انحذفت وراح نبنيها من جديد)
+          </div>
+        </div>
+      `;
+
+      if(isHost){
+        ctaBtn.textContent = "الرئيسية";
         ctaBtn.classList.add("compact");
         ctaBtn.disabled = false;
       }
@@ -508,11 +518,6 @@
       });
     }
 
-    // ✅ الانتقال للجميع عبر phase
-    function goVotePage(){
-      window.location.href = "vote.html?room=" + encodeURIComponent(roomId);
-    }
-
     ctaBtn.addEventListener("click", async () => {
       if(!isHost) return;
       hideErr();
@@ -538,11 +543,13 @@
         }
 
         if(phase === "suspect"){
-          // ✅ نفتح التصويت للجميع
-          await setRoom({
-            phase: "vote",
-            votesBy: {} // تصفير تصويتات الجولة
-          });
+          // ✅ بدل التصويت (انحذف): ننهي هنا مؤقتًا
+          await setRoom({ phase: "end_questions" });
+          return;
+        }
+
+        if(phase === "end_questions"){
+          window.location.href = "index.html";
           return;
         }
 
@@ -558,12 +565,6 @@
       const phase = cleanName(data?.phase) || "questions_intro";
       const pairs = Array.isArray(data?.questionPairs) ? data.questionPairs : [];
       const idx = Number(data?.askIndex || 0);
-
-      // ✅ إذا تحولت الغرفة للتصويت: الكل يروح vote.html
-      if(phase === "vote" || phase === "vote_wait" || phase === "vote_result" || phase === "vote_done"){
-        goVotePage();
-        return;
-      }
 
       if(phase === "questions_intro"){
         renderIntro();
@@ -581,6 +582,11 @@
 
       if(phase === "suspect"){
         renderSuspect();
+        return;
+      }
+
+      if(phase === "end_questions"){
+        renderEnd();
         return;
       }
 
@@ -618,4 +624,4 @@
 </body>
 </html>
 
-<!-- multi_questions.html برا السالفة – إصدار 4 -->
+<!-- multi_questions.html برا السالفة – إصدار 5 (بدون تصويت/بدون صفحات بعد التصويت) -->
