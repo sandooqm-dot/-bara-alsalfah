@@ -501,11 +501,6 @@
     const params = new URLSearchParams(location.search);
     const roomId = clean(params.get("room"));
 
-    // host detect (مثل ملفاتك)
-    const HOST_ROOM_KEY = "bara_roomId_multi_v4";
-    const hostRoomId = clean(sessionStorage.getItem(HOST_ROOM_KEY));
-    const isHost = !!hostRoomId && hostRoomId === roomId;
-
     // my name
     const POSSIBLE_PLAYER_KEYS = [
       "bara_playerName_multi_v4",
@@ -533,6 +528,31 @@
     }
     const myName = getMyName();
 
+    // ✅ تحديد المقدم (محسّن مثل multi_questions)
+    const HOST_ROOM_KEYS = ["bara_roomId_multi_v4","bara_roomId_multi_v3","bara_roomId_multi_v2","bara_roomId_multi_v1"];
+    function getHostRoomId(){
+      for(const k of HOST_ROOM_KEYS){
+        const v = clean(sessionStorage.getItem(k));
+        if(v) return v;
+      }
+      return "";
+    }
+    function isHostByName(){
+      if(!myName) return false;
+      for(const k of POSSIBLE_HOST_KEYS){
+        const v = clean(localStorage.getItem(k));
+        if(v && v === myName) return true;
+      }
+      return false;
+    }
+    const hostRoomId = getHostRoomId();
+    const isHost = (!!roomId && ((!!hostRoomId && hostRoomId === roomId) || isHostByName()));
+
+    // ✅ تثبيت roomId للمقدم عشان ما يضيع بين الصفحات
+    if(isHost && roomId){
+      sessionStorage.setItem("bara_roomId_multi_v4", roomId);
+    }
+
     // UI
     buyArea.classList.toggle("hidden", isHost);
     ctaArea.classList.toggle("hidden", !isHost);
@@ -543,7 +563,7 @@
     });
 
     function clearMultiState(){
-      sessionStorage.removeItem("bara_roomId_multi_v4");
+      for(const k of HOST_ROOM_KEYS) sessionStorage.removeItem(k);
       sessionStorage.removeItem("bara_roomTs_multi_v4");
       sessionStorage.removeItem("bara_hostAdded_multi_v4");
       localStorage.removeItem("bara_hostName_multi_v4");
@@ -588,7 +608,7 @@
         || clean(data?.outPlayer)
         || clean(data?.outsideName)
         || clean(data?.baraOut)
-        || clean(data?.outsiderName)   // ✅ (مطلوب) دعم outsiderName من ready.html
+        || clean(data?.outsiderName)
         || "";
     }
 
@@ -600,7 +620,7 @@
         || "";
     }
 
-    // ✅ (مطلوب) نفس قوائم الكلمات الموجودة في ready.html عشان نقدر نولّد خيارات التخمين إذا ما فيه categoryWords في Firebase
+    // ✅ قوائم احتياطية (لو categoryWords ما وصلت من Firebase)
     const WORDS = {
       eat:  ["كبسة","مفطح","جريش","مندي","مراصيع","بسبوسة","هريس"],
       zoo:  ["أسد","نمر","زرافة","فيل","ذئب","غزال","قندس"],
@@ -613,10 +633,8 @@
     function buildGuessOptions(data){
       const story = getStoryWord(data);
 
-      // الأولوية: لو فيه categoryWords من Firebase
       let pool = Array.isArray(data?.categoryWords) ? data.categoryWords : [];
 
-      // ✅ (مطلوب) إذا ما فيه، نأخذ من WORDS حسب categoryKey
       if(!Array.isArray(pool) || pool.length < 7){
         const key = clean(data?.categoryKey);
         pool = Array.isArray(WORDS[key]) ? WORDS[key] : [];
@@ -867,9 +885,10 @@
           if(!outName || myName !== outName) return;
 
           const correctWord = clean(d?.correctWord);
-          const guessBy = (d.guessBy && typeof d.guessBy === "object") ? d.guessBy : {};
+          if(!correctWord) return;
 
-          if(clean(guessBy[outName])) return;
+          const guessBy = (d.guessBy && typeof d.guessBy === "object") ? d.guessBy : {};
+          if(clean(guessBy[outName])) return; // اختيار واحد فقط
 
           guessBy[outName] = word;
 
@@ -885,14 +904,16 @@
       }
     }
 
-    function renderGuess(data, names){
+    function renderGuess(data){
       pageTitle.textContent = "اختيار السالفة";
 
       const outName = getOutName(data);
       const opts = Array.isArray(data?.guessOptions) ? data.guessOptions.map(x=>clean(x)).filter(Boolean) : [];
       const correct = clean(data?.correctWord);
       const guessBy = (data?.guessBy && typeof data?.guessBy === "object") ? data.guessBy : {};
-      const chosen = outName ? clean(guessBy?.[outName]) : "";
+
+      const chosenOut = outName ? clean(guessBy?.[outName]) : "";
+      const isOut = !!outName && myName === outName;
 
       if(opts.length !== 7 || !correct){
         cardEl.innerHTML = `
@@ -900,6 +921,7 @@
             <div class="hint">جاري تجهيز خيارات السالفة...</div>
           </div>
         `;
+        // ✅ المقدم ينتظر تجهيز الخيارات
         if(isHost){
           ctaBtn.textContent = "التالي";
           ctaBtn.disabled = true;
@@ -907,18 +929,18 @@
         return;
       }
 
-      const isOut = !!outName && myName === outName;
-
       const buttons = opts.map(w => {
         const isCorrect = (w === correct);
 
         let cls = "optBtn";
-        if(chosen){
+        // ✅ تلوين فوري بعد اختيار برا السالفة (كل المربعات)
+        if(chosenOut){
           if(isCorrect) cls += " correct";
           else cls += " wrong";
         }
 
-        const disabled = chosen ? " disabled" : (isOut ? "" : " disabled");
+        // ✅ القفل: لا يضغط إلا برا السالفة (حتى المقدم/اللاعبين مشاهدين)
+        const disabled = chosenOut ? " disabled" : (isOut ? "" : " disabled");
 
         return `<button class="${cls}" data-word="${escapeHtml(w)}"${disabled}>${escapeHtml(w)}</button>`;
       }).join("");
@@ -942,13 +964,14 @@
         });
       }
 
+      // ✅ المقدم ما يقدر ينتقل للنتائج إلا بعد ما برا السالفة يختار
       if(isHost){
         ctaBtn.textContent = "التالي";
-        ctaBtn.disabled = false;
+        ctaBtn.disabled = !chosenOut;
       }
     }
 
-    // ---------- النتائج ----------
+    // ---------- النتائج / احتساب النقاط ----------
     function computeWinners(data, names){
       const outName = getOutName(data);
       const votesBy = (data?.votesBy && typeof data.votesBy === "object") ? data.votesBy : {};
@@ -962,21 +985,27 @@
 
       const outChosen = outName ? clean(guessBy?.[outName]) : "";
       const outGuessedCorrect = !!outChosen && !!correct && outChosen === correct;
+
+      // ✅ حسب قواعدك:
+      // - إذا ما أحد صوّت عليه: يفوز 100 حتى لو أخطأ
+      // - إذا صوّتوا عليه + اختار الصحيح: يفوز 100
+      // - إذا صوّتوا عليه + اختار خطأ: يخسر 0
       const outWins = (!!outName) && (votesAgainstOut === 0 || outGuessedCorrect);
 
       const winners = new Set();
 
       if(outWins && outName) winners.add(outName);
 
+      // ✅ اللاعبين داخل السالفة: اللي صوّت على برا السالفة يفوز 100
       for(const n of names){
         if(!n || n === outName) continue;
         if(clean(votesBy?.[n]) === outName) winners.add(n);
       }
 
-      return { winners, outName };
+      return { winners };
     }
 
-    async function applyScoresIfHost(data, names){
+    async function applyScoresIfHost(data){
       if(!isHost) return;
 
       const phase = clean(data?.phase);
@@ -1011,8 +1040,7 @@
         const scoresBy = (d.scoresBy && typeof d.scoresBy === "object") ? d.scoresBy : {};
         for(const name of uniq){
           const prev = Number(scoresBy[name] || 0);
-          if(winners.has(name)) scoresBy[name] = prev + 100;
-          else scoresBy[name] = prev + 0;
+          scoresBy[name] = prev + (winners.has(name) ? 100 : 0);
         }
 
         tx.update(ref, {
@@ -1027,7 +1055,7 @@
     function renderResults(data, names){
       pageTitle.textContent = "النتائج";
 
-      const scoresBy = (data?.scoresBy && typeof data.scoresBy === "object") ? data.scoresBy : {};
+      const scoresBy = (data?.scoresBy && typeof data?.scoresBy === "object") ? data.scoresBy : {};
       const rows = names.slice().sort((a,b)=>Number(scoresBy[b]||0)-Number(scoresBy[a]||0)).map(n => {
         const s = Number(scoresBy[n] || 0);
         return `
@@ -1116,6 +1144,14 @@
       }
 
       if(phase === "guess"){
+        // ✅ لا ينتقل إلا بعد ما برا السالفة يختار كلمة (حتى لو برا السالفة هو المقدم)
+        const outName = getOutName(data);
+        const guessBy = (data?.guessBy && typeof data?.guessBy === "object") ? data.guessBy : {};
+        const chosen = outName ? clean(guessBy?.[outName]) : "";
+        if(!chosen){
+          showErr("انتظر لين برا السالفة يختار كلمة.");
+          return;
+        }
         await setRoom({ phase: "results" });
         return;
       }
@@ -1168,7 +1204,7 @@
       }
 
       if(phase === "guess"){
-        renderGuess(data, names);
+        renderGuess(data);
         return;
       }
 
@@ -1200,10 +1236,7 @@
           if(!data) return;
 
           try{ await ensureGuessSetupIfHost(data); }catch(e){}
-          try{
-            const names = getPlayersNames(data);
-            await applyScoresIfHost(data, names);
-          }catch(e){}
+          try{ await applyScoresIfHost(data); }catch(e){}
 
           renderByRoom(data);
         });
@@ -1217,4 +1250,4 @@
 </body>
 </html>
 
-<!-- multi_round.html برا السالفة – إصدار 2 -->
+<!-- multi_round.html برا السالفة – إصدار 3 -->
