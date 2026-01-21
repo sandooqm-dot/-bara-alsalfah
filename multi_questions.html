@@ -17,7 +17,6 @@
       --yellow:#f2c21b;
       --yellowText:#111;
 
-      --vote:#7b1f1f;
       --shadow: 0 10px 0 rgba(0,0,0,.25);
 
       --containerMax: 520px;
@@ -363,6 +362,10 @@
       window.location.href = "index.html";
     });
 
+    function goRoundPage(){
+      window.location.href = "multi_round.html?room=" + encodeURIComponent(roomId);
+    }
+
     function renderIntro(){
       pageTitle.textContent = "وقت الاسئلة";
       content.innerHTML = `
@@ -415,7 +418,7 @@
           <div class="msgText">
             الحين يقدر أي أحد يسأل شخص يشك إنه هو اللي برا السالفة<br/><br/>
             <div style="font-size:22px; font-weight:1000; opacity:.95;">
-              بعد الانتهاء من الأسئلة اضغط <span style="color:var(--yellow);">التالي</span>
+              بعد الانتهاء من الأسئلة اضغط <span style="color:var(--yellow);">التالي</span> للانتقال للتصويت
             </div>
           </div>
         </div>
@@ -423,24 +426,6 @@
 
       if(isHost){
         ctaBtn.textContent = "التالي";
-        ctaBtn.classList.add("compact");
-        ctaBtn.disabled = false;
-      }
-    }
-
-    function renderEnd(){
-      pageTitle.textContent = "انتهت الجولة";
-      content.innerHTML = `
-        <div class="bigCard" style="min-height:280px;">
-          <div class="msgText">
-            انتهت مرحلة الأسئلة.<br/>
-            (صفحات التصويت وما بعدها انحذفت وراح نبنيها من جديد)
-          </div>
-        </div>
-      `;
-
-      if(isHost){
-        ctaBtn.textContent = "الرئيسية";
         ctaBtn.classList.add("compact");
         ctaBtn.disabled = false;
       }
@@ -543,13 +528,14 @@
         }
 
         if(phase === "suspect"){
-          // ✅ بدل التصويت (انحذف): ننهي هنا مؤقتًا
-          await setRoom({ phase: "end_questions" });
-          return;
-        }
-
-        if(phase === "end_questions"){
-          window.location.href = "index.html";
+          // ✅ الانتقال للتصويت (الصفحات الجديدة داخل multi_round.html)
+          await setRoom({
+            phase: "vote",
+            votesBy: {},      // تصفير تصويتات الجولة
+            revealTs: null,   // تهيئة الكشف الجديد (سيضبطه المقدم في الصفحة الجديدة)
+            guessBy: {},      // تهيئة اختيارات التخمين
+            scoresAppliedFor: "" // حماية من تكرار احتساب النتائج
+          });
           return;
         }
 
@@ -565,6 +551,12 @@
       const phase = cleanName(data?.phase) || "questions_intro";
       const pairs = Array.isArray(data?.questionPairs) ? data.questionPairs : [];
       const idx = Number(data?.askIndex || 0);
+
+      // ✅ إذا دخلنا مراحل التصويت/الكشف/التخمين/النتائج/نهاية الجولة → نروح للملف الجديد
+      if(["vote","reveal","guess","results","round_end"].includes(phase)){
+        goRoundPage();
+        return;
+      }
 
       if(phase === "questions_intro"){
         renderIntro();
@@ -582,11 +574,6 @@
 
       if(phase === "suspect"){
         renderSuspect();
-        return;
-      }
-
-      if(phase === "end_questions"){
-        renderEnd();
         return;
       }
 
@@ -624,4 +611,4 @@
 </body>
 </html>
 
-<!-- multi_questions.html برا السالفة – إصدار 5 (بدون تصويت/بدون صفحات بعد التصويت) -->
+<!-- multi_questions.html برا السالفة – إصدار 6 (مرتبط بـ multi_round.html) -->
