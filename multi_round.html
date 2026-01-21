@@ -588,6 +588,7 @@
         || clean(data?.outPlayer)
         || clean(data?.outsideName)
         || clean(data?.baraOut)
+        || clean(data?.outsiderName)   // ✅ (مطلوب) دعم outsiderName من ready.html
         || "";
     }
 
@@ -599,17 +600,35 @@
         || "";
     }
 
+    // ✅ (مطلوب) نفس قوائم الكلمات الموجودة في ready.html عشان نقدر نولّد خيارات التخمين إذا ما فيه categoryWords في Firebase
+    const WORDS = {
+      eat:  ["كبسة","مفطح","جريش","مندي","مراصيع","بسبوسة","هريس"],
+      zoo:  ["أسد","نمر","زرافة","فيل","ذئب","غزال","قندس"],
+      play: ["حارس","مهاجم","مدرب","حكم","جمهور","كابتن","بديل"],
+      car:  ["كامري","باترول","كورولا","جي كلاس","لاندكروزر","سوناتا","اكسبلورر"],
+      frot: ["تفاح","موز","عنب","رمان","خيار","طماطم","فراولة"],
+      cola: ["ماء","شاي","قهوة","عصير","موهيتو","كولا","لبن"]
+    };
+
     function buildGuessOptions(data){
       const story = getStoryWord(data);
-      const pool = Array.isArray(data?.categoryWords) ? data.categoryWords : [];
-      const cleanPool = pool.map(w => clean(w)).filter(Boolean);
+
+      // الأولوية: لو فيه categoryWords من Firebase
+      let pool = Array.isArray(data?.categoryWords) ? data.categoryWords : [];
+
+      // ✅ (مطلوب) إذا ما فيه، نأخذ من WORDS حسب categoryKey
+      if(!Array.isArray(pool) || pool.length < 7){
+        const key = clean(data?.categoryKey);
+        pool = Array.isArray(WORDS[key]) ? WORDS[key] : [];
+      }
+
+      const cleanPool = (pool || []).map(w => clean(w)).filter(Boolean);
 
       if(!story || cleanPool.length < 7) return null;
 
       const uniq = Array.from(new Set(cleanPool));
       const filtered = uniq.filter(w => w !== story);
 
-      // اختار 6 كلمات عشوائية
       const picks = [];
       const used = new Set();
       while(picks.length < 6 && used.size < filtered.length){
@@ -622,7 +641,6 @@
 
       const opts = picks.concat([story]);
 
-      // shuffle
       for(let i=opts.length-1;i>0;i--){
         const j = Math.floor(Math.random()*(i+1));
         [opts[i], opts[j]] = [opts[j], opts[i]];
@@ -690,7 +708,7 @@
       pageTitle.textContent = "التصويت";
 
       const selected = myName ? clean(votesBy?.[myName]) : "";
-      const canVote = !!myName; // اللاعب والمقدم يقدرون يصوتون
+      const canVote = !!myName;
 
       const list = names.map(n => {
         const dis = (!canVote || (myName && n === myName)) ? " disabled" : "";
@@ -752,13 +770,11 @@
       const el = document.getElementById("revealName");
       clearRevealTimers();
 
-      // لو ما عندنا توقيت، نعرض الاسم مباشرة
       if(!startTs){
         el.textContent = outName || "غير معروف";
         return;
       }
 
-      // دوران أسماء 3 ثواني ثم تثبيت
       let idx = 0;
       const safeNames = (names && names.length) ? names : (outName ? [outName] : ["..."]);
 
@@ -767,7 +783,6 @@
         idx++;
       };
 
-      // شغل مباشرة
       runTick();
       revealTickTimer = setInterval(runTick, 120);
 
@@ -824,7 +839,7 @@
           tick: increment(1),
           guessOptions: b.opts,
           correctWord: b.story,
-          guessBy: {},          // تصفير اختيارات برا السالفة
+          guessBy: {},
           guessRoundId: cr || String(Date.now())
         });
       });
@@ -854,7 +869,6 @@
           const correctWord = clean(d?.correctWord);
           const guessBy = (d.guessBy && typeof d.guessBy === "object") ? d.guessBy : {};
 
-          // اختيار واحد فقط
           if(clean(guessBy[outName])) return;
 
           guessBy[outName] = word;
@@ -877,10 +891,9 @@
       const outName = getOutName(data);
       const opts = Array.isArray(data?.guessOptions) ? data.guessOptions.map(x=>clean(x)).filter(Boolean) : [];
       const correct = clean(data?.correctWord);
-      const guessBy = (data?.guessBy && typeof data.guessBy === "object") ? data.guessBy : {};
+      const guessBy = (data?.guessBy && typeof data?.guessBy === "object") ? data.guessBy : {};
       const chosen = outName ? clean(guessBy?.[outName]) : "";
 
-      // fallback إذا ما جهزت الخيارات بعد
       if(opts.length !== 7 || !correct){
         cardEl.innerHTML = `
           <div style="width:100%;">
@@ -898,7 +911,6 @@
 
       const buttons = opts.map(w => {
         const isCorrect = (w === correct);
-        const isChosen = (w === chosen);
 
         let cls = "optBtn";
         if(chosen){
@@ -906,8 +918,6 @@
           else cls += " wrong";
         }
 
-        // بعد الاختيار: منع الكل من الضغط
-        // قبل الاختيار: فقط برا السالفة يقدر يختار
         const disabled = chosen ? " disabled" : (isOut ? "" : " disabled");
 
         return `<button class="${cls}" data-word="${escapeHtml(w)}"${disabled}>${escapeHtml(w)}</button>`;
@@ -956,10 +966,8 @@
 
       const winners = new Set();
 
-      // برا السالفة
       if(outWins && outName) winners.add(outName);
 
-      // الباقين
       for(const n of names){
         if(!n || n === outName) continue;
         if(clean(votesBy?.[n]) === outName) winners.add(n);
@@ -1075,13 +1083,11 @@
 
       if(isHost && b1){
         b1.addEventListener("click", () => {
-          // المقدم فقط يروح صفحة إضافة اللاعبين، واللاعبين يبقون هنا
           window.location.href = "players.html?room=" + encodeURIComponent(roomId);
         });
       }
       if(isHost && b2){
         b2.addEventListener("click", () => {
-          // المقدم فقط يروح الكتاغوريات، واللاعبين يبقون هنا
           window.location.href = "categories.html?room=" + encodeURIComponent(roomId) + "&mode=multi";
         });
       }
@@ -1094,7 +1100,6 @@
 
       const phase = clean(data?.phase);
 
-      // من التصويت إلى الكشف
       if(phase === "vote"){
         const votesBy = (data?.votesBy && typeof data.votesBy === "object") ? data.votesBy : {};
         if(!canHostNextVote(names, votesBy)){
@@ -1105,19 +1110,16 @@
         return;
       }
 
-      // من الكشف إلى التخمين
       if(phase === "reveal"){
         await setRoom({ phase: "guess" });
         return;
       }
 
-      // من التخمين إلى النتائج (مع تطبيق نقاط)
       if(phase === "guess"){
         await setRoom({ phase: "results" });
         return;
       }
 
-      // من النتائج إلى نهاية الجولة
       if(phase === "results"){
         await setRoom({ phase: "round_end" });
         return;
@@ -1144,14 +1146,12 @@
       const phase = clean(data?.phase) || "vote";
       const names = getPlayersNames(data);
 
-      // جاهزية زر التالي للمقدم حسب المرحلة
       if(isHost){
         ctaBtn.disabled = false;
         ctaBtn.classList.remove("vote");
         ctaBtn.textContent = "التالي";
       }
 
-      // التصويت
       if(phase === "vote"){
         const votesBy = (data?.votesBy && typeof data.votesBy === "object") ? data.votesBy : {};
         if(isHost){
@@ -1161,32 +1161,27 @@
         return;
       }
 
-      // الكشف
       if(phase === "reveal"){
         const outName = getOutName(data);
         renderReveal(names, outName, data?.revealTs);
         return;
       }
 
-      // التخمين
       if(phase === "guess"){
         renderGuess(data, names);
         return;
       }
 
-      // النتائج
       if(phase === "results"){
         renderResults(data, names);
         return;
       }
 
-      // نهاية الجولة
       if(phase === "round_end"){
         renderRoundEnd();
         return;
       }
 
-      // افتراضي
       pageTitle.textContent = "بانتظار...";
       cardEl.innerHTML = `<div class="hint">بانتظار المقدم...</div>`;
       if(isHost) ctaBtn.disabled = true;
@@ -1204,10 +1199,7 @@
         listenRoom(roomId, async (data) => {
           if(!data) return;
 
-          // تجهيز خيارات التخمين عند دخول مرحلة guess
           try{ await ensureGuessSetupIfHost(data); }catch(e){}
-
-          // تطبيق نقاط النتائج مرة واحدة
           try{
             const names = getPlayersNames(data);
             await applyScoresIfHost(data, names);
@@ -1225,4 +1217,4 @@
 </body>
 </html>
 
-<!-- multi_round.html برا السالفة – أجهزة متعددة (تصويت/كشف/تخمين/نتائج/نهاية الجولة) – إصدار 1 -->
+<!-- multi_round.html برا السالفة – إصدار 2 -->
