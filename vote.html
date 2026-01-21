@@ -108,6 +108,15 @@
       opacity:.95;
     }
 
+    .subhint{
+      text-align:center;
+      font-weight:900;
+      font-size:16px;
+      line-height:1.6;
+      opacity:.95;
+      margin-top:8px;
+    }
+
     .list{
       margin-top: 14px;
       background: rgba(0,0,0,.10);
@@ -131,9 +140,7 @@
       box-shadow: 0 8px 0 rgba(0,0,0,0.18);
     }
     .rowBtn:active{ transform: translateY(1px); box-shadow: 0 7px 0 rgba(0,0,0,0.18); }
-    .rowBtn.selected{
-      background: var(--blue);
-    }
+    .rowBtn.selected{ background: var(--blue); }
     .rowBtn[disabled]{
       opacity:.6;
       cursor:not-allowed;
@@ -172,7 +179,6 @@
       justify-content:center;
       margin-top: 14px;
     }
-    .ctaArea.hidden{ display:none; }
 
     .cta{
       height: var(--btnH);
@@ -207,29 +213,6 @@
       color:#fff;
       max-width: 360px;
     }
-
-    .buyArea{
-      width:100%;
-      display:flex;
-      justify-content:center;
-      margin-top: 14px;
-    }
-    .buyArea.hidden{ display:none; }
-    .buyBtn{
-      width: min(360px, 82%);
-      border: 4px solid #000;
-      border-radius: 22px;
-      padding: 14px 18px;
-      font-size: 28px;
-      font-weight: 1000;
-      box-shadow: 0 8px 0 rgba(0,0,0,0.18);
-      cursor:pointer;
-      -webkit-tap-highlight-color:transparent;
-      text-align:center;
-      background: var(--blue);
-      color:#111;
-    }
-    .buyBtn:active{ transform: translateY(1px); box-shadow: 0 7px 0 rgba(0,0,0,0.18); }
 
     .err{
       width:100%;
@@ -298,11 +281,7 @@
       </div>
 
       <div class="ctaArea" id="ctaArea">
-        <button class="cta vote" id="ctaBtn">التالي</button>
-      </div>
-
-      <div class="buyArea" id="buyArea">
-        <button class="buyBtn" id="buyBtn">لشراء اللعبة اضغط هنا</button>
+        <button class="cta vote" id="ctaBtn" disabled>تصويت</button>
       </div>
 
       <div class="err" id="err"></div>
@@ -333,10 +312,7 @@
 
     const pageTitle = document.getElementById("pageTitle");
     const cardEl    = document.getElementById("card");
-    const ctaArea   = document.getElementById("ctaArea");
     const ctaBtn    = document.getElementById("ctaBtn");
-    const buyArea   = document.getElementById("buyArea");
-    const buyBtn    = document.getElementById("buyBtn");
     const homeBtn   = document.getElementById("homeBtn");
     const errBox    = document.getElementById("err");
 
@@ -358,16 +334,15 @@
         .replaceAll("'","&#039;");
     }
 
-    // room
     const params = new URLSearchParams(location.search);
     const roomId = clean(params.get("room"));
 
-    // host detect (زي ملفاتك)
+    // host detect (نفس ملفاتك)
     const HOST_ROOM_KEY = "bara_roomId_multi_v4";
     const hostRoomId = clean(sessionStorage.getItem(HOST_ROOM_KEY));
     const isHost = !!hostRoomId && hostRoomId === roomId;
 
-    // my name (أوسع تغطية)
+    // my name
     const POSSIBLE_PLAYER_KEYS = [
       "bara_playerName_multi_v4",
       "bara_playerName_multi_v3",
@@ -394,15 +369,11 @@
     }
     const myName = getMyName();
 
-    // UI buttons
-    buyArea.classList.toggle("hidden", isHost);
-    ctaArea.classList.toggle("hidden", !isHost);
-    ctaBtn.textContent = "التالي";
+    // زر الصفحة:
+    // - اللاعب: "تصويت"
+    // - المقدم: "التالي"
+    ctaBtn.textContent = isHost ? "التالي" : "تصويت";
     ctaBtn.disabled = true;
-
-    buyBtn.addEventListener("click", () => {
-      window.open("https://sandooq-m.com", "_blank", "noopener,noreferrer");
-    });
 
     function clearMultiState(){
       sessionStorage.removeItem("bara_roomId_multi_v4");
@@ -415,7 +386,7 @@
       window.location.href = "index.html";
     });
 
-    // ---------- Navigation (حل جذري) ----------
+    // ---------- Navigation ----------
     let lastNavTs = 0;
     function handleNav(data){
       const navTo = clean(data?.navTo);
@@ -437,7 +408,7 @@
       return false;
     }
 
-    // ---------- Voting ----------
+    // ---------- Voting helpers ----------
     function getPlayersNames(data){
       const players = Array.isArray(data?.players) ? data.players : [];
       const names = players.map(p => clean(p?.name)).filter(Boolean);
@@ -463,10 +434,27 @@
       return counts;
     }
 
-    async function voteFor(targetName){
+    function allVoted(names, votesBy){
+      if(!Array.isArray(names) || names.length < 3) return false;
+      const obj = (votesBy && typeof votesBy === "object") ? votesBy : {};
+      for(const n of names){
+        const v = clean(obj?.[n]);
+        if(!v) return false;
+      }
+      return true;
+    }
+
+    // ---------- Local selection (الزر صار ضروري) ----------
+    let localSelected = "";
+    let lastServerSelected = "";
+
+    async function submitVote(){
       if(!roomId) return;
       if(!myName){
         showErr("اسمك غير معروف في هذا الجهاز.");
+        return;
+      }
+      if(!localSelected){
         return;
       }
 
@@ -482,7 +470,7 @@
           if(phase !== "vote") return;
 
           const votesBy = (d.votesBy && typeof d.votesBy === "object") ? d.votesBy : {};
-          votesBy[myName] = targetName;
+          votesBy[myName] = localSelected;
 
           tx.update(ref, {
             updatedAt: serverTimestamp(),
@@ -496,18 +484,19 @@
       }
     }
 
-    function renderVote(names, selected, canVote){
+    function renderVote(names, serverSelected, canInteract){
       pageTitle.textContent = "التصويت";
-      const list = names
-        .map(n => {
-          const sel = (selected === n) ? " selected" : "";
-          const dis = canVote ? "" : " disabled";
-          return `<button class="rowBtn${sel}" data-name="${escapeHtml(n)}"${dis}>${escapeHtml(n)}</button>`;
-        })
-        .join("");
+
+      const selected = localSelected || serverSelected || "";
+      const list = names.map(n => {
+        const sel = (selected === n) ? " selected" : "";
+        const dis = canInteract ? "" : " disabled";
+        return `<button class="rowBtn${sel}" data-name="${escapeHtml(n)}"${dis}>${escapeHtml(n)}</button>`;
+      }).join("");
 
       cardEl.innerHTML = `
         <div class="hint">اختر الشخص اللي تشك إنه برا السالفة</div>
+        <div class="subhint">${isHost ? "المقدم يقدر يصوّت مثل الباقين" : "بعد الاختيار اضغط (تصويت)"}</div>
         <div class="list" id="list">${list}</div>
       `;
 
@@ -519,7 +508,9 @@
           if(btn.disabled) return;
           const n = clean(btn.getAttribute("data-name"));
           if(!n) return;
-          voteFor(n);
+          localSelected = n;
+          // أعد رسم التحديد فقط
+          renderVote(names, serverSelected, canInteract);
         });
       }
     }
@@ -528,19 +519,14 @@
       pageTitle.textContent = "عرض الأصوات";
       const counts = countVotes(votesBy);
 
-      // رتب حسب الأصوات نزولاً
-      const rows = names
-        .slice()
-        .sort((a,b)=>(counts[b]||0)-(counts[a]||0))
-        .map(n => {
-          return `
-            <div class="resultRow">
-              <div>${escapeHtml(n)}</div>
-              <div class="countBadge">${counts[n] || 0}</div>
-            </div>
-          `;
-        })
-        .join("");
+      const rows = names.slice().sort((a,b)=>(counts[b]||0)-(counts[a]||0)).map(n => {
+        return `
+          <div class="resultRow">
+            <div>${escapeHtml(n)}</div>
+            <div class="countBadge">${counts[n] || 0}</div>
+          </div>
+        `;
+      }).join("");
 
       cardEl.innerHTML = `
         <div class="hint">هذه نتيجة التصويت</div>
@@ -557,16 +543,11 @@
         await updateDoc(roomRef(roomId), {
           updatedAt: serverTimestamp(),
           tick: increment(1),
-
-          // ✅ المرحلة
           phase: "reveal",
-
-          // ✅ أمر انتقال مضمون للجميع
           navTo: "reveal.html",
           navTs: Date.now()
         });
 
-        // المقدم ينتقل فوراً (واللاعبين عبر navTo/navTs)
         window.location.replace("reveal.html?room=" + encodeURIComponent(roomId) + "&v=" + Date.now());
       }catch(e){
         console.warn(e);
@@ -574,43 +555,58 @@
       }
     }
 
-    ctaBtn.addEventListener("click", hostNextToReveal);
+    ctaBtn.addEventListener("click", async () => {
+      if(isHost){
+        await hostNextToReveal();
+      }else{
+        await submitVote();
+      }
+    });
 
-    // ---------- Start ----------
-    let lastPhase = "";
     function renderByRoom(data){
       if(!data) return;
 
-      // ✅ التقط أمر الانتقال أولاً
       if(handleNav(data)) return;
 
       const phase = clean(data?.phase) || "vote";
       const names = getPlayersNames(data);
       const votesBy = (data?.votesBy && typeof data.votesBy === "object") ? data.votesBy : {};
 
-      // host: الزر يظهر دائمًا هنا
-      if(isHost){
-        ctaBtn.disabled = false;
-      }
+      const serverSelected = myName ? clean(votesBy?.[myName]) : "";
+      lastServerSelected = serverSelected;
 
-      // اللاعب: ممكن يصوّت فقط في phase=vote
-      const selected = myName ? clean(votesBy?.[myName]) : "";
-      const canVote = !isHost && phase === "vote";
+      // لو سبق وصوّت: نقفل التفاعل
+      const alreadyVoted = !!serverSelected;
 
       if(phase === "vote"){
-        renderVote(names, selected, canVote);
+        // المقدم واللاعب يقدرون يختارون (إزالة شرط !isHost)
+        const canInteract = !alreadyVoted;
+
+        // ثبت localSelected لو السيرفر عنده اختيار
+        if(serverSelected && !localSelected) localSelected = serverSelected;
+
+        renderVote(names, serverSelected, canInteract);
+
         if(isHost){
-          // في التصويت زر "التالي" عند المقدم يقفل التصويت وينتقل؟
-          // نخليه "التالي" يودّي للكشف مباشرة إذا تحب.
+          // زر التالي للمقدم: يتفعل بعد ما الجميع يصوّت
           ctaBtn.textContent = "التالي";
+          ctaBtn.disabled = !allVoted(names, votesBy);
+        }else{
+          // زر التصويت للاعب: يتفعل بعد اختيار اسم + إذا ما صوّت قبل
+          ctaBtn.textContent = alreadyVoted ? "تم التصويت" : "تصويت";
+          ctaBtn.disabled = alreadyVoted ? true : !localSelected;
         }
         return;
       }
 
-      // أي شيء غير vote نعرض النتائج + ننتظر التالي
+      // بعد التصويت: عرض أصوات (والمقدم فقط معه التالي)
       renderResults(names, votesBy);
       if(isHost){
         ctaBtn.textContent = "التالي";
+        ctaBtn.disabled = false;
+      }else{
+        ctaBtn.textContent = "بانتظار المقدم…";
+        ctaBtn.disabled = true;
       }
     }
 
@@ -623,10 +619,9 @@
       try{
         await ensureRoom(roomId);
 
-        // استماع + بولنق سيرفر زيادة (جذري)
         listenRoom(roomId, (data) => renderByRoom(data));
 
-        // polling من السيرفر كل 700ms لضمان الالتقاط في iOS
+        // Polling احتياط (iOS)
         setInterval(async () => {
           try{
             const snap = await getDocFromServer(roomRef(roomId));
@@ -645,4 +640,4 @@
 </body>
 </html>
 
-<!-- vote.html برا السالفة – إصدار 1 (حل جذري navTo/navTs) -->
+<!-- vote.html برا السالفة – إصدار 2 (تصحيح زر التصويت + تصويت المقدم) -->
