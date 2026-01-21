@@ -255,6 +255,12 @@
     // ✅ (إضافة مطلوبة فقط) منع تكرار التحويل لصفحة ready
     let redirectedToReady = false;
 
+    // ✅ (إضافة مطلوبة فقط) منع تكرار التحويل لملف الجولة الجديد
+    let redirectedToRound = false;
+
+    // ✅ (إضافة مطلوبة فقط) اسم ملف الصفحات الجديدة بعد التصويت
+    const ROUND_FILE = "multi_round.html";
+
     function showErr(msg){
       errBox.textContent = msg;
       errBox.style.display = "block";
@@ -376,6 +382,16 @@
       }
     }
 
+    // ✅ (إضافة مطلوبة فقط) نحدد إذا phase تخص الصفحات الجديدة بعد التصويت
+    function isRoundPhase(phase){
+      const p = cleanName(phase);
+      return /^(vote|reveal|guess|results|end)/.test(p);
+    }
+
+    function goRound(){
+      window.location.href = ROUND_FILE + "?room=" + encodeURIComponent(roomId);
+    }
+
     (async () => {
       if(!roomId){
         showErr("الرابط غير صحيح: رمز الغرفة غير موجود.");
@@ -431,8 +447,15 @@
 
           renderNames(allNames);
 
-          // ✅ (إضافة مطلوبة فقط) إذا المقدم اختار كتاغوري وبدأ -> phase تصير ready -> ننتقل تلقائيًا
+          // ✅ إذا بدأت مراحل التصويت وما بعدها -> الملف الجديد
           const phase = cleanName(data?.phase);
+          if(isRoundPhase(phase) && !redirectedToRound){
+            redirectedToRound = true;
+            goRound();
+            return;
+          }
+
+          // ✅ إذا المقدم اختار كتاغوري وبدأ -> phase تصير ready -> ننتقل تلقائيًا
           if(phase === "ready" && !redirectedToReady){
             redirectedToReady = true;
             window.location.href = "ready.html?room=" + encodeURIComponent(roomId);
@@ -461,4 +484,4 @@
 </body>
 </html>
 
-<!-- wait.html برا السالفة – إصدار 2 -->
+<!-- wait.html برا السالفة – إصدار 3 (ربط مراحل التصويت/الكشف/النتائج بـ multi_round.html) -->
