@@ -375,8 +375,12 @@
     }
 
     function goNext(){
-      // الصفحة التالية (بنجهزها بعدين)
       window.location.href = "multi_questions.html?room=" + encodeURIComponent(roomId);
+    }
+
+    // ✅ (إضافة مطلوبة فقط) دعم صفحات الجولة الجديدة
+    function goRoundPage(){
+      window.location.href = "multi_round.html?room=" + encodeURIComponent(roomId);
     }
 
     nextBtn.addEventListener("click", async () => {
@@ -391,8 +395,8 @@
 
       nextBtn.disabled = true;
       try{
-        // ✅ نغيّر المرحلة عشان كل الأجهزة تنتقل
-        await updateRoomFields(roomId, { phase: "questions" });
+        // ✅ (تعديل مطلوب فقط) نبدأ من شاشة "وقت الأسئلة" أولاً
+        await updateRoomFields(roomId, { phase: "questions_intro" });
       }catch(e){
         console.warn(e);
         showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
@@ -445,9 +449,14 @@
             nextBtn.disabled = !allArrived;
           }
 
-          // ✅ إذا المقدم انتقل للمرحلة التالية: ننقل الجميع
-          if(phase === "questions"){
+          // ✅ (إضافة مطلوبة فقط) توجيه حسب المرحلة
+          if(["vote","reveal","guess","results","round_end"].includes(phase)){
+            goRoundPage();
+            return;
+          }
+          if(["questions_intro","questions","suspect","end_questions"].includes(phase)){
             goNext();
+            return;
           }
         });
 
@@ -461,4 +470,4 @@
 </body>
 </html>
 
-<!-- ready_wait.html برا السالفة – إصدار 1 -->
+<!-- ready_wait.html برا السالفة – إصدار 2 (ربط بسيط مع phases + بداية questions_intro) -->
