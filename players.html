@@ -571,6 +571,7 @@
       localStorage.removeItem(KEY_HOST);
 
       hostInput.value = "";
+      hostInput.style.display = "";
       playersWrap.innerHTML = "";
       emptyHint.style.display = "block";
       startBtn.disabled = true;
@@ -611,10 +612,14 @@
     roomCodeEl.textContent = roomId;
     joinLinkBox.textContent = joinUrl;
 
-    // ✅ لا نسترجع اسم المقدم إلا إذا كانت نفس الجلسة (reload)
-    if(NAV_TYPE === "reload" && !FROM_INDEX){
+    // ✅✅ FIX: إذا اسم المقدم محفوظ (حتى لو التنقل Navigate) رجّعه وخفِّ خانة الاسم
+    if(!FROM_INDEX){
       const savedHost = (localStorage.getItem(KEY_HOST) || "").trim();
-      if(savedHost) hostInput.value = savedHost;
+      if(savedHost){
+        hostInput.value = savedHost;
+        hostInput.placeholder = "";
+        hostInput.style.display = "none"; // ما نبي خانة تجبره يكتب اسمه ثانية
+      }
     }
 
     function sortPlayers(list){
@@ -898,4 +903,4 @@
 </body>
 </html>
 
-<!-- players.html برا السالفة – أجهزة متعددة (المقدم) – إصدار 2 -->
+<!-- players.html برا السالفة – أجهزة متعددة (المقدم) – إصدار 3 (Fix: استرجاع اسم المقدم عند التنقل وإخفاء خانة الاسم) -->
