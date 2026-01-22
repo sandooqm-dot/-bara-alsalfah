@@ -7,6 +7,7 @@ import {
   doc,
   setDoc,
   getDoc,
+  getDocFromServer,
   updateDoc,
   onSnapshot,
   serverTimestamp,
@@ -126,22 +127,40 @@ export async function updateRoomFields(roomId, fields = {}) {
   });
 }
 
-// ✅ استماع للتحديثات (Snapshot) + ✅ فحص احتياطي (Polling) لضمان وصول التغييرات للجميع
+// ✅ استماع للتحديثات (Snapshot) + ✅ Polling من السيرفر فقط (عشان ما يرجّع بيانات قديمة من الكاش)
 export function listenRoom(roomId, cb) {
   const ref = roomRef(roomId);
 
   let lastJson = null;
+  let lastTick = -1; // حماية ضد الرجوع لبيانات أقدم
+
+  const shouldAccept = (data) => {
+    if (!data) return true;
+
+    const t = Number(data?.tick);
+    if (Number.isFinite(t)) {
+      // لا نسمح لبيانات أقدم ترجع الواجهة للخلف
+      if (t < lastTick) return false;
+    }
+    return true;
+  };
+
   const emitIfChanged = (data) => {
+    if (!shouldAccept(data)) return;
+
+    const t = Number(data?.tick);
+    if (Number.isFinite(t)) lastTick = Math.max(lastTick, t);
+
     const j = data ? JSON.stringify(data) : null;
     if (j === lastJson) return;
+
     lastJson = j;
     cb(data);
   };
 
-  // Snapshot (مع metadata changes)
+  // Snapshot (بدون metadata changes عشان ما يصير “ذبذبة”)
   const unsub = onSnapshot(
     ref,
-    { includeMetadataChanges: true },
     (snap) => {
       emitIfChanged(snap.exists() ? snap.data() : null);
     },
@@ -151,16 +170,23 @@ export function listenRoom(roomId, cb) {
     }
   );
 
-  // Polling احتياطي (لو انقطع snapshot أو iOS علّق التحديثات)
+  // Polling احتياطي (من السيرفر فقط) — يمنع مشكلة “تطلع لحظة ثم تختفي”
   let stopped = false;
 
   const pollOnce = async () => {
     if (stopped) return;
     try {
-      const snap = await getDoc(ref);
+      // ✅ مهم جدًا: من السيرفر وليس من الكاش
+      const snap = await getDocFromServer(ref);
       emitIfChanged(snap.exists() ? snap.data() : null);
     } catch (e) {
-      console.error("listenRoom poll error:", e);
+      // إذا فشل السيرفر (ضعف نت/أوفلاين) نرجع لـ getDoc كحل أخير بدون ما نكسر اللعبة
+      try {
+        const snap2 = await getDoc(ref);
+        emitIfChanged(snap2.exists() ? snap2.data() : null);
+      } catch (e2) {
+        console.error("listenRoom poll error:", e2);
+      }
     }
   };
 
@@ -175,3 +201,5 @@ export function listenRoom(roomId, cb) {
     try { unsub(); } catch (e) {}
   };
 }
+
+/* data/firebase.js برا السالفة – إصدار 2 (Fix: no stale-cache polling + tick guard) */
