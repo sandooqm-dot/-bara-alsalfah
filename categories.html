@@ -225,7 +225,13 @@
 
   <script type="module">
     // ✅ كسر الكاش (مهم)
-    import { updateRoomFields, ensureRoom } from "./data/firebase.js?v=6";
+    import { updateRoomFields, ensureRoom, roomRef, db } from "./data/firebase.js?v=6";
+
+    import {
+      runTransaction,
+      serverTimestamp,
+      increment
+    } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
     const IMAGE_SIZES = {
       eat:  { file: "eat.PNG",  w: 190, h: 120  },
@@ -259,6 +265,7 @@
     let selectedLabel = "";
 
     function safeJSONParse(v){ try { return JSON.parse(v); } catch(e){ return null; } }
+    function clean(x){ return String(x || "").trim(); }
 
     function getPlayersFromSession(){
       const v1 = sessionStorage.getItem(KEY_PLAYERS);
@@ -395,6 +402,92 @@
       return (code ? (code + " - ") : "") + (msg || "Unknown error");
     }
 
+    // =========================
+    // ✅ (جديد) تحميل كلمات الكتاغوري كاملة + اختيار سالفة عشوائية بدون تكرار
+    // =========================
+    async function loadCategoryWords(key){
+      const k = clean(key);
+      if(!k) return [];
+
+      // حمّل ملف الداتا الخاص بالكتاغوري (ينشئ window.BARA_WORDS[k])
+      try{
+        await import(`./data/${encodeURIComponent(k)}.js?v=${Date.now()}`);
+      }catch(e){
+        // لو فشل التحميل، نحاول بدون encode (احتياط)
+        try{ await import(`./data/${k}.js?v=${Date.now()}`); }catch(_e){}
+      }
+
+      const poolRaw = window.BARA_WORDS && window.BARA_WORDS[k] ? window.BARA_WORDS[k] : [];
+      const arr = Array.isArray(poolRaw) ? poolRaw : [];
+
+      // تنظيف + إزالة الفاضي + إزالة التكرار
+      const seen = new Set();
+      const out = [];
+      for(const w of arr){
+        const s = clean(w);
+        if(!s) continue;
+        if(seen.has(s)) continue;
+        seen.add(s);
+        out.push(s);
+      }
+      return out;
+    }
+
+    function pickRandom(arr){
+      if(!Array.isArray(arr) || !arr.length) return "";
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    async function setRoomCategoryAndStory(roomId, catKey, catLabel, words){
+      const ref = roomRef(roomId);
+
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if(!snap.exists()) return;
+
+        const d = snap.data() || {};
+        const usedMap = (d.usedStoryWords && typeof d.usedStoryWords === "object") ? d.usedStoryWords : {};
+        const usedArrRaw = Array.isArray(usedMap[catKey]) ? usedMap[catKey] : [];
+        const usedArr = usedArrRaw.map(clean).filter(Boolean);
+
+        let candidates = words.filter(w => !usedArr.includes(w));
+
+        // إذا خلصت الكلمات كلها، نبدأ دورة جديدة
+        if(candidates.length === 0){
+          usedMap[catKey] = [];
+          candidates = words.slice();
+        }
+
+        const storyWord = pickRandom(candidates) || pickRandom(words) || "";
+
+        // حدّث سجل الاستخدام
+        usedMap[catKey] = Array.from(new Set([...(Array.isArray(usedMap[catKey]) ? usedMap[catKey] : []), storyWord]))
+          .map(clean)
+          .filter(Boolean);
+
+        tx.update(ref, {
+          updatedAt: serverTimestamp(),
+          tick: increment(1),
+
+          categoryKey: catKey,
+          categoryLabel: catLabel,
+
+          // ✅ مهم: كلمات الكتاغوري كاملة
+          categoryWords: words,
+
+          // ✅ مهم: سالفة الجولة (تُقرأ في multi_round.html)
+          storyWord: storyWord,
+
+          // نفس سلوكك السابق
+          phase: "ready",
+          phaseAt: Date.now(),
+
+          // ✅ منع التكرار
+          usedStoryWords: usedMap
+        });
+      });
+    }
+
     startBtn.addEventListener("click", async () => {
       if(!selectedKey){
         alert("اختر نوع السالفة أولاً.");
@@ -412,12 +505,18 @@
           startBtn.disabled = true;
 
           await ensureRoom(multiRoomId);
-          await updateRoomFields(multiRoomId, {
-            categoryKey: selectedKey,
-            categoryLabel: selectedLabel,
-            phase: "ready",
-            phaseAt: Date.now()
-          });
+
+          // ✅ (جديد) خذ كلمات الكتاغوري من الداتا كاملة
+          const words = await loadCategoryWords(selectedKey);
+
+          if(!words.length){
+            startBtn.disabled = false;
+            alert("ما قدرت أقرأ كلمات هذا الكتاغوري من ملف الداتا.\nتأكد إن ملف data موجود واسم الكتاغوري صحيح.");
+            return;
+          }
+
+          // ✅ (جديد) احفظ الكلمات كاملة + اختر سالفة عشوائية بدون تكرار
+          await setRoomCategoryAndStory(multiRoomId, selectedKey, selectedLabel, words);
 
           // ✅ مهم: مرر roomId
           window.location.href = "ready.html?room=" + encodeURIComponent(multiRoomId);
@@ -444,4 +543,4 @@
 </body>
 </html>
 
-<!-- categories.html برا السالفة – إصدار 6 -->
+<!-- categories.html برا السالفة – إصدار 7 (Fix: random storyWord from full data + prevent repeats in multi) -->
