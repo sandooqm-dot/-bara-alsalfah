@@ -195,7 +195,12 @@
       -webkit-tap-highlight-color:transparent;
     }
     .cta:active{ transform: translateY(1px); box-shadow: 0 9px 0 rgba(0,0,0,0.25); }
-    .cta:disabled{ opacity:.55; cursor:not-allowed; filter: grayscale(.15); transform:none; }
+    .cta:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      filter: grayscale(.25);
+      transform:none;
+    }
 
     .cta.vote{
       background: var(--vote);
@@ -269,6 +274,7 @@
     }
     .homeBtn svg{ width:34px;height:34px; }
 
+    /* نتائج */
     .resultRow{
       display:flex;
       align-items:center;
@@ -306,6 +312,7 @@
       background:#fff;
     }
 
+    /* خيارات التخمين */
     .optBtn{
       width:100%;
       border: 4px solid #000;
@@ -326,6 +333,7 @@
     .optBtn.wrong{ background:#b92b2b; color:#fff; }
     .optBtn.correct{ background:#1f8a3a; color:#fff; }
 
+    /* مودال تأكيد التصويت */
     .modalBack{
       position: fixed;
       inset: 0;
@@ -335,7 +343,6 @@
       justify-content:center;
       z-index:10000;
       padding: 16px;
-    reveals: 
     }
     .modal{
       width: min(520px, 94vw);
@@ -380,7 +387,7 @@
       font-size: 26px;
       font-weight: 1000;
       cursor:pointer;
-      box-shadow: 0 8px 0 rgba(0,0,0,0.18);
+      box-shadow: var(--shadowSmall);
       -webkit-tap-highlight-color:transparent;
     }
     .modalBtn:active{ transform: translateY(1px); box-shadow: 0 7px 0 rgba(0,0,0,0.18); }
@@ -423,10 +430,12 @@
         <div class="hint">جاري التحميل...</div>
       </div>
 
+      <!-- زر التالي (للمقدم فقط) -->
       <div class="ctaArea" id="ctaArea">
         <button class="cta" id="ctaBtn">التالي</button>
       </div>
 
+      <!-- زر شراء (للاعبين فقط) -->
       <div class="buyArea" id="buyArea">
         <button class="buyBtn" id="buyBtn">لشراء اللعبة اضغط هنا</button>
       </div>
@@ -446,6 +455,7 @@
     </div>
   </div>
 
+  <!-- مودال نتيجة التصويت -->
   <div class="modalBack" id="modalBack" aria-hidden="true">
     <div class="modal">
       <div class="modalInner">
@@ -459,16 +469,14 @@
   </div>
 
   <script type="module">
-    import { ensureRoom, roomRef } from "./data/firebase.js";
+    import { ensureRoom, listenRoom, roomRef } from "./data/firebase.js";
     import { db } from "./data/firebase.js";
     import {
       runTransaction,
       updateDoc,
       serverTimestamp,
       increment,
-      getDocFromCache,
-      getDocFromServer,
-      onSnapshot
+      getDocFromServer
     } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
     const pageTitle = document.getElementById("pageTitle");
@@ -499,10 +507,12 @@
     const params = new URLSearchParams(location.search);
     const roomId = clean(params.get("room"));
 
+    // host detect (مثل ملفاتك)
     const HOST_ROOM_KEY = "bara_roomId_multi_v4";
     const hostRoomId = clean(sessionStorage.getItem(HOST_ROOM_KEY));
     const isHost = !!hostRoomId && hostRoomId === roomId;
 
+    // my name
     const POSSIBLE_PLAYER_KEYS = [
       "bara_playerName_multi_v4",
       "bara_playerName_multi_v3",
@@ -529,6 +539,7 @@
     }
     const myName = getMyName();
 
+    // UI
     buyArea.classList.toggle("hidden", isHost);
     ctaArea.classList.toggle("hidden", !isHost);
     ctaBtn.disabled = true;
@@ -570,7 +581,10 @@
       const seen = new Set();
       const unique = [];
       for(const n of names){
-        if(!seen.has(n)){ seen.add(n); unique.push(n); }
+        if(!seen.has(n)){
+          seen.add(n);
+          unique.push(n);
+        }
       }
       return unique;
     }
@@ -592,6 +606,7 @@
         || "";
     }
 
+    // نفس قوائم الكلمات (fallback)
     const WORDS = {
       eat:  ["كبسة","مفطح","جريش","مندي","مراصيع","بسبوسة","هريس"],
       zoo:  ["أسد","نمر","زرافة","فيل","ذئب","غزال","قندس"],
@@ -611,6 +626,7 @@
       }
 
       const cleanPool = (pool || []).map(w => clean(w)).filter(Boolean);
+
       if(!story || cleanPool.length < 7) return null;
 
       const uniq = Array.from(new Set(cleanPool));
@@ -642,6 +658,197 @@
       });
     }
 
+    // ---------- (جديد) مزامنة سريعة من السيرفر لمنع التعليق ----------
+    let fastSyncTimer = null;
+    let fastSyncTries = 0;
+
+    async function syncFromServerOnce(){
+      if(!roomId) return;
+      try{
+        const snap = await getDocFromServer(roomRef(roomId));
+        if(snap.exists()){
+          const data = snap.data();
+          // نحاول تجهيز التخمين إذا كنا في مرحلة guess والمقدم هو اللي يجهّز
+          try{ await ensureGuessSetupIfHost(data); }catch(e){}
+          renderByRoom(data);
+        }
+      }catch(e){
+        // نتجاهل هنا (الـ listenRoom شغال)
+      }
+    }
+
+    function startFastSync(){
+      if(fastSyncTimer) return;
+      fastSyncTries = 0;
+      fastSyncTimer = setInterval(async () => {
+        fastSyncTries++;
+        await syncFromServerOnce();
+        if(fastSyncTries >= 12){ // ~6 ثواني
+          stopFastSync();
+        }
+      }, 500);
+    }
+
+    function stopFastSync(){
+      if(fastSyncTimer){
+        clearInterval(fastSyncTimer);
+        fastSyncTimer = null;
+      }
+    }
+
+    // لما ترجع الصفحة من الخلفية على iOS
+    document.addEventListener("visibilitychange", () => {
+      if(document.visibilityState === "visible"){
+        syncFromServerOnce();
+      }
+    });
+    window.addEventListener("online", () => {
+      syncFromServerOnce();
+    });
+
+    // ---------- التصويت ----------
+    async function voteFor(targetName){
+      if(!roomId) return;
+      if(!myName){
+        showErr("اسمك غير معروف في هذا الجهاز.");
+        return;
+      }
+      hideErr();
+
+      const ref = roomRef(roomId);
+      try{
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(ref);
+          if(!snap.exists()) return;
+
+          const d = snap.data() || {};
+          const phase = clean(d?.phase) || "vote";
+          if(phase !== "vote") return;
+
+          const votesBy = (d.votesBy && typeof d.votesBy === "object") ? d.votesBy : {};
+          votesBy[myName] = targetName;
+
+          tx.update(ref, {
+            updatedAt: serverTimestamp(),
+            tick: increment(1),
+            votesBy
+          });
+        });
+
+        openVoteModal(myName, targetName);
+
+      }catch(e){
+        console.warn(e);
+        showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
+      }
+    }
+
+    function canHostNextVote(names, votesBy){
+      if(!isHost) return false;
+      if(!Array.isArray(names) || names.length < 3) return false;
+      const obj = (votesBy && typeof votesBy === "object") ? votesBy : {};
+      for(const n of names){
+        const v = clean(obj[n]);
+        if(!v) return false;
+      }
+      return true;
+    }
+
+    function renderVote(names, votesBy){
+      pageTitle.textContent = "التصويت";
+
+      const selected = myName ? clean(votesBy?.[myName]) : "";
+      const canVote = !!myName;
+
+      const list = names.map(n => {
+        const dis = (!canVote || (myName && n === myName)) ? " disabled" : "";
+        const sel = (selected === n) ? " selected" : "";
+        return `<button class="rowBtn${sel}" data-name="${escapeHtml(n)}"${dis}>${escapeHtml(n)}</button>`;
+      }).join("");
+
+      cardEl.innerHTML = `
+        <div style="width:100%;">
+          <div class="hint">اختر الشخص اللي تشك إنه برا السالفة</div>
+          <div class="list" id="voteList">${list}</div>
+        </div>
+      `;
+
+      const voteList = document.getElementById("voteList");
+      if(voteList){
+        voteList.addEventListener("click", (e) => {
+          const btn = e.target.closest("button.rowBtn");
+          if(!btn || btn.disabled) return;
+          const n = clean(btn.getAttribute("data-name"));
+          if(!n) return;
+          voteFor(n);
+        });
+      }
+
+      if(isHost){
+        ctaBtn.textContent = "التالي";
+        ctaBtn.classList.remove("vote");
+        ctaBtn.disabled = !canHostNextVote(names, votesBy);
+      }
+    }
+
+    // ---------- الكشف ----------
+    let revealTimer = null;
+    let revealTickTimer = null;
+
+    function clearRevealTimers(){
+      if(revealTimer) clearTimeout(revealTimer);
+      if(revealTickTimer) clearInterval(revealTickTimer);
+      revealTimer = null;
+      revealTickTimer = null;
+    }
+
+    function renderReveal(names, outName, revealTs){
+      pageTitle.textContent = "الكشف";
+
+      const startTs = Number(revealTs || 0);
+      const now = Date.now();
+      const dur = 3000;
+      const remaining = startTs ? Math.max(0, (startTs + dur) - now) : 0;
+
+      cardEl.innerHTML = `
+        <div style="width:100%;">
+          <div class="hint" style="font-size:26px; font-weight:1000;">اللي برا السالفة هو :</div>
+          <div class="bigName" id="revealName">...</div>
+        </div>
+      `;
+
+      const el = document.getElementById("revealName");
+      clearRevealTimers();
+
+      if(!startTs){
+        el.textContent = outName || "غير معروف";
+        return;
+      }
+
+      let idx = 0;
+      const safeNames = (names && names.length) ? names : (outName ? [outName] : ["..."]);
+
+      const runTick = () => {
+        el.textContent = safeNames[idx % safeNames.length] || "...";
+        idx++;
+      };
+
+      runTick();
+      revealTickTimer = setInterval(runTick, 120);
+
+      revealTimer = setTimeout(() => {
+        clearRevealTimers();
+        el.textContent = outName || "غير معروف";
+      }, remaining);
+
+      if(isHost){
+        ctaBtn.textContent = "التالي";
+        ctaBtn.classList.remove("vote");
+        ctaBtn.disabled = false;
+      }
+    }
+
+    // ---------- التخمين ----------
     async function ensureGuessSetupIfHost(data){
       if(!isHost) return;
       const phase = clean(data?.phase);
@@ -690,7 +897,10 @@
 
     async function chooseGuess(word){
       if(!roomId) return;
-      if(!myName){ showErr("اسمك غير معروف في هذا الجهاز."); return; }
+      if(!myName){
+        showErr("اسمك غير معروف في هذا الجهاز.");
+        return;
+      }
       hideErr();
 
       const ref = roomRef(roomId);
@@ -711,7 +921,11 @@
 
           guessBy[outName] = word;
 
-          tx.update(ref, { updatedAt: serverTimestamp(), tick: increment(1), guessBy });
+          tx.update(ref, {
+            updatedAt: serverTimestamp(),
+            tick: increment(1),
+            guessBy
+          });
         });
       }catch(e){
         console.warn(e);
@@ -719,7 +933,7 @@
       }
     }
 
-    function renderGuess(data){
+    function renderGuess(data, names){
       pageTitle.textContent = "اختيار السالفة";
 
       const outName = getOutName(data);
@@ -728,11 +942,26 @@
       const guessBy = (data?.guessBy && typeof data?.guessBy === "object") ? data.guessBy : {};
       const chosen = outName ? clean(guessBy?.[outName]) : "";
 
+      // ✅ لو الخيارات لسه ما وصلت: نفعّل مزامنة سريعة من السيرفر عشان ما يعلق
       if(opts.length !== 7 || !correct){
-        cardEl.innerHTML = `<div style="width:100%;"><div class="hint">جاري تجهيز خيارات السالفة...</div></div>`;
-        if(isHost){ ctaBtn.textContent = "التالي"; ctaBtn.disabled = true; }
+        startFastSync();
+
+        cardEl.innerHTML = `
+          <div style="width:100%;">
+            <div class="hint">جاري تجهيز خيارات السالفة...</div>
+          </div>
+        `;
+
+        // ✅ (مطلوب) زر التالي عند المقدم يكون باهت ومقفول لين تتجهز الصفحة/الاختيار
+        if(isHost){
+          ctaBtn.textContent = "التالي";
+          ctaBtn.disabled = true;
+        }
         return;
       }
+
+      // إذا وصلت الخيارات نوقف المزامنة السريعة
+      stopFastSync();
 
       const isOut = !!outName && myName === outName;
 
@@ -746,6 +975,7 @@
         }
 
         const disabled = chosen ? " disabled" : (isOut ? "" : " disabled");
+
         return `<button class="${cls}" data-word="${escapeHtml(w)}"${disabled}>${escapeHtml(w)}</button>`;
       }).join("");
 
@@ -768,134 +998,87 @@
         });
       }
 
-      // ✅ تجميد زر التالي للمقدم قبل اختيار اللي برا السالفة
+      // ✅ (مطلوب) تجميد زر التالي عند المقدم لين يختار برا السالفة كلمة
       if(isHost){
         ctaBtn.textContent = "التالي";
-        ctaBtn.disabled = !(outName && chosen);
+        ctaBtn.disabled = !chosen;
       }
     }
 
-    function renderVote(names, votesBy){
-      pageTitle.textContent = "التصويت";
+    // ---------- النتائج ----------
+    function computeWinners(data, names){
+      const outName = getOutName(data);
+      const votesBy = (data?.votesBy && typeof data.votesBy === "object") ? data.votesBy : {};
+      const guessBy = (data?.guessBy && typeof data.guessBy === "object") ? data.guessBy : {};
+      const correct = clean(data?.correctWord);
 
-      const selected = myName ? clean(votesBy?.[myName]) : "";
-      const canVote = !!myName;
-
-      const list = names.map(n => {
-        const dis = (!canVote || (myName && n === myName)) ? " disabled" : "";
-        const sel = (selected === n) ? " selected" : "";
-        return `<button class="rowBtn${sel}" data-name="${escapeHtml(n)}"${dis}>${escapeHtml(n)}</button>`;
-      }).join("");
-
-      cardEl.innerHTML = `
-        <div style="width:100%;">
-          <div class="hint">اختر الشخص اللي تشك إنه برا السالفة</div>
-          <div class="list" id="voteList">${list}</div>
-        </div>
-      `;
-
-      const voteList = document.getElementById("voteList");
-      if(voteList){
-        voteList.addEventListener("click", (e) => {
-          const btn = e.target.closest("button.rowBtn");
-          if(!btn || btn.disabled) return;
-          const n = clean(btn.getAttribute("data-name"));
-          if(!n) return;
-          voteFor(n);
-        });
+      let votesAgainstOut = 0;
+      for(const voter of Object.keys(votesBy)){
+        if(clean(votesBy[voter]) === outName) votesAgainstOut++;
       }
 
-      if(isHost){
-        ctaBtn.textContent = "التالي";
-        ctaBtn.disabled = !canHostNextVote(names, votesBy);
+      const outChosen = outName ? clean(guessBy?.[outName]) : "";
+      const outGuessedCorrect = !!outChosen && !!correct && outChosen === correct;
+      const outWins = (!!outName) && (votesAgainstOut === 0 || outGuessedCorrect);
+
+      const winners = new Set();
+
+      if(outWins && outName) winners.add(outName);
+
+      for(const n of names){
+        if(!n || n === outName) continue;
+        if(clean(votesBy?.[n]) === outName) winners.add(n);
       }
+
+      return { winners, outName };
     }
 
-    async function voteFor(targetName){
-      if(!roomId) return;
-      if(!myName){ showErr("اسمك غير معروف في هذا الجهاز."); return; }
-      hideErr();
+    async function applyScoresIfHost(data, names){
+      if(!isHost) return;
+
+      const phase = clean(data?.phase);
+      if(phase !== "results") return;
 
       const ref = roomRef(roomId);
-      try{
-        await runTransaction(db, async (tx) => {
-          const snap = await tx.get(ref);
-          if(!snap.exists()) return;
+      const currentRoundId = clean(data?.roundId) || clean(data?.questionsRoundId) || "round";
+      const applied = clean(data?.scoresAppliedFor);
 
-          const d = snap.data() || {};
-          const phase = clean(d?.phase) || "vote";
-          if(phase !== "vote") return;
+      if(applied === currentRoundId) return;
 
-          const votesBy = (d.votesBy && typeof d.votesBy === "object") ? d.votesBy : {};
-          votesBy[myName] = targetName;
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if(!snap.exists()) return;
+        const d = snap.data() || {};
 
-          tx.update(ref, { updatedAt: serverTimestamp(), tick: increment(1), votesBy });
+        const ph = clean(d?.phase);
+        if(ph !== "results") return;
+
+        const cr = clean(d?.roundId) || clean(d?.questionsRoundId) || "round";
+        const ap = clean(d?.scoresAppliedFor);
+        if(ap === cr) return;
+
+        const players = Array.isArray(d?.players) ? d.players : [];
+        const nm = players.map(p => clean(p?.name)).filter(Boolean);
+        const seen = new Set();
+        const uniq = [];
+        for(const x of nm){ if(!seen.has(x)){ seen.add(x); uniq.push(x); } }
+
+        const { winners } = computeWinners(d, uniq);
+
+        const scoresBy = (d.scoresBy && typeof d.scoresBy === "object") ? d.scoresBy : {};
+        for(const name of uniq){
+          const prev = Number(scoresBy[name] || 0);
+          if(winners.has(name)) scoresBy[name] = prev + 100;
+          else scoresBy[name] = prev + 0;
+        }
+
+        tx.update(ref, {
+          updatedAt: serverTimestamp(),
+          tick: increment(1),
+          scoresBy,
+          scoresAppliedFor: cr
         });
-
-        openVoteModal(myName, targetName);
-      }catch(e){
-        console.warn(e);
-        showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
-      }
-    }
-
-    function canHostNextVote(names, votesBy){
-      if(!isHost) return false;
-      if(!Array.isArray(names) || names.length < 3) return false;
-      const obj = (votesBy && typeof votesBy === "object") ? votesBy : {};
-      for(const n of names){
-        const v = clean(obj[n]);
-        if(!v) return false;
-      }
-      return true;
-    }
-
-    let revealTimer = null;
-    let revealTickTimer = null;
-    function clearRevealTimers(){
-      if(revealTimer) clearTimeout(revealTimer);
-      if(revealTickTimer) clearInterval(revealTickTimer);
-      revealTimer = null;
-      revealTickTimer = null;
-    }
-
-    function renderReveal(names, outName, revealTs){
-      pageTitle.textContent = "الكشف";
-
-      const startTs = Number(revealTs || 0);
-      const now = Date.now();
-      const dur = 3000;
-      const remaining = startTs ? Math.max(0, (startTs + dur) - now) : 0;
-
-      cardEl.innerHTML = `
-        <div style="width:100%;">
-          <div class="hint" style="font-size:26px; font-weight:1000;">اللي برا السالفة هو :</div>
-          <div class="bigName" id="revealName">...</div>
-        </div>
-      `;
-
-      const el = document.getElementById("revealName");
-      clearRevealTimers();
-
-      if(!startTs){
-        el.textContent = outName || "غير معروف";
-        if(isHost){ ctaBtn.textContent="التالي"; ctaBtn.disabled=false; }
-        return;
-      }
-
-      let idx = 0;
-      const safeNames = (names && names.length) ? names : (outName ? [outName] : ["..."]);
-      const runTick = () => { el.textContent = safeNames[idx % safeNames.length] || "..."; idx++; };
-
-      runTick();
-      revealTickTimer = setInterval(runTick, 120);
-
-      revealTimer = setTimeout(() => {
-        clearRevealTimers();
-        el.textContent = outName || "غير معروف";
-      }, remaining);
-
-      if(isHost){ ctaBtn.textContent="التالي"; ctaBtn.disabled=false; }
+      });
     }
 
     function renderResults(data, names){
@@ -918,11 +1101,18 @@
         </div>
       `;
 
-      if(isHost){ ctaBtn.textContent="التالي"; ctaBtn.disabled=false; }
+      stopFastSync();
+
+      if(isHost){
+        ctaBtn.textContent = "التالي";
+        ctaBtn.disabled = false;
+      }
     }
 
+    // ---------- نهاية الجولة ----------
     function renderRoundEnd(){
       pageTitle.textContent = "نهاية الجولة";
+
       cardEl.innerHTML = `
         <div style="width:100%; max-width: 460px; margin: 0 auto;">
           <div class="hint" style="font-size:22px; font-weight:1000;">
@@ -943,7 +1133,11 @@
         </div>
       `;
 
-      if(isHost){ ctaBtn.disabled = true; }
+      stopFastSync();
+
+      if(isHost){
+        ctaBtn.disabled = true;
+      }
 
       const b1 = document.getElementById("btnChangePlayers");
       const b2 = document.getElementById("btnContinue");
@@ -960,6 +1154,7 @@
       }
     }
 
+    // ---------- التحكم بزر التالي (المقدم) ----------
     async function hostNext(data, names){
       if(!isHost) return;
       hideErr();
@@ -982,11 +1177,12 @@
       }
 
       if(phase === "guess"){
+        // ✅ حماية إضافية: لا ينتقل إلا بعد اختيار برا السالفة
         const outName = getOutName(data);
         const guessBy = (data?.guessBy && typeof data?.guessBy === "object") ? data.guessBy : {};
         const chosen = outName ? clean(guessBy?.[outName]) : "";
-        if(!outName || !chosen){
-          showErr("انتظر لين اللي برا السالفة يختار السالفة.");
+        if(!chosen){
+          showErr("انتظر لين يختار اللي برا السالفة السالفة.");
           return;
         }
         await setRoom({ phase: "results" });
@@ -1003,97 +1199,65 @@
       if(!isHost) return;
       const data = window.__lastRoomData || {};
       const names = getPlayersNames(data);
-      try{ await hostNext(data, names); }
-      catch(e){ console.warn(e); showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية."); }
+      try{
+        await hostNext(data, names);
+      }catch(e){
+        console.warn(e);
+        showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
+      }
     });
 
-    function goQuestionsPage(){
-      window.location.href = "multi_questions.html?room=" + encodeURIComponent(roomId);
-    }
-
-    const ROUND_PHASES = new Set(["vote","reveal","guess","results","round_end"]);
-    const QUESTIONS_PHASES = new Set(["questions_intro","questions","suspect","ready","ready_wait","lobby","playing"]);
-
-    function renderByRoom(data, meta){
+    // ---------- Render by phase ----------
+    function renderByRoom(data){
       window.__lastRoomData = data || {};
       if(!data) return;
 
-      const phase = clean(data?.phase);
-      const fromCache = !!meta?.fromCache;
-
-      // ✅ مهم جدًا: لا نسوي تحويل صفحات إذا اللقطة من الكاش (عشان ما يصير فلاش ثم اختفاء)
-      if(!fromCache && QUESTIONS_PHASES.has(phase)){
-        goQuestionsPage();
-        return;
-      }
-
-      if(!ROUND_PHASES.has(phase)){
-        // نخليها “جاري المزامنة” بدون تكسير واجهة
-        pageTitle.textContent = "بانتظار...";
-        cardEl.innerHTML = `<div class="hint">جاري المزامنة...</div>`;
-        if(isHost) ctaBtn.disabled = true;
-        return;
-      }
-
+      const phase = clean(data?.phase) || "vote";
       const names = getPlayersNames(data);
 
+      if(isHost){
+        ctaBtn.classList.remove("vote");
+        ctaBtn.textContent = "التالي";
+      }
+
       if(phase === "vote"){
+        stopFastSync();
         const votesBy = (data?.votesBy && typeof data.votesBy === "object") ? data.votesBy : {};
+        if(isHost){
+          ctaBtn.disabled = !canHostNextVote(names, votesBy);
+        }
         renderVote(names, votesBy);
         return;
       }
+
       if(phase === "reveal"){
-        renderReveal(names, getOutName(data), data?.revealTs);
+        stopFastSync();
+        const outName = getOutName(data);
+        renderReveal(names, outName, data?.revealTs);
         return;
       }
+
       if(phase === "guess"){
-        renderGuess(data);
+        // (renderGuess يتحكم بالمزامنة وبزر التالي حسب الاختيار)
+        renderGuess(data, names);
         return;
       }
+
       if(phase === "results"){
+        stopFastSync();
         renderResults(data, names);
         return;
       }
+
       if(phase === "round_end"){
+        stopFastSync();
         renderRoundEnd();
         return;
       }
-    }
 
-    let gotServer = false;
-    let pollTimer = null;
-
-    function stopPoll(){
-      if(pollTimer) clearInterval(pollTimer);
-      pollTimer = null;
-    }
-
-    async function pollServer(ref){
-      if(gotServer) return;
-      try{
-        const snap = await getDocFromServer(ref);
-        if(snap && snap.exists()){
-          gotServer = true;
-          const d = snap.data() || {};
-          try{ await ensureGuessSetupIfHost(d); }catch(e){}
-          renderByRoom(d, { fromCache:false });
-          stopPoll();
-        }
-      }catch(e){}
-    }
-
-    async function bootstrapFast(ref){
-      // 1) cache
-      try{
-        const cacheSnap = await getDocFromCache(ref);
-        if(cacheSnap && cacheSnap.exists()){
-          const d = cacheSnap.data() || {};
-          renderByRoom(d, { fromCache:true });
-        }
-      }catch(e){}
-
-      // 2) server (مرة مباشرة)
-      await pollServer(ref);
+      pageTitle.textContent = "بانتظار...";
+      cardEl.innerHTML = `<div class="hint">بانتظار المقدم...</div>`;
+      if(isHost) ctaBtn.disabled = true;
     }
 
     (async () => {
@@ -1105,48 +1269,23 @@
       try{
         await ensureRoom(roomId);
 
-        pageTitle.textContent = "جاري التحميل...";
-        cardEl.innerHTML = `<div class="hint">جاري التحميل...</div>`;
-        if(isHost) ctaBtn.disabled = true;
+        // ✅ (جديد) أول ما تفتح الصفحة: نجيب من السيرفر مباشرة عشان ما يعلق
+        await syncFromServerOnce();
 
-        const ref = roomRef(roomId);
-
-        // ✅ رسم سريع (كاش + سيرفر)
-        bootstrapFast(ref);
-
-        // ✅ Fallback Polling: كل 0.8 ثانية لمدة 12 ثانية (إذا onSnapshot ما وصل سيرفر)
-        let tries = 0;
-        pollTimer = setInterval(() => {
-          tries++;
-          if(gotServer || tries > 15){
-            stopPoll();
-            return;
-          }
-          pollServer(ref);
-        }, 800);
-
-        // Listener
-        onSnapshot(ref, { includeMetadataChanges:true }, async (snap) => {
-          if(!snap.exists()) return;
-          const data = snap.data() || {};
-
-          if(!snap.metadata.fromCache) gotServer = true;
+        listenRoom(roomId, async (data) => {
+          if(!data) return;
 
           try{ await ensureGuessSetupIfHost(data); }catch(e){}
-          renderByRoom(data, { fromCache: snap.metadata.fromCache });
+          try{
+            const names = getPlayersNames(data);
+            await applyScoresIfHost(data, names);
+          }catch(e){}
 
-          if(gotServer) stopPoll();
-        }, (err) => {
-          console.warn(err);
-          showErr("تعذر الاتصال. حدّث الصفحة وجرب مرة ثانية.");
+          renderByRoom(data);
         });
 
-        // لو سفاري جمد: نعمل مزامنة عند الرجوع
-        document.addEventListener("visibilitychange", () => {
-          if(!document.hidden) bootstrapFast(ref);
-        });
-        window.addEventListener("focus", () => bootstrapFast(ref));
-        window.addEventListener("online", () => bootstrapFast(ref));
+        // ✅ (جديد) دفعة مزامنة سريعة بالبداية (خصوصًا iOS)
+        startFastSync();
 
       }catch(e){
         console.warn(e);
@@ -1157,4 +1296,4 @@
 </body>
 </html>
 
-<!-- multi_round.html برا السالفة – إصدار 6 (Fix: cache-flicker + polling fallback) -->
+<!-- multi_round.html برا السالفة – إصدار 3 (Fix: instant server sync + freeze Next until out chooses) -->
