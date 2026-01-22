@@ -171,7 +171,6 @@
     }
     .revealText.small{
       font-size: 52px;
-      white-space: nowrap; /* ✅ يخلي 👀 على نفس السطر */
     }
 
     .btn{
@@ -193,6 +192,15 @@
       opacity:.55;
       cursor:not-allowed;
       transform:none;
+    }
+
+    /* ✅ التعديل المطلوب فقط: زر "فهمت" أسفل المربع الزيتي */
+    .cardFace.back{ padding-bottom: 130px; }
+    .cardFace.back #understoodBtn{
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 26px;
     }
 
     .note{
@@ -279,7 +287,7 @@
                 اضغط جاهز حتى تعرف<br/>
                 انت برا السالفة أو داخلها<br/>
                 ولا تخلي احد غيرك<br/>
-                يشوف&nbsp;الشاشة !
+                يشوف الشاشة !
               </div>
 
               <button class="btn" id="readyBtn">جاهز</button>
@@ -289,7 +297,7 @@
             <!-- Back -->
             <div class="cardFace back">
               <div id="revealBox" class="revealText" style="display:none;"></div>
-              <div id="outsiderBox" class="revealText small" style="display:none;">انت برا السالفة👀</div>
+              <div id="outsiderBox" class="revealText small" style="display:none;">انت برا السالفة 👀</div>
 
               <button class="btn" id="understoodBtn" disabled>فهمت</button>
               <div class="note" id="backNote"></div>
@@ -565,4 +573,4 @@
 </body>
 </html>
 
-<!-- ready.html برا السالفة – إصدار 4 (يشوف الشاشة سطر واحد + 👀 بنفس السطر) -->
+<!-- ready.html برا السالفة – إصدار 4 (زر "فهمت" بأسفل المربع الزيتي) -->
