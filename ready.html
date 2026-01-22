@@ -53,7 +53,6 @@
       overflow:hidden;
     }
 
-    /* Top */
     .topRow{
       position: relative;
       min-height: 86px;
@@ -102,7 +101,6 @@
       gap: 14px;
     }
 
-    /* Name pill (مثل الصور) */
     .namePill{
       width: min(440px, 92%);
       background: rgba(216,207,177,0.9);
@@ -117,7 +115,6 @@
     }
     .namePill.hidden{ display:none; }
 
-    /* Flip wrapper */
     .flipWrap{
       width: min(460px, 92%);
       perspective: 1100px;
@@ -147,7 +144,6 @@
       gap: 18px;
     }
 
-    /* Front & Back: نفس شكل الكرت الأخضر بالصورة */
     .front,
     .back{
       background: var(--greenCard);
@@ -156,16 +152,15 @@
       transform: rotateY(180deg);
     }
 
-    /* Text inside green card */
     .frontText{
       color:#fff;
       font-weight: 1000;
       font-size: 36px;
       line-height: 1.35;
       padding: 0 6px;
+      margin-bottom: 12px; /* ✅ فراغ بين الكلام وزر جاهز */
     }
 
-    /* Big reveal text (الكلمة أو انت برا السالفة) */
     .revealText{
       color:#fff;
       font-weight: 1000;
@@ -205,7 +200,7 @@
       font-size: 16px;
       line-height: 1.5;
       opacity: .95;
-      display:none; /* نخفيها عشان تطابق الصور */
+      display:none;
     }
 
     .err{
@@ -219,7 +214,6 @@
       margin: 10px auto 0;
     }
 
-    /* Home button (للمقدم فقط) */
     .homeBtn{
       position:absolute;
       left: 18px;
@@ -229,7 +223,7 @@
       border-radius:50%;
       border:6px solid #000;
       background:#a9dbff;
-      display:none; /* افتراضي: مخفي للاعبين */
+      display:none;
       align-items:center;
       justify-content:center;
       cursor:pointer;
@@ -283,8 +277,8 @@
               <div class="frontText">
                 اضغط جاهز حتى تعرف<br/>
                 انت برا السالفة أو داخلها<br/>
-                ولا تخلي احد غيرك يشوف<br/>
-                الشاشة !
+                ولا تخلي احد غيرك<br/>
+                يشوف الشاشة !
               </div>
 
               <button class="btn" id="readyBtn">جاهز</button>
@@ -352,7 +346,6 @@
     }
     function cleanName(x){ return String(x || "").trim(); }
 
-    // ✅ نحاول نعرف اسم اللاعب الحالي من التخزين (بدون ما نلمس ملفات ثانية)
     const POSSIBLE_PLAYER_KEYS = [
       "bara_playerName_multi",
       "bara_playerName_multi_v1",
@@ -377,13 +370,11 @@
       return "";
     }
 
-    // room from URL
     const params = new URLSearchParams(location.search);
     const roomId = cleanName(params.get("room"));
 
     const myName = getMyName();
 
-    // ✅ إظهار الاسم في المربع العلوي (مثل الصور)
     if(myName){
       namePill.textContent = myName;
       namePill.classList.remove("hidden");
@@ -392,7 +383,6 @@
       namePill.classList.add("hidden");
     }
 
-    // ✅ زر الرئيسية للمقدم فقط (مخفي للاعبين)
     const HOST_ROOM_KEYS = ["bara_roomId_multi_v4","bara_roomId_multi_v3","bara_roomId_multi_v2","bara_roomId_multi_v1"];
     function getHostRoomId(){
       for(const k of HOST_ROOM_KEYS){
@@ -415,7 +405,6 @@
     if(isHost){
       homeBtn.classList.add("show");
       homeBtn.addEventListener("click", () => {
-        // ما نلمس أي منطق لعبة هنا، فقط رجوع للرئيسية للمقدم
         window.location.href = "index.html";
       });
     }
@@ -431,7 +420,6 @@
 
       if(iAmOutsider){
         outsiderBox.style.display = "block";
-        // (اختياري) نخلي backNote مخفي عشان يطابق الصور
       }else{
         revealBox.style.display = "block";
         revealBox.textContent = storyWord || "—";
@@ -444,7 +432,6 @@
       flip.classList.add("isFlipped");
     }
 
-    // ✅ إعداد الجولة (مرة واحدة فقط) داخل Firestore
     async function ensureRoundSetup(roomId){
       const ref = roomRef(roomId);
 
@@ -461,10 +448,7 @@
 
         const outsider = names[Math.floor(Math.random() * names.length)];
 
-        const catKey = cleanName(data.categoryKey);
         const words = Array.isArray(data.words) ? data.words : null;
-
-        // ✅ نستخدم كلمات الداتا إذا كانت موجودة بالغرفة، وإلا نخليها زي ما هي
         let word = "";
         if(Array.isArray(words) && words.length){
           word = words[Math.floor(Math.random() * words.length)];
@@ -504,7 +488,6 @@
         await ensureRoom(roomId);
         await ensureRoundSetup(roomId);
 
-        // ✅ نسجل أن هذا اللاعب ضغط "جاهز"
         try{
           await updateDoc(roomRef(roomId), {
             updatedAt: serverTimestamp(),
@@ -564,12 +547,10 @@
           const word = cleanName(data?.storyWord);
           const outsider = cleanName(data?.outsiderName);
 
-          // إذا البطاقة انقلبت: اعرض كشف الحالة مباشرة من الداتا
           if(flip.classList.contains("isFlipped") && (word || outsider)){
             revealForMe(data);
           }
 
-          // نخفي النوتس عشان يطابق الصور
           frontNote.textContent = "";
           backNote.textContent = "";
         });
@@ -583,4 +564,4 @@
 </body>
 </html>
 
-<!-- ready.html برا السالفة – إصدار 2 (ستايل مطابق للصور + زر المنزل للمقدم فقط) -->
+<!-- ready.html برا السالفة – إصدار 3 (سطر: يشوف الشاشة + فراغ قبل زر جاهز) -->
