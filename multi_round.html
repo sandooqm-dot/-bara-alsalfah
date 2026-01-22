@@ -269,7 +269,6 @@
     }
     .homeBtn svg{ width:34px;height:34px; }
 
-    /* نتائج */
     .resultRow{
       display:flex;
       align-items:center;
@@ -307,7 +306,6 @@
       background:#fff;
     }
 
-    /* خيارات التخمين */
     .optBtn{
       width:100%;
       border: 4px solid #000;
@@ -328,7 +326,6 @@
     .optBtn.wrong{ background:#b92b2b; color:#fff; }
     .optBtn.correct{ background:#1f8a3a; color:#fff; }
 
-    /* مودال نتيجة التصويت */
     .modalBack{
       position: fixed;
       inset: 0;
@@ -338,6 +335,7 @@
       justify-content:center;
       z-index:10000;
       padding: 16px;
+    reveals: 
     }
     .modal{
       width: min(520px, 94vw);
@@ -382,7 +380,7 @@
       font-size: 26px;
       font-weight: 1000;
       cursor:pointer;
-      box-shadow: var(--shadowSmall);
+      box-shadow: 0 8px 0 rgba(0,0,0,0.18);
       -webkit-tap-highlight-color:transparent;
     }
     .modalBtn:active{ transform: translateY(1px); box-shadow: 0 7px 0 rgba(0,0,0,0.18); }
@@ -468,7 +466,6 @@
       updateDoc,
       serverTimestamp,
       increment,
-      getDoc,
       getDocFromCache,
       getDocFromServer,
       onSnapshot
@@ -645,133 +642,6 @@
       });
     }
 
-    async function voteFor(targetName){
-      if(!roomId) return;
-      if(!myName){ showErr("اسمك غير معروف في هذا الجهاز."); return; }
-      hideErr();
-
-      const ref = roomRef(roomId);
-      try{
-        await runTransaction(db, async (tx) => {
-          const snap = await tx.get(ref);
-          if(!snap.exists()) return;
-
-          const d = snap.data() || {};
-          const phase = clean(d?.phase) || "vote";
-          if(phase !== "vote") return;
-
-          const votesBy = (d.votesBy && typeof d.votesBy === "object") ? d.votesBy : {};
-          votesBy[myName] = targetName;
-
-          tx.update(ref, { updatedAt: serverTimestamp(), tick: increment(1), votesBy });
-        });
-
-        openVoteModal(myName, targetName);
-      }catch(e){
-        console.warn(e);
-        showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
-      }
-    }
-
-    function canHostNextVote(names, votesBy){
-      if(!isHost) return false;
-      if(!Array.isArray(names) || names.length < 3) return false;
-      const obj = (votesBy && typeof votesBy === "object") ? votesBy : {};
-      for(const n of names){
-        const v = clean(obj[n]);
-        if(!v) return false;
-      }
-      return true;
-    }
-
-    function renderVote(names, votesBy){
-      pageTitle.textContent = "التصويت";
-
-      const selected = myName ? clean(votesBy?.[myName]) : "";
-      const canVote = !!myName;
-
-      const list = names.map(n => {
-        const dis = (!canVote || (myName && n === myName)) ? " disabled" : "";
-        const sel = (selected === n) ? " selected" : "";
-        return `<button class="rowBtn${sel}" data-name="${escapeHtml(n)}"${dis}>${escapeHtml(n)}</button>`;
-      }).join("");
-
-      cardEl.innerHTML = `
-        <div style="width:100%;">
-          <div class="hint">اختر الشخص اللي تشك إنه برا السالفة</div>
-          <div class="list" id="voteList">${list}</div>
-        </div>
-      `;
-
-      const voteList = document.getElementById("voteList");
-      if(voteList){
-        voteList.addEventListener("click", (e) => {
-          const btn = e.target.closest("button.rowBtn");
-          if(!btn || btn.disabled) return;
-          const n = clean(btn.getAttribute("data-name"));
-          if(!n) return;
-          voteFor(n);
-        });
-      }
-
-      if(isHost){
-        ctaBtn.textContent = "التالي";
-        ctaBtn.classList.remove("vote");
-        ctaBtn.disabled = !canHostNextVote(names, votesBy);
-      }
-    }
-
-    let revealTimer = null;
-    let revealTickTimer = null;
-    function clearRevealTimers(){
-      if(revealTimer) clearTimeout(revealTimer);
-      if(revealTickTimer) clearInterval(revealTickTimer);
-      revealTimer = null;
-      revealTickTimer = null;
-    }
-
-    function renderReveal(names, outName, revealTs){
-      pageTitle.textContent = "الكشف";
-
-      const startTs = Number(revealTs || 0);
-      const now = Date.now();
-      const dur = 3000;
-      const remaining = startTs ? Math.max(0, (startTs + dur) - now) : 0;
-
-      cardEl.innerHTML = `
-        <div style="width:100%;">
-          <div class="hint" style="font-size:26px; font-weight:1000;">اللي برا السالفة هو :</div>
-          <div class="bigName" id="revealName">...</div>
-        </div>
-      `;
-
-      const el = document.getElementById("revealName");
-      clearRevealTimers();
-
-      if(!startTs){
-        el.textContent = outName || "غير معروف";
-        return;
-      }
-
-      let idx = 0;
-      const safeNames = (names && names.length) ? names : (outName ? [outName] : ["..."]);
-      const runTick = () => { el.textContent = safeNames[idx % safeNames.length] || "..."; idx++; };
-
-      runTick();
-      revealTickTimer = setInterval(runTick, 120);
-
-      revealTimer = setTimeout(() => {
-        clearRevealTimers();
-        el.textContent = outName || "غير معروف";
-      }, remaining);
-
-      if(isHost){
-        ctaBtn.textContent = "التالي";
-        ctaBtn.classList.remove("vote");
-        ctaBtn.disabled = false;
-      }
-    }
-
     async function ensureGuessSetupIfHost(data){
       if(!isHost) return;
       const phase = clean(data?.phase);
@@ -898,11 +768,134 @@
         });
       }
 
-      // ✅ تجميد التالي للمقدم قبل اختيار اللي برا السالفة
+      // ✅ تجميد زر التالي للمقدم قبل اختيار اللي برا السالفة
       if(isHost){
         ctaBtn.textContent = "التالي";
         ctaBtn.disabled = !(outName && chosen);
       }
+    }
+
+    function renderVote(names, votesBy){
+      pageTitle.textContent = "التصويت";
+
+      const selected = myName ? clean(votesBy?.[myName]) : "";
+      const canVote = !!myName;
+
+      const list = names.map(n => {
+        const dis = (!canVote || (myName && n === myName)) ? " disabled" : "";
+        const sel = (selected === n) ? " selected" : "";
+        return `<button class="rowBtn${sel}" data-name="${escapeHtml(n)}"${dis}>${escapeHtml(n)}</button>`;
+      }).join("");
+
+      cardEl.innerHTML = `
+        <div style="width:100%;">
+          <div class="hint">اختر الشخص اللي تشك إنه برا السالفة</div>
+          <div class="list" id="voteList">${list}</div>
+        </div>
+      `;
+
+      const voteList = document.getElementById("voteList");
+      if(voteList){
+        voteList.addEventListener("click", (e) => {
+          const btn = e.target.closest("button.rowBtn");
+          if(!btn || btn.disabled) return;
+          const n = clean(btn.getAttribute("data-name"));
+          if(!n) return;
+          voteFor(n);
+        });
+      }
+
+      if(isHost){
+        ctaBtn.textContent = "التالي";
+        ctaBtn.disabled = !canHostNextVote(names, votesBy);
+      }
+    }
+
+    async function voteFor(targetName){
+      if(!roomId) return;
+      if(!myName){ showErr("اسمك غير معروف في هذا الجهاز."); return; }
+      hideErr();
+
+      const ref = roomRef(roomId);
+      try{
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(ref);
+          if(!snap.exists()) return;
+
+          const d = snap.data() || {};
+          const phase = clean(d?.phase) || "vote";
+          if(phase !== "vote") return;
+
+          const votesBy = (d.votesBy && typeof d.votesBy === "object") ? d.votesBy : {};
+          votesBy[myName] = targetName;
+
+          tx.update(ref, { updatedAt: serverTimestamp(), tick: increment(1), votesBy });
+        });
+
+        openVoteModal(myName, targetName);
+      }catch(e){
+        console.warn(e);
+        showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
+      }
+    }
+
+    function canHostNextVote(names, votesBy){
+      if(!isHost) return false;
+      if(!Array.isArray(names) || names.length < 3) return false;
+      const obj = (votesBy && typeof votesBy === "object") ? votesBy : {};
+      for(const n of names){
+        const v = clean(obj[n]);
+        if(!v) return false;
+      }
+      return true;
+    }
+
+    let revealTimer = null;
+    let revealTickTimer = null;
+    function clearRevealTimers(){
+      if(revealTimer) clearTimeout(revealTimer);
+      if(revealTickTimer) clearInterval(revealTickTimer);
+      revealTimer = null;
+      revealTickTimer = null;
+    }
+
+    function renderReveal(names, outName, revealTs){
+      pageTitle.textContent = "الكشف";
+
+      const startTs = Number(revealTs || 0);
+      const now = Date.now();
+      const dur = 3000;
+      const remaining = startTs ? Math.max(0, (startTs + dur) - now) : 0;
+
+      cardEl.innerHTML = `
+        <div style="width:100%;">
+          <div class="hint" style="font-size:26px; font-weight:1000;">اللي برا السالفة هو :</div>
+          <div class="bigName" id="revealName">...</div>
+        </div>
+      `;
+
+      const el = document.getElementById("revealName");
+      clearRevealTimers();
+
+      if(!startTs){
+        el.textContent = outName || "غير معروف";
+        if(isHost){ ctaBtn.textContent="التالي"; ctaBtn.disabled=false; }
+        return;
+      }
+
+      let idx = 0;
+      const safeNames = (names && names.length) ? names : (outName ? [outName] : ["..."]);
+      const runTick = () => { el.textContent = safeNames[idx % safeNames.length] || "..."; idx++; };
+
+      runTick();
+      revealTickTimer = setInterval(runTick, 120);
+
+      revealTimer = setTimeout(() => {
+        clearRevealTimers();
+        el.textContent = outName || "غير معروف";
+      }, remaining);
+
+      if(isHost){ ctaBtn.textContent="التالي"; ctaBtn.disabled=false; }
     }
 
     function renderResults(data, names){
@@ -925,12 +918,11 @@
         </div>
       `;
 
-      if(isHost){ ctaBtn.textContent = "التالي"; ctaBtn.disabled = false; }
+      if(isHost){ ctaBtn.textContent="التالي"; ctaBtn.disabled=false; }
     }
 
     function renderRoundEnd(){
       pageTitle.textContent = "نهاية الجولة";
-
       cardEl.innerHTML = `
         <div style="width:100%; max-width: 460px; margin: 0 auto;">
           <div class="hint" style="font-size:22px; font-weight:1000;">
@@ -1022,28 +1014,26 @@
     const ROUND_PHASES = new Set(["vote","reveal","guess","results","round_end"]);
     const QUESTIONS_PHASES = new Set(["questions_intro","questions","suspect","ready","ready_wait","lobby","playing"]);
 
-    let lastGoodPhase = "";
-
-    function renderByRoom(data){
+    function renderByRoom(data, meta){
       window.__lastRoomData = data || {};
       if(!data) return;
 
       const phase = clean(data?.phase);
+      const fromCache = !!meta?.fromCache;
 
-      if(QUESTIONS_PHASES.has(phase)){
+      // ✅ مهم جدًا: لا نسوي تحويل صفحات إذا اللقطة من الكاش (عشان ما يصير فلاش ثم اختفاء)
+      if(!fromCache && QUESTIONS_PHASES.has(phase)){
         goQuestionsPage();
         return;
       }
 
       if(!ROUND_PHASES.has(phase)){
-        if(lastGoodPhase) return;
+        // نخليها “جاري المزامنة” بدون تكسير واجهة
         pageTitle.textContent = "بانتظار...";
         cardEl.innerHTML = `<div class="hint">جاري المزامنة...</div>`;
         if(isHost) ctaBtn.disabled = true;
         return;
       }
-
-      lastGoodPhase = phase;
 
       const names = getPlayersNames(data);
 
@@ -1070,26 +1060,40 @@
       }
     }
 
-    // ✅ رسم فوري: (1) من الكاش فورًا (2) من السيرفر بعدها
+    let gotServer = false;
+    let pollTimer = null;
+
+    function stopPoll(){
+      if(pollTimer) clearInterval(pollTimer);
+      pollTimer = null;
+    }
+
+    async function pollServer(ref){
+      if(gotServer) return;
+      try{
+        const snap = await getDocFromServer(ref);
+        if(snap && snap.exists()){
+          gotServer = true;
+          const d = snap.data() || {};
+          try{ await ensureGuessSetupIfHost(d); }catch(e){}
+          renderByRoom(d, { fromCache:false });
+          stopPoll();
+        }
+      }catch(e){}
+    }
+
     async function bootstrapFast(ref){
-      // 1) cache instant (إذا موجود)
+      // 1) cache
       try{
         const cacheSnap = await getDocFromCache(ref);
         if(cacheSnap && cacheSnap.exists()){
           const d = cacheSnap.data() || {};
-          renderByRoom(d);
+          renderByRoom(d, { fromCache:true });
         }
       }catch(e){}
 
-      // 2) server (أدق)
-      try{
-        const serverSnap = await getDocFromServer(ref);
-        if(serverSnap && serverSnap.exists()){
-          const d = serverSnap.data() || {};
-          try{ await ensureGuessSetupIfHost(d); }catch(e){}
-          renderByRoom(d);
-        }
-      }catch(e){}
+      // 2) server (مرة مباشرة)
+      await pollServer(ref);
     }
 
     (async () => {
@@ -1107,21 +1111,37 @@
 
         const ref = roomRef(roomId);
 
-        // ✅ أهم سطر: يجيب آخر حالة فورًا (من الكاش غالبًا) بدون انتظار 3-5 ثواني
+        // ✅ رسم سريع (كاش + سيرفر)
         bootstrapFast(ref);
 
-        // Listener طبيعي
+        // ✅ Fallback Polling: كل 0.8 ثانية لمدة 12 ثانية (إذا onSnapshot ما وصل سيرفر)
+        let tries = 0;
+        pollTimer = setInterval(() => {
+          tries++;
+          if(gotServer || tries > 15){
+            stopPoll();
+            return;
+          }
+          pollServer(ref);
+        }, 800);
+
+        // Listener
         onSnapshot(ref, { includeMetadataChanges:true }, async (snap) => {
           if(!snap.exists()) return;
           const data = snap.data() || {};
+
+          if(!snap.metadata.fromCache) gotServer = true;
+
           try{ await ensureGuessSetupIfHost(data); }catch(e){}
-          renderByRoom(data);
+          renderByRoom(data, { fromCache: snap.metadata.fromCache });
+
+          if(gotServer) stopPoll();
         }, (err) => {
           console.warn(err);
           showErr("تعذر الاتصال. حدّث الصفحة وجرب مرة ثانية.");
         });
 
-        // إذا Safari جمّد الليسنر: لما يرجع المستخدم للصفحة ننعش سريعًا
+        // لو سفاري جمد: نعمل مزامنة عند الرجوع
         document.addEventListener("visibilitychange", () => {
           if(!document.hidden) bootstrapFast(ref);
         });
@@ -1137,4 +1157,4 @@
 </body>
 </html>
 
-<!-- multi_round.html برا السالفة – إصدار 5 -->
+<!-- multi_round.html برا السالفة – إصدار 6 (Fix: cache-flicker + polling fallback) -->
