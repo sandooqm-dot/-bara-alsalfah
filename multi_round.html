@@ -470,7 +470,8 @@
       runTransaction,
       updateDoc,
       serverTimestamp,
-      increment
+      increment,
+      getDoc
     } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
     const pageTitle = document.getElementById("pageTitle");
@@ -600,7 +601,6 @@
         || "";
     }
 
-    // نفس قوائم الكلمات الموجودة عندك
     const WORDS = {
       eat:  ["كبسة","مفطح","جريش","مندي","مراصيع","بسبوسة","هريس"],
       zoo:  ["أسد","نمر","زرافة","فيل","ذئب","غزال","قندس"],
@@ -614,12 +614,14 @@
       const story = getStoryWord(data);
 
       let pool = Array.isArray(data?.categoryWords) ? data.categoryWords : [];
+
       if(!Array.isArray(pool) || pool.length < 7){
         const key = clean(data?.categoryKey);
         pool = Array.isArray(WORDS[key]) ? WORDS[key] : [];
       }
 
       const cleanPool = (pool || []).map(w => clean(w)).filter(Boolean);
+
       if(!story || cleanPool.length < 7) return null;
 
       const uniq = Array.from(new Set(cleanPool));
@@ -636,6 +638,7 @@
       if(picks.length < 6) return null;
 
       const opts = picks.concat([story]);
+
       for(let i=opts.length-1;i>0;i--){
         const j = Math.floor(Math.random()*(i+1));
         [opts[i], opts[j]] = [opts[j], opts[i]];
@@ -794,55 +797,50 @@
     }
 
     // ---------- التخمين ----------
-    // ✅ إصلاح مشكلة ظهور "جاري تجهيز..." عند المقدم: تجهيز الخيارات تلقائياً إذا كانت ناقصة (مرة واحدة وبحماية)
-    async function ensureGuessSetupIfNeeded(data){
+    async function ensureGuessSetupIfHost(data){
+      if(!isHost) return;
       const phase = clean(data?.phase);
       if(phase !== "guess") return;
 
+      const ref = roomRef(roomId);
+
+      const currentRoundId = clean(data?.roundId) || clean(data?.questionsRoundId) || "";
+      const guessRoundId = clean(data?.guessRoundId) || "";
       const hasOpts = Array.isArray(data?.guessOptions) && data.guessOptions.length === 7;
-      const hasCorrect = !!clean(data?.correctWord);
-      if(hasOpts && hasCorrect) return;
+      const story = getStoryWord(data);
+
+      if(hasOpts && guessRoundId && currentRoundId && guessRoundId === currentRoundId && story) return;
 
       const built = buildGuessOptions(data);
       if(!built) return;
 
-      const ref = roomRef(roomId);
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if(!snap.exists()) return;
+        const d = snap.data() || {};
 
-      try{
-        await runTransaction(db, async (tx) => {
-          const snap = await tx.get(ref);
-          if(!snap.exists()) return;
-          const d = snap.data() || {};
+        const ph = clean(d?.phase);
+        if(ph !== "guess") return;
 
-          const ph = clean(d?.phase);
-          if(ph !== "guess") return;
+        const cr = clean(d?.roundId) || clean(d?.questionsRoundId) || "";
+        const gr = clean(d?.guessRoundId) || "";
+        const ok = Array.isArray(d?.guessOptions) && d.guessOptions.length === 7;
+        const st = getStoryWord(d);
 
-          const ok = Array.isArray(d?.guessOptions) && d.guessOptions.length === 7;
-          const cw = clean(d?.correctWord);
-          if(ok && cw) return;
+        if(ok && st && cr && gr === cr) return;
 
-          // حماية: إذا بدأ اللي برا السالفة يختار/انحفظ اختياره، لا نعيد ضبط أي شيء
-          const gb = (d.guessBy && typeof d.guessBy === "object") ? d.guessBy : {};
-          const outName = getOutName(d);
-          const alreadyChosen = outName ? !!clean(gb?.[outName]) : (Object.keys(gb).length > 0);
-          if(alreadyChosen) return;
+        const b = buildGuessOptions(d);
+        if(!b) return;
 
-          const b = buildGuessOptions(d);
-          if(!b) return;
-
-          const currentRoundId = clean(d?.roundId) || clean(d?.questionsRoundId) || "";
-          tx.update(ref, {
-            updatedAt: serverTimestamp(),
-            tick: increment(1),
-            guessOptions: b.opts,
-            correctWord: b.story,
-            guessBy: gb && typeof gb === "object" ? gb : {},
-            guessRoundId: currentRoundId || clean(d?.guessRoundId) || String(Date.now())
-          });
+        tx.update(ref, {
+          updatedAt: serverTimestamp(),
+          tick: increment(1),
+          guessOptions: b.opts,
+          correctWord: b.story,
+          guessBy: {},
+          guessRoundId: cr || String(Date.now())
         });
-      }catch(e){
-        // نتجاهل أي خطأ هنا حتى ما نصنع مشاكل جديدة، والصفحة ستكمل تستمع للتحديثات
-      }
+      });
     }
 
     async function chooseGuess(word){
@@ -889,7 +887,7 @@
       const outName = getOutName(data);
       const opts = Array.isArray(data?.guessOptions) ? data.guessOptions.map(x=>clean(x)).filter(Boolean) : [];
       const correct = clean(data?.correctWord);
-      const guessBy = (data?.guessBy && typeof data?.guessBy === "object") ? data?.guessBy : {};
+      const guessBy = (data?.guessBy && typeof data?.guessBy === "object") ? data.guessBy : {};
       const chosen = outName ? clean(guessBy?.[outName]) : "";
 
       if(opts.length !== 7 || !correct){
@@ -940,9 +938,10 @@
         });
       }
 
+      // ✅ (مطلوب) تجميد "التالي" عند المقدم قبل اختيار اللي برا السالفة
       if(isHost){
         ctaBtn.textContent = "التالي";
-        ctaBtn.disabled = false;
+        ctaBtn.disabled = !(outName && chosen);
       }
     }
 
@@ -950,7 +949,7 @@
     function computeWinners(data, names){
       const outName = getOutName(data);
       const votesBy = (data?.votesBy && typeof data.votesBy === "object") ? data.votesBy : {};
-      const guessBy = (data?.guessBy && typeof data.guessBy === "object") ? data.guessBy : {};
+      const guessBy = (data?.guessBy && typeof data?.guessBy === "object") ? data.guessBy : {};
       const correct = clean(data?.correctWord);
 
       let votesAgainstOut = 0;
@@ -960,11 +959,10 @@
 
       const outChosen = outName ? clean(guessBy?.[outName]) : "";
       const outGuessedCorrect = !!outChosen && !!correct && outChosen === correct;
-
-      // نفس قواعدك: يفوز إذا ما أحد صوّت عليه، أو إذا صوّتوا عليه لكنه اختار الصح
       const outWins = (!!outName) && (votesAgainstOut === 0 || outGuessedCorrect);
 
       const winners = new Set();
+
       if(outWins && outName) winners.add(outName);
 
       for(const n of names){
@@ -1115,6 +1113,14 @@
       }
 
       if(phase === "guess"){
+        // ✅ (مطلوب) لا تسمح للمقدم بالانتقال قبل اختيار اللي برا السالفة
+        const outName = getOutName(data);
+        const guessBy = (data?.guessBy && typeof data?.guessBy === "object") ? data.guessBy : {};
+        const chosen = outName ? clean(guessBy?.[outName]) : "";
+        if(!outName || !chosen){
+          showErr("انتظر لين اللي برا السالفة يختار السالفة.");
+          return;
+        }
         await setRoom({ phase: "results" });
         return;
       }
@@ -1146,7 +1152,6 @@
       const names = getPlayersNames(data);
 
       if(isHost){
-        ctaBtn.disabled = false;
         ctaBtn.classList.remove("vote");
         ctaBtn.textContent = "التالي";
       }
@@ -1186,6 +1191,29 @@
       if(isHost) ctaBtn.disabled = true;
     }
 
+    // ✅ (مطلوب) حل التعليق: fallback fetch + refetch عند رجوع الصفحة
+    let firstDataArrived = false;
+    let lastSnapshotAt = 0;
+    let safetyTimer = null;
+    let pollTimer = null;
+
+    async function forceFetch(){
+      if(!roomId) return;
+      try{
+        const snap = await getDoc(roomRef(roomId));
+        if(snap && snap.exists()){
+          const data = snap.data();
+          // نرسم حتى لو الليسنر ما اشتغل
+          renderByRoom(data);
+        }
+      }catch(e){}
+    }
+
+    function markSnapshotArrived(){
+      firstDataArrived = true;
+      lastSnapshotAt = Date.now();
+    }
+
     (async () => {
       if(!roomId){
         showErr("الرابط غير صحيح: رمز الغرفة غير موجود.");
@@ -1195,12 +1223,35 @@
       try{
         await ensureRoom(roomId);
 
+        // إذا ما وصل أول تحديث خلال 2.5 ثانية → نسوي جلب مباشر
+        safetyTimer = setTimeout(() => {
+          if(!firstDataArrived){
+            forceFetch();
+          }
+        }, 2500);
+
+        // بولنغ خفيف: إذا ما فيه تحديث 8 ثواني → جلب مباشر (يحارب تجميد سفاري)
+        pollTimer = setInterval(() => {
+          if(document.hidden) return;
+          if(!lastSnapshotAt) return;
+          if(Date.now() - lastSnapshotAt > 8000){
+            forceFetch();
+          }
+        }, 4000);
+
+        // عند رجوع المستخدم للصفحة (Safari يجمد أحيانًا) → جلب مباشر
+        document.addEventListener("visibilitychange", () => {
+          if(!document.hidden){
+            forceFetch();
+          }
+        });
+
         listenRoom(roomId, async (data) => {
           if(!data) return;
 
-          // ✅ (الإصلاح) إذا دخلنا guess والخيارات ناقصة، جهّزها مباشرة حتى تظهر للمقدم بدون انتظار اختيار اللي برا السالفة
-          try{ await ensureGuessSetupIfNeeded(data); }catch(e){}
+          markSnapshotArrived();
 
+          try{ await ensureGuessSetupIfHost(data); }catch(e){}
           try{
             const names = getPlayersNames(data);
             await applyScoresIfHost(data, names);
@@ -1208,6 +1259,11 @@
 
           renderByRoom(data);
         });
+
+        // رسم مبدئي لطيف بدل ما يعلق على نفس الشكل
+        pageTitle.textContent = "بانتظار...";
+        cardEl.innerHTML = `<div class="hint">جاري الاتصال...</div>`;
+        if(isHost) ctaBtn.disabled = true;
 
       }catch(e){
         console.warn(e);
@@ -1218,4 +1274,4 @@
 </body>
 </html>
 
-<!-- multi_round.html برا السالفة – إصدار 3 (إصلاح ظهور خيارات التخمين عند المقدم) -->
+<!-- multi_round.html برا السالفة – إصدار 3 -->
