@@ -9,14 +9,18 @@
     :root{
       --bg:#e9e3d6;
       --green:#3f5b2a;
-      --green2:#6e8554;
+      --greenCard:#6e8554;
       --yellow:#f2c300;
-      --blue:#bfe3ff;
       --text:#1a1a1a;
-      --muted:#9a9a9a;
 
       --shadow: 0 10px 0 rgba(0,0,0,0.18);
       --shadowSmall: 0 8px 0 rgba(0,0,0,0.18);
+
+      --frameRadius: 28px;
+      --frameBorder: 6px;
+
+      --cardRadius: 22px;
+      --nameRadius: 22px;
     }
 
     *{ box-sizing:border-box; }
@@ -38,9 +42,9 @@
     .frame{
       width: min(520px, 100%);
       background: var(--bg);
-      border: 6px solid var(--green);
-      border-radius: 26px;
-      padding: 18px 16px 22px;
+      border: var(--frameBorder) solid var(--green);
+      border-radius: var(--frameRadius);
+      padding: 18px 16px 26px;
       position: relative;
 
       min-height: calc(100vh - 28px);
@@ -49,10 +53,11 @@
       overflow:hidden;
     }
 
+    /* Top */
     .topRow{
       position: relative;
       min-height: 86px;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       padding-left: 118px;
     }
     .logo{
@@ -84,18 +89,35 @@
       color:#2a2a2a;
       font-weight: 900;
       font-size: 18px;
-      margin: 6px 0 12px;
+      margin: 6px 0 14px;
     }
 
     .center{
       flex:1;
       display:flex;
       align-items:center;
-      justify-content:center;
-      padding: 10px 0 18px;
+      justify-content:flex-start;
+      flex-direction:column;
+      padding: 6px 0 18px;
+      gap: 14px;
     }
 
-    /* Card flip */
+    /* Name pill (مثل الصور) */
+    .namePill{
+      width: min(440px, 92%);
+      background: rgba(216,207,177,0.9);
+      border-radius: var(--nameRadius);
+      padding: 16px 14px;
+      text-align:center;
+      color: var(--green);
+      font-weight: 1000;
+      font-size: 42px;
+      line-height: 1;
+      letter-spacing: .2px;
+    }
+    .namePill.hidden{ display:none; }
+
+    /* Flip wrapper */
     .flipWrap{
       width: min(460px, 92%);
       perspective: 1100px;
@@ -105,95 +127,70 @@
       position:relative;
       transform-style: preserve-3d;
       transition: transform .75s ease;
+      min-height: 420px;
     }
     .flip.isFlipped{
       transform: rotateY(180deg);
     }
 
     .cardFace{
-      width:100%;
-      min-height: 340px;
-      border-radius: 22px;
-      border: 6px solid #000;
-      box-shadow: var(--shadow);
-      background:#fff;
-      padding: 18px 16px 16px;
+      position:absolute;
+      inset:0;
+      border-radius: var(--cardRadius);
       backface-visibility: hidden;
       display:flex;
       flex-direction:column;
       align-items:center;
       justify-content:center;
-      gap: 14px;
       text-align:center;
+      padding: 22px 18px;
+      gap: 18px;
     }
 
-    .front{
-      background: rgba(255,255,255,0.9);
-    }
-
+    /* Front & Back: نفس شكل الكرت الأخضر بالصورة */
+    .front,
     .back{
-      position:absolute;
-      inset:0;
+      background: var(--greenCard);
+    }
+    .back{
       transform: rotateY(180deg);
-      background: rgba(191,227,255,0.55);
     }
 
-    .bigTitle{
-      color:#111;
+    /* Text inside green card */
+    .frontText{
+      color:#fff;
       font-weight: 1000;
-      font-size: 34px;
-      line-height: 1.15;
-      margin: 0;
-    }
-    .hint{
-      color:#3a3a3a;
-      font-weight: 900;
-      font-size: 16px;
-      line-height: 1.45;
-      max-width: 360px;
+      font-size: 36px;
+      line-height: 1.35;
+      padding: 0 6px;
     }
 
-    .wordBox{
-      width: min(360px, 88%);
-      background:#fff;
-      border: 5px solid var(--green2);
-      border-radius: 18px;
-      padding: 14px 12px;
+    /* Big reveal text (الكلمة أو انت برا السالفة) */
+    .revealText{
+      color:#fff;
       font-weight: 1000;
-      font-size: 34px;
+      font-size: 58px;
+      line-height: 1.1;
       letter-spacing: .2px;
-      box-shadow: 0 8px 0 rgba(0,0,0,0.10);
-      color:#111;
+      padding: 0 10px;
     }
-
-    .outsiderBox{
-      width: min(360px, 88%);
-      background: rgba(242,195,0,0.25);
-      border: 5px solid rgba(0,0,0,0.25);
-      border-radius: 18px;
-      padding: 14px 12px;
-      font-weight: 1000;
-      font-size: 30px;
-      color:#111;
-      line-height: 1.2;
+    .revealText.small{
+      font-size: 52px;
     }
 
     .btn{
       width: min(360px, 82%);
-      border: 4px solid #000;
+      border: 0;
       border-radius: 22px;
-      padding: 14px 18px;
-      font-size: 28px;
+      padding: 16px 18px;
+      font-size: 46px;
       font-weight: 1000;
-      box-shadow: var(--shadowSmall);
       cursor:pointer;
       -webkit-tap-highlight-color:transparent;
       text-align:center;
       background: var(--yellow);
       color:#111;
-    }
-    .btn.secondary{
-      background: var(--blue);
+      box-shadow: var(--shadowSmall);
     }
     .btn:active{ transform: translateY(1px); box-shadow: 0 7px 0 rgba(0,0,0,0.18); }
     .btn[disabled]{
@@ -202,13 +199,13 @@
       transform:none;
     }
 
-    .smallNote{
-      margin-top: 6px;
-      color:#4a4a4a;
+    .note{
+      color: rgba(255,255,255,0.9);
       font-weight: 900;
-      font-size: 14px;
+      font-size: 16px;
       line-height: 1.5;
-      max-width: 420px;
+      opacity: .95;
+      display:none; /* نخفيها عشان تطابق الصور */
     }
 
     .err{
@@ -222,14 +219,44 @@
       margin: 10px auto 0;
     }
 
+    /* Home button (للمقدم فقط) */
+    .homeBtn{
+      position:absolute;
+      left: 18px;
+      bottom: 18px;
+      width:72px;
+      height:72px;
+      border-radius:50%;
+      border:6px solid #000;
+      background:#a9dbff;
+      display:none; /* افتراضي: مخفي للاعبين */
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      box-shadow:0 8px 0 rgba(0,0,0,.25);
+      -webkit-tap-highlight-color:transparent;
+      z-index: 10;
+    }
+    .homeBtn.show{ display:flex; }
+    .homeBtn:active{ transform:translateY(1px); box-shadow:0 7px 0 rgba(0,0,0,.25); }
+    .homeBtn svg{ width:44px;height:44px; fill:#111; }
+
+    @media (max-width: 420px){
+      .namePill{ font-size: 40px; }
+      .frontText{ font-size: 34px; }
+      .revealText{ font-size: 54px; }
+      .btn{ font-size: 44px; }
+    }
     @media (max-width: 360px){
       .h1{ font-size: 30px; top: 20px; right: 16px; }
       .logo{ width: 90px; height: 90px; }
-      .bigTitle{ font-size: 30px; }
-      .wordBox{ font-size: 30px; }
-      .outsiderBox{ font-size: 28px; }
-      .btn{ font-size: 26px; }
-      .cardFace{ min-height: 320px; }
+      .namePill{ font-size: 36px; }
+      .frontText{ font-size: 30px; }
+      .revealText{ font-size: 48px; }
+      .btn{ font-size: 40px; }
+      .flip{ min-height: 400px; }
+      .homeBtn{ width:66px;height:66px; }
+      .homeBtn svg{ width:40px;height:40px; }
     }
   </style>
 </head>
@@ -246,26 +273,31 @@
       <div class="sub">اضغط "جاهز" عشان تنقلب البطاقة وتظهر لك السالفة</div>
 
       <div class="center">
+        <div class="namePill" id="namePill"></div>
+
         <div class="flipWrap">
           <div class="flip" id="flip">
 
             <!-- Front -->
             <div class="cardFace front">
-              <h2 class="bigTitle">جاهز؟</h2>
-              <div class="hint">إذا انقلبت البطاقة لا توري أحد، خلك مركز 👀</div>
+              <div class="frontText">
+                اضغط جاهز حتى تعرف<br/>
+                انت برا السالفة أو داخلها<br/>
+                ولا تخلي احد غيرك يشوف<br/>
+                الشاشة !
+              </div>
+
               <button class="btn" id="readyBtn">جاهز</button>
-              <div class="smallNote" id="frontNote"></div>
+              <div class="note" id="frontNote"></div>
             </div>
 
             <!-- Back -->
             <div class="cardFace back">
-              <div id="revealBox" class="wordBox" style="display:none;"></div>
-              <div id="outsiderBox" class="outsiderBox" style="display:none;">أنت برا السالفة</div>
+              <div id="revealBox" class="revealText" style="display:none;"></div>
+              <div id="outsiderBox" class="revealText small" style="display:none;">انت برا السالفة 👀</div>
 
-              <div class="hint" id="backHint">إذا فهمت السالفة اضغط "فهمت"</div>
-              <button class="btn secondary" id="understoodBtn" disabled>فهمت</button>
-
-              <div class="smallNote" id="backNote"></div>
+              <button class="btn" id="understoodBtn" disabled>فهمت</button>
+              <div class="note" id="backNote"></div>
             </div>
 
           </div>
@@ -273,6 +305,13 @@
       </div>
 
       <div id="err" class="err"></div>
+
+      <!-- زر الرئيسية (للمقدم فقط) -->
+      <button class="homeBtn" id="homeBtn" aria-label="الرئيسية" title="الرئيسية">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
+        </svg>
+      </button>
 
     </div>
   </div>
@@ -299,6 +338,9 @@
     const backNote = document.getElementById("backNote");
 
     const errBox = document.getElementById("err");
+
+    const namePill = document.getElementById("namePill");
+    const homeBtn  = document.getElementById("homeBtn");
 
     function showErr(msg){
       errBox.textContent = msg;
@@ -335,133 +377,46 @@
       return "";
     }
 
+    // room from URL
     const params = new URLSearchParams(location.search);
     const roomId = cleanName(params.get("room"));
+
     const myName = getMyName();
 
-    // ------------------------------------------------------------------
-    // ✅ تحميل كلمات الكتاغوري من ملفات data/*.js (بدون getDoc نهائياً)
-    // ------------------------------------------------------------------
-
-    function isSafeKey(k){
-      return /^[a-z0-9_-]+$/i.test(String(k || ""));
+    // ✅ إظهار الاسم في المربع العلوي (مثل الصور)
+    if(myName){
+      namePill.textContent = myName;
+      namePill.classList.remove("hidden");
+    }else{
+      namePill.textContent = "";
+      namePill.classList.add("hidden");
     }
 
-    function normalizeWords(list){
-      const arr = Array.isArray(list) ? list : [];
-      const clean = arr.map(x => cleanName(x)).filter(Boolean);
-      return Array.from(new Set(clean));
+    // ✅ زر الرئيسية للمقدم فقط (مخفي للاعبين)
+    const HOST_ROOM_KEYS = ["bara_roomId_multi_v4","bara_roomId_multi_v3","bara_roomId_multi_v2","bara_roomId_multi_v1"];
+    function getHostRoomId(){
+      for(const k of HOST_ROOM_KEYS){
+        const v = cleanName(sessionStorage.getItem(k));
+        if(v) return v;
+      }
+      return "";
     }
-
-    function loadCategoryWords(catKey){
-      return new Promise((resolve) => {
-        const key = cleanName(catKey);
-        if(!key || !isSafeKey(key)) return resolve([]);
-
-        window.BARA_WORDS = window.BARA_WORDS || {};
-
-        const existing = window.BARA_WORDS[key];
-        if(Array.isArray(existing) && existing.length){
-          return resolve(normalizeWords(existing));
-        }
-
-        const s = document.createElement("script");
-        s.src = `./data/${key}.js?v=1`;
-        s.async = true;
-
-        // ✅ تايم أوت عشان ما يعلق الزر إذا صار تعليق بالشبكة
-        const t = setTimeout(() => resolve([]), 4000);
-
-        s.onload = () => {
-          clearTimeout(t);
-          const arr = window.BARA_WORDS?.[key];
-          resolve(normalizeWords(arr));
-        };
-        s.onerror = () => {
-          clearTimeout(t);
-          resolve([]);
-        };
-
-        document.head.appendChild(s);
-      });
+    function isHostByName(){
+      if(!myName) return false;
+      for(const k of POSSIBLE_HOST_KEYS){
+        const v = cleanName(localStorage.getItem(k));
+        if(v && v === myName) return true;
+      }
+      return false;
     }
+    const hostRoomId = getHostRoomId();
+    const isHost = (!!roomId && ((!!hostRoomId && hostRoomId === roomId) || isHostByName()));
 
-    function pickWordSmart(words, usedWords, lastWord){
-      const all = normalizeWords(words);
-      if(!all.length) return { picked:"", usedNext: [] };
-
-      const used = normalizeWords(usedWords);
-      const last = cleanName(lastWord);
-
-      let pool = all.filter(w => !used.includes(w));
-
-      if(!pool.length){
-        pool = all.slice();
-        if(last && pool.length > 1){
-          pool = pool.filter(w => w !== last);
-          if(!pool.length) pool = all.slice();
-        }
-        const picked = pool[Math.floor(Math.random() * pool.length)];
-        return { picked, usedNext: [picked] };
-      }
-
-      if(last && pool.length > 1){
-        const alt = pool.filter(w => w !== last);
-        if(alt.length) pool = alt;
-      }
-
-      const picked = pool[Math.floor(Math.random() * pool.length)];
-      const usedNext = used.includes(picked) ? used : used.concat([picked]);
-      return { picked, usedNext };
-    }
-
-    async function ensureRoundSetup(roomId){
-      const ref = roomRef(roomId);
-
-      // ✅ ناخذ categoryKey من آخر تحديث للغرفة (من listenRoom)
-      const catKey = cleanName(window.__lastRoomData?.categoryKey);
-      if(!catKey){
-        throw new Error("جاري تحميل بيانات الغرفة… انتظر ثانية ثم اضغط جاهز مرة ثانية.");
-      }
-
-      const words = await loadCategoryWords(catKey);
-      if(!words.length){
-        throw new Error("تعذر تحميل كلمات هذا التصنيف. تأكد من وجود ملف data/" + catKey + ".js");
-      }
-
-      await runTransaction(db, async (tx) => {
-        const snap = await tx.get(ref);
-        if(!snap.exists()) return;
-
-        const data = snap.data() || {};
-        if(data.storyWord && data.outsiderName && data.roundId) return;
-
-        const players = Array.isArray(data.players) ? data.players : [];
-        const names = players.map(p => cleanName(p?.name)).filter(Boolean);
-        if(names.length < 3) return;
-
-        const outsider = names[Math.floor(Math.random() * names.length)];
-
-        const usedWords = Array.isArray(data.usedWords) ? data.usedWords : [];
-        const lastWord = cleanName(data.lastWord);
-
-        const { picked, usedNext } = pickWordSmart(words, usedWords, lastWord);
-
-        tx.update(ref, {
-          updatedAt: serverTimestamp(),
-          tick: increment(1),
-
-          roundId: String(Date.now()),
-          outsiderName: outsider,
-          storyWord: picked || "—",
-
-          categoryWords: words,
-
-          usedWords: usedNext,
-          lastWord: picked || "",
-
-          phase: "ready"
-        });
+    if(isHost){
+      homeBtn.classList.add("show");
+      homeBtn.addEventListener("click", () => {
+        // ما نلمس أي منطق لعبة هنا، فقط رجوع للرئيسية للمقدم
+        window.location.href = "index.html";
       });
     }
 
@@ -476,11 +431,10 @@
 
       if(iAmOutsider){
         outsiderBox.style.display = "block";
-        backNote.textContent = "حاول تندمج.. اسأل أسئلة ذكية عشان ما ينكشف أمرك.";
+        // (اختياري) نخلي backNote مخفي عشان يطابق الصور
       }else{
         revealBox.style.display = "block";
         revealBox.textContent = storyWord || "—";
-        backNote.textContent = "لا توري أحد. خلك مركز وابدأ جهّز أسئلتك.";
       }
 
       understoodBtn.disabled = false;
@@ -488,6 +442,48 @@
 
     function flipCard(){
       flip.classList.add("isFlipped");
+    }
+
+    // ✅ إعداد الجولة (مرة واحدة فقط) داخل Firestore
+    async function ensureRoundSetup(roomId){
+      const ref = roomRef(roomId);
+
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if(!snap.exists()) return;
+
+        const data = snap.data() || {};
+        if(data.storyWord && data.outsiderName && data.roundId) return;
+
+        const players = Array.isArray(data.players) ? data.players : [];
+        const names = players.map(p => cleanName(p?.name)).filter(Boolean);
+        if(names.length < 3) return;
+
+        const outsider = names[Math.floor(Math.random() * names.length)];
+
+        const catKey = cleanName(data.categoryKey);
+        const words = Array.isArray(data.words) ? data.words : null;
+
+        // ✅ نستخدم كلمات الداتا إذا كانت موجودة بالغرفة، وإلا نخليها زي ما هي
+        let word = "";
+        if(Array.isArray(words) && words.length){
+          word = words[Math.floor(Math.random() * words.length)];
+        }else{
+          const fallback = Array.isArray(data.storyWords) ? data.storyWords : null;
+          if(Array.isArray(fallback) && fallback.length){
+            word = fallback[Math.floor(Math.random() * fallback.length)];
+          }
+        }
+
+        tx.update(ref, {
+          updatedAt: serverTimestamp(),
+          tick: increment(1),
+          roundId: String(Date.now()),
+          outsiderName: outsider,
+          storyWord: cleanName(word) || (cleanName(data.storyWord) || "—"),
+          phase: "ready"
+        });
+      });
     }
 
     readyBtn.addEventListener("click", async () => {
@@ -508,6 +504,7 @@
         await ensureRoom(roomId);
         await ensureRoundSetup(roomId);
 
+        // ✅ نسجل أن هذا اللاعب ضغط "جاهز"
         try{
           await updateDoc(roomRef(roomId), {
             updatedAt: serverTimestamp(),
@@ -520,7 +517,7 @@
 
       }catch(e){
         console.warn(e);
-        showErr(e?.message ? String(e.message) : "صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
+        showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
         readyBtn.disabled = false;
       }
     });
@@ -564,17 +561,17 @@
         listenRoom(roomId, (data) => {
           if(!data) return;
 
-          // ✅ نخزن آخر بيانات للغرفة (عشان categoryKey)
-          window.__lastRoomData = data || {};
-
           const word = cleanName(data?.storyWord);
           const outsider = cleanName(data?.outsiderName);
 
-          frontNote.textContent = myName ? ("اسمك: " + myName) : "";
-
+          // إذا البطاقة انقلبت: اعرض كشف الحالة مباشرة من الداتا
           if(flip.classList.contains("isFlipped") && (word || outsider)){
             revealForMe(data);
           }
+
+          // نخفي النوتس عشان يطابق الصور
+          frontNote.textContent = "";
+          backNote.textContent = "";
         });
 
       }catch(e){
@@ -586,4 +583,4 @@
 </body>
 </html>
 
-<!-- ready.html برا السالفة – إصدار 3 (Fix: remove getDoc import; use listenRoom data for categoryKey so زر جاهز لا يتعطل) -->
+<!-- ready.html برا السالفة – إصدار 2 (ستايل مطابق للصور + زر المنزل للمقدم فقط) -->
