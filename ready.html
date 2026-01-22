@@ -284,8 +284,7 @@
       updateDoc,
       serverTimestamp,
       increment,
-      arrayUnion,
-      getDoc
+      arrayUnion
     } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
     import { db } from "./data/firebase.js";
 
@@ -306,4 +305,285 @@
       errBox.style.display = "block";
     }
     function hideErr(){
-      errBox.textContent =
+      errBox.textContent = "";
+      errBox.style.display = "none";
+    }
+    function cleanName(x){ return String(x || "").trim(); }
+
+    // ✅ نحاول نعرف اسم اللاعب الحالي من التخزين (بدون ما نلمس ملفات ثانية)
+    const POSSIBLE_PLAYER_KEYS = [
+      "bara_playerName_multi",
+      "bara_playerName_multi_v1",
+      "bara_playerName_multi_v2"
+    ];
+    const POSSIBLE_HOST_KEYS = [
+      "bara_hostName_multi_v4",
+      "bara_hostName_multi_v3",
+      "bara_hostName_multi_v2",
+      "bara_hostName_multi_v1"
+    ];
+
+    function getMyName(){
+      for(const k of POSSIBLE_PLAYER_KEYS){
+        const v = cleanName(sessionStorage.getItem(k));
+        if(v) return v;
+      }
+      for(const k of POSSIBLE_HOST_KEYS){
+        const v = cleanName(localStorage.getItem(k));
+        if(v) return v;
+      }
+      return "";
+    }
+
+    const params = new URLSearchParams(location.search);
+    const roomId = cleanName(params.get("room"));
+    const myName = getMyName();
+
+    // ------------------------------------------------------------------
+    // ✅ تحميل كلمات الكتاغوري من ملفات data/*.js (بدون getDoc نهائياً)
+    // ------------------------------------------------------------------
+
+    function isSafeKey(k){
+      return /^[a-z0-9_-]+$/i.test(String(k || ""));
+    }
+
+    function normalizeWords(list){
+      const arr = Array.isArray(list) ? list : [];
+      const clean = arr.map(x => cleanName(x)).filter(Boolean);
+      return Array.from(new Set(clean));
+    }
+
+    function loadCategoryWords(catKey){
+      return new Promise((resolve) => {
+        const key = cleanName(catKey);
+        if(!key || !isSafeKey(key)) return resolve([]);
+
+        window.BARA_WORDS = window.BARA_WORDS || {};
+
+        const existing = window.BARA_WORDS[key];
+        if(Array.isArray(existing) && existing.length){
+          return resolve(normalizeWords(existing));
+        }
+
+        const s = document.createElement("script");
+        s.src = `./data/${key}.js?v=1`;
+        s.async = true;
+
+        // ✅ تايم أوت عشان ما يعلق الزر إذا صار تعليق بالشبكة
+        const t = setTimeout(() => resolve([]), 4000);
+
+        s.onload = () => {
+          clearTimeout(t);
+          const arr = window.BARA_WORDS?.[key];
+          resolve(normalizeWords(arr));
+        };
+        s.onerror = () => {
+          clearTimeout(t);
+          resolve([]);
+        };
+
+        document.head.appendChild(s);
+      });
+    }
+
+    function pickWordSmart(words, usedWords, lastWord){
+      const all = normalizeWords(words);
+      if(!all.length) return { picked:"", usedNext: [] };
+
+      const used = normalizeWords(usedWords);
+      const last = cleanName(lastWord);
+
+      let pool = all.filter(w => !used.includes(w));
+
+      if(!pool.length){
+        pool = all.slice();
+        if(last && pool.length > 1){
+          pool = pool.filter(w => w !== last);
+          if(!pool.length) pool = all.slice();
+        }
+        const picked = pool[Math.floor(Math.random() * pool.length)];
+        return { picked, usedNext: [picked] };
+      }
+
+      if(last && pool.length > 1){
+        const alt = pool.filter(w => w !== last);
+        if(alt.length) pool = alt;
+      }
+
+      const picked = pool[Math.floor(Math.random() * pool.length)];
+      const usedNext = used.includes(picked) ? used : used.concat([picked]);
+      return { picked, usedNext };
+    }
+
+    async function ensureRoundSetup(roomId){
+      const ref = roomRef(roomId);
+
+      // ✅ ناخذ categoryKey من آخر تحديث للغرفة (من listenRoom)
+      const catKey = cleanName(window.__lastRoomData?.categoryKey);
+      if(!catKey){
+        throw new Error("جاري تحميل بيانات الغرفة… انتظر ثانية ثم اضغط جاهز مرة ثانية.");
+      }
+
+      const words = await loadCategoryWords(catKey);
+      if(!words.length){
+        throw new Error("تعذر تحميل كلمات هذا التصنيف. تأكد من وجود ملف data/" + catKey + ".js");
+      }
+
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if(!snap.exists()) return;
+
+        const data = snap.data() || {};
+        if(data.storyWord && data.outsiderName && data.roundId) return;
+
+        const players = Array.isArray(data.players) ? data.players : [];
+        const names = players.map(p => cleanName(p?.name)).filter(Boolean);
+        if(names.length < 3) return;
+
+        const outsider = names[Math.floor(Math.random() * names.length)];
+
+        const usedWords = Array.isArray(data.usedWords) ? data.usedWords : [];
+        const lastWord = cleanName(data.lastWord);
+
+        const { picked, usedNext } = pickWordSmart(words, usedWords, lastWord);
+
+        tx.update(ref, {
+          updatedAt: serverTimestamp(),
+          tick: increment(1),
+
+          roundId: String(Date.now()),
+          outsiderName: outsider,
+          storyWord: picked || "—",
+
+          categoryWords: words,
+
+          usedWords: usedNext,
+          lastWord: picked || "",
+
+          phase: "ready"
+        });
+      });
+    }
+
+    function revealForMe(data){
+      const outsiderName = cleanName(data?.outsiderName);
+      const storyWord = cleanName(data?.storyWord);
+
+      const iAmOutsider = (myName && outsiderName && myName === outsiderName);
+
+      revealBox.style.display = "none";
+      outsiderBox.style.display = "none";
+
+      if(iAmOutsider){
+        outsiderBox.style.display = "block";
+        backNote.textContent = "حاول تندمج.. اسأل أسئلة ذكية عشان ما ينكشف أمرك.";
+      }else{
+        revealBox.style.display = "block";
+        revealBox.textContent = storyWord || "—";
+        backNote.textContent = "لا توري أحد. خلك مركز وابدأ جهّز أسئلتك.";
+      }
+
+      understoodBtn.disabled = false;
+    }
+
+    function flipCard(){
+      flip.classList.add("isFlipped");
+    }
+
+    readyBtn.addEventListener("click", async () => {
+      hideErr();
+
+      if(!roomId){
+        showErr("الرابط غير صحيح: رمز الغرفة غير موجود.");
+        return;
+      }
+      if(!myName){
+        showErr("اسمك غير معروف في هذا الجهاز. ارجع للصفحة السابقة وادخل اسمك ثم جرّب.");
+        return;
+      }
+
+      readyBtn.disabled = true;
+
+      try{
+        await ensureRoom(roomId);
+        await ensureRoundSetup(roomId);
+
+        try{
+          await updateDoc(roomRef(roomId), {
+            updatedAt: serverTimestamp(),
+            tick: increment(1),
+            readyList: arrayUnion(myName)
+          });
+        }catch(e){}
+
+        flipCard();
+
+      }catch(e){
+        console.warn(e);
+        showErr(e?.message ? String(e.message) : "صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
+        readyBtn.disabled = false;
+      }
+    });
+
+    understoodBtn.addEventListener("click", async () => {
+      hideErr();
+
+      if(!roomId){
+        showErr("الرابط غير صحيح: رمز الغرفة غير موجود.");
+        return;
+      }
+      if(!myName){
+        showErr("اسمك غير معروف في هذا الجهاز.");
+        return;
+      }
+
+      understoodBtn.disabled = true;
+
+      try{
+        await updateDoc(roomRef(roomId), {
+          updatedAt: serverTimestamp(),
+          tick: increment(1),
+          understoodList: arrayUnion(myName)
+        });
+
+        window.location.href = "ready_wait.html?room=" + encodeURIComponent(roomId);
+
+      }catch(e){
+        console.warn(e);
+        showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
+        understoodBtn.disabled = false;
+      }
+    });
+
+    (async () => {
+      if(!roomId) return;
+
+      try{
+        await ensureRoom(roomId);
+
+        listenRoom(roomId, (data) => {
+          if(!data) return;
+
+          // ✅ نخزن آخر بيانات للغرفة (عشان categoryKey)
+          window.__lastRoomData = data || {};
+
+          const word = cleanName(data?.storyWord);
+          const outsider = cleanName(data?.outsiderName);
+
+          frontNote.textContent = myName ? ("اسمك: " + myName) : "";
+
+          if(flip.classList.contains("isFlipped") && (word || outsider)){
+            revealForMe(data);
+          }
+        });
+
+      }catch(e){
+        console.warn(e);
+        showErr("تعذر الاتصال. حدّث الصفحة وجرب مرة ثانية.");
+      }
+    })();
+  </script>
+</body>
+</html>
+
+<!-- ready.html برا السالفة – إصدار 3 (Fix: remove getDoc import; use listenRoom data for categoryKey so زر جاهز لا يتعطل) -->
