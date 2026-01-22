@@ -512,6 +512,11 @@
     const hostRoomId = clean(sessionStorage.getItem(HOST_ROOM_KEY));
     const isHost = !!hostRoomId && hostRoomId === roomId;
 
+    // ✅ شرطك: زر الرئيسية للمقدم فقط
+    if(!isHost){
+      homeBtn.style.display = "none";
+    }
+
     // my name
     const POSSIBLE_PLAYER_KEYS = [
       "bara_playerName_multi_v4",
@@ -662,6 +667,45 @@
       });
     }
 
+    // ✅ تجهيز جولة جديدة (Reset للجولة) — للمقدم فقط
+    async function resetRoundForNewGame(){
+      if(!isHost) return;
+      await setRoom({
+        // إعلان الدخول لمرحلة اختيار الكتاغوري
+        phase: "category",
+
+        // تصفير بيانات الجولة القديمة (عشان ما يتكرر نفس برا السالفة)
+        roundId: "",
+        questionsRoundId: "",
+        revealTs: null,
+
+        outsiderName: "",
+        outName: "",
+        outPlayer: "",
+        outsideName: "",
+        baraOut: "",
+
+        storyWord: "",
+        topicWord: "",
+        salfahWord: "",
+        word: "",
+
+        readyList: [],
+        understoodList: [],
+
+        votesBy: {},
+        guessBy: {},
+        guessOptions: [],
+        correctWord: "",
+        guessRoundId: "",
+        scoresAppliedFor: "",
+
+        // تصفير الكتاغوري الحالية حتى ما تتعلق القديم
+        categoryKey: "",
+        categoryWords: []
+      });
+    }
+
     // ---------- مزامنة سريعة من السيرفر ----------
     let fastSyncTimer = null;
     let fastSyncTries = 0;
@@ -676,7 +720,7 @@
           renderByRoom(data);
         }
       }catch(e){
-        // تجاهل (الـ listenRoom شغال)
+        // تجاهل
       }
     }
 
@@ -686,7 +730,7 @@
       fastSyncTimer = setInterval(async () => {
         fastSyncTries++;
         await syncFromServerOnce();
-        if(fastSyncTries >= 12){ // ~6 ثواني
+        if(fastSyncTries >= 12){
           stopFastSync();
         }
       }, 500);
@@ -1087,7 +1131,6 @@
       const scoresBy = (data?.scoresBy && typeof data.scoresBy === "object") ? data.scoresBy : null;
       if(applied !== roundId) return false;
       if(!scoresBy) return false;
-      // لازم يكون عندنا درجات لكل لاعب (أو على الأقل مفاتيح موجودة)
       for(const n of names){
         if(!(n in scoresBy)) return false;
       }
@@ -1097,7 +1140,6 @@
     function renderResults(data, names){
       pageTitle.textContent = "النتائج";
 
-      // ✅ إذا النتائج مو جاهزة عند المقدم: نعمل مزامنة سريعة من السيرفر تلقائياً
       if(!resultsReady(data, names)){
         startFastSync();
         cardEl.innerHTML = `
@@ -1112,7 +1154,6 @@
         return;
       }
 
-      // جاهزة
       stopFastSync();
 
       const scoresBy = (data?.scoresBy && typeof data.scoresBy === "object") ? data.scoresBy : {};
@@ -1179,9 +1220,20 @@
           window.location.href = "players.html?room=" + encodeURIComponent(roomId);
         });
       }
+
+      // ✅ FIX: كمل لعب = Reset للجولة + phase=category ثم يروح المقدم للكتاغوريات
       if(isHost && b2){
-        b2.addEventListener("click", () => {
-          window.location.href = "categories.html?room=" + encodeURIComponent(roomId) + "&mode=multi";
+        b2.addEventListener("click", async () => {
+          hideErr();
+          b2.disabled = true;
+          try{
+            await resetRoundForNewGame();
+            window.location.href = "categories.html?room=" + encodeURIComponent(roomId) + "&mode=multi";
+          }catch(e){
+            console.warn(e);
+            showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
+            b2.disabled = false;
+          }
         });
       }
     }
@@ -1221,7 +1273,6 @@
       }
 
       if(phase === "results"){
-        // ✅ لا نطلع من النتائج إلا إذا كانت جاهزة فعلاً
         const namesNow = getPlayersNames(data);
         if(!resultsReady(data, namesNow)){
           showErr("لحظة... جاري تجهيز النتائج.");
@@ -1253,6 +1304,25 @@
       const phase = clean(data?.phase) || "vote";
       const names = getPlayersNames(data);
 
+      // ✅ FIX: إذا المقدم بدأ الجولة (phase=ready) لازم كل اللاعبين يروحون ready.html
+      if(phase === "ready"){
+        window.location.href = "ready.html?room=" + encodeURIComponent(roomId);
+        return;
+      }
+
+      // مرحلة اختيار الكتاغوري: المقدم فقط يروح للكتاغوريات، اللاعب ينتظر
+      if(phase === "category" || phase === "categories"){
+        if(isHost){
+          // لو المقدم رجع هنا من أي مكان
+          // (ما نغير شيء ثاني)
+        }else{
+          pageTitle.textContent = "بانتظار...";
+          cardEl.innerHTML = `<div class="hint">بانتظار المقدم...</div>`;
+        }
+        if(isHost) ctaBtn.disabled = true;
+        return;
+      }
+
       if(isHost){
         ctaBtn.classList.remove("vote");
         ctaBtn.textContent = "التالي";
@@ -1281,7 +1351,6 @@
       }
 
       if(phase === "results"){
-        // ✅ لا نوقف fastSync هنا، renderResults هو اللي يقرر حسب جاهزية النتائج
         renderResults(data, names);
         return;
       }
@@ -1313,7 +1382,6 @@
 
           try{ await ensureGuessSetupIfHost(data); }catch(e){}
 
-          // ✅ مهم: في النتائج عند المقدم، بعد تطبيق السكورات نسوي سحب فوري من السيرفر عشان تظهر مباشرة
           try{
             const names = getPlayersNames(data);
             const didApply = await applyScoresIfHost(data, names);
@@ -1323,7 +1391,6 @@
             }
           }catch(e){}
 
-          // ✅ إذا كنا في النتائج والمقدم وماهي جاهزة: فعل fast sync
           try{
             const ph = clean(data?.phase);
             if(ph === "results" && isHost){
@@ -1346,4 +1413,4 @@
 </body>
 </html>
 
-<!-- multi_round.html برا السالفة – إصدار 4 (Fix: results fast-sync until scores ready + force server fetch after applyScores) -->
+<!-- multi_round.html برا السالفة – إصدار 5 (Fix: Continue resets round + phase=category, Redirect all to ready on phase=ready, Hide Home for players) -->
