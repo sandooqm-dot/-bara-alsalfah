@@ -469,6 +469,8 @@
       serverTimestamp,
       increment,
       getDoc,
+      getDocFromCache,
+      getDocFromServer,
       onSnapshot
     } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
@@ -753,8 +755,8 @@
 
       let idx = 0;
       const safeNames = (names && names.length) ? names : (outName ? [outName] : ["..."]);
-
       const runTick = () => { el.textContent = safeNames[idx % safeNames.length] || "..."; idx++; };
+
       runTick();
       revealTickTimer = setInterval(runTick, 120);
 
@@ -874,7 +876,6 @@
         }
 
         const disabled = chosen ? " disabled" : (isOut ? "" : " disabled");
-
         return `<button class="${cls}" data-word="${escapeHtml(w)}"${disabled}>${escapeHtml(w)}</button>`;
       }).join("");
 
@@ -1014,46 +1015,35 @@
       catch(e){ console.warn(e); showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية."); }
     });
 
-    // ✅ توجيه للملف الصحيح بدل "بانتظار..."
     function goQuestionsPage(){
       window.location.href = "multi_questions.html?room=" + encodeURIComponent(roomId);
     }
 
-    // ✅ منع الفِلِكر: لا نسمح لـ "phase غريب/قديم" يطفي الشاشة
     const ROUND_PHASES = new Set(["vote","reveal","guess","results","round_end"]);
     const QUESTIONS_PHASES = new Set(["questions_intro","questions","suspect","ready","ready_wait","lobby","playing"]);
 
     let lastGoodPhase = "";
-    let lastGoodAt = 0;
 
-    function renderByRoom(data, meta){
+    function renderByRoom(data){
       window.__lastRoomData = data || {};
       if(!data) return;
 
       const phase = clean(data?.phase);
 
-      // لو رجعنا لمرحلة الأسئلة واحنا في ملف الجولة → رجّعنا تلقائيًا
       if(QUESTIONS_PHASES.has(phase)){
         goQuestionsPage();
         return;
       }
 
-      // لو phase فاضي/غريب، لا نكسر الشاشة.. نطلب سيرفر فورًا
       if(!ROUND_PHASES.has(phase)){
-        // إذا عندنا شاشة صحيحة قبل قليل، نخليها ولا نكتب "بانتظار..."
-        if(lastGoodPhase){
-          forceFetch("phase_unknown");
-          return;
-        }
+        if(lastGoodPhase) return;
         pageTitle.textContent = "بانتظار...";
         cardEl.innerHTML = `<div class="hint">جاري المزامنة...</div>`;
         if(isHost) ctaBtn.disabled = true;
-        forceFetch("phase_unknown_first");
         return;
       }
 
       lastGoodPhase = phase;
-      lastGoodAt = Date.now();
 
       const names = getPlayersNames(data);
 
@@ -1080,26 +1070,26 @@
       }
     }
 
-    // ✅ حل جذري للتعليق في Safari: onSnapshot مع metadata + forceFetch
-    let serverSeen = false;
-    let lastServerAt = 0;
-    let safetyTimer = null;
-    let pollTimer = null;
-
-    async function forceFetch(reason){
-      if(!roomId) return;
+    // ✅ رسم فوري: (1) من الكاش فورًا (2) من السيرفر بعدها
+    async function bootstrapFast(ref){
+      // 1) cache instant (إذا موجود)
       try{
-        const snap = await getDoc(roomRef(roomId));
-        if(snap && snap.exists()){
-          const data = snap.data();
-          renderByRoom(data, { fromCache:false, reason: String(reason||"") });
+        const cacheSnap = await getDocFromCache(ref);
+        if(cacheSnap && cacheSnap.exists()){
+          const d = cacheSnap.data() || {};
+          renderByRoom(d);
         }
       }catch(e){}
-    }
 
-    function markServerSeen(){
-      serverSeen = true;
-      lastServerAt = Date.now();
+      // 2) server (أدق)
+      try{
+        const serverSnap = await getDocFromServer(ref);
+        if(serverSnap && serverSnap.exists()){
+          const d = serverSnap.data() || {};
+          try{ await ensureGuessSetupIfHost(d); }catch(e){}
+          renderByRoom(d);
+        }
+      }catch(e){}
     }
 
     (async () => {
@@ -1111,56 +1101,32 @@
       try{
         await ensureRoom(roomId);
 
-        pageTitle.textContent = "بانتظار...";
-        cardEl.innerHTML = `<div class="hint">جاري الاتصال...</div>`;
+        pageTitle.textContent = "جاري التحميل...";
+        cardEl.innerHTML = `<div class="hint">جاري التحميل...</div>`;
         if(isHost) ctaBtn.disabled = true;
-
-        // لو ما شفنا سيرفر خلال 1.2 ثانية → forceFetch
-        safetyTimer = setTimeout(() => {
-          if(!serverSeen) forceFetch("no_server_seen_early");
-        }, 1200);
-
-        // بولنغ خفيف: إذا ما شفنا سيرفر 6 ثواني → forceFetch
-        pollTimer = setInterval(() => {
-          if(document.hidden) return;
-          if(!serverSeen) { forceFetch("poll_no_server"); return; }
-          if(Date.now() - lastServerAt > 6000) forceFetch("poll_stale");
-        }, 3000);
-
-        // عند رجوع المستخدم للصفحة (Safari) → forceFetch
-        document.addEventListener("visibilitychange", () => {
-          if(!document.hidden) forceFetch("visibility");
-        });
-        window.addEventListener("focus", () => forceFetch("focus"));
-        window.addEventListener("online", () => forceFetch("online"));
 
         const ref = roomRef(roomId);
 
+        // ✅ أهم سطر: يجيب آخر حالة فورًا (من الكاش غالبًا) بدون انتظار 3-5 ثواني
+        bootstrapFast(ref);
+
+        // Listener طبيعي
         onSnapshot(ref, { includeMetadataChanges:true }, async (snap) => {
           if(!snap.exists()) return;
-
-          const meta = snap.metadata || {};
-          const fromCache = !!meta.fromCache;
-
           const data = snap.data() || {};
-
-          // إذا جتنا من الكاش → نرسم بحذر + نطلب سيرفر فورًا
-          if(fromCache){
-            renderByRoom(data, { fromCache:true });
-            forceFetch("from_cache");
-            return;
-          }
-
-          // هذه سيرفر مؤكدة
-          markServerSeen();
-
           try{ await ensureGuessSetupIfHost(data); }catch(e){}
-          renderByRoom(data, { fromCache:false });
-
+          renderByRoom(data);
         }, (err) => {
           console.warn(err);
           showErr("تعذر الاتصال. حدّث الصفحة وجرب مرة ثانية.");
         });
+
+        // إذا Safari جمّد الليسنر: لما يرجع المستخدم للصفحة ننعش سريعًا
+        document.addEventListener("visibilitychange", () => {
+          if(!document.hidden) bootstrapFast(ref);
+        });
+        window.addEventListener("focus", () => bootstrapFast(ref));
+        window.addEventListener("online", () => bootstrapFast(ref));
 
       }catch(e){
         console.warn(e);
@@ -1171,4 +1137,4 @@
 </body>
 </html>
 
-<!-- multi_round.html برا السالفة – إصدار 4 -->
+<!-- multi_round.html برا السالفة – إصدار 5 -->
