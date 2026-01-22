@@ -195,12 +195,7 @@
       -webkit-tap-highlight-color:transparent;
     }
     .cta:active{ transform: translateY(1px); box-shadow: 0 9px 0 rgba(0,0,0,0.25); }
-    .cta:disabled{
-      opacity:.45;
-      cursor:not-allowed;
-      filter: grayscale(.25);
-      transform:none;
-    }
+    .cta:disabled{ opacity:.55; cursor:not-allowed; filter: grayscale(.15); transform:none; }
 
     .cta.vote{
       background: var(--vote);
@@ -475,8 +470,7 @@
       runTransaction,
       updateDoc,
       serverTimestamp,
-      increment,
-      getDocFromServer
+      increment
     } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
     const pageTitle = document.getElementById("pageTitle");
@@ -606,7 +600,7 @@
         || "";
     }
 
-    // نفس قوائم الكلمات (fallback)
+    // نفس قوائم الكلمات الموجودة في ready.html
     const WORDS = {
       eat:  ["كبسة","مفطح","جريش","مندي","مراصيع","بسبوسة","هريس"],
       zoo:  ["أسد","نمر","زرافة","فيل","ذئب","غزال","قندس"],
@@ -620,6 +614,7 @@
       const story = getStoryWord(data);
 
       let pool = Array.isArray(data?.categoryWords) ? data.categoryWords : [];
+
       if(!Array.isArray(pool) || pool.length < 7){
         const key = clean(data?.categoryKey);
         pool = Array.isArray(WORDS[key]) ? WORDS[key] : [];
@@ -643,6 +638,7 @@
       if(picks.length < 6) return null;
 
       const opts = picks.concat([story]);
+
       for(let i=opts.length-1;i>0;i--){
         const j = Math.floor(Math.random()*(i+1));
         [opts[i], opts[j]] = [opts[j], opts[i]];
@@ -657,54 +653,6 @@
         tick: increment(1)
       });
     }
-
-    // ---------- (جديد) مزامنة سريعة من السيرفر لمنع التعليق ----------
-    let fastSyncTimer = null;
-    let fastSyncTries = 0;
-
-    async function syncFromServerOnce(){
-      if(!roomId) return;
-      try{
-        const snap = await getDocFromServer(roomRef(roomId));
-        if(snap.exists()){
-          const data = snap.data();
-          // نحاول تجهيز التخمين إذا كنا في مرحلة guess والمقدم هو اللي يجهّز
-          try{ await ensureGuessSetupIfHost(data); }catch(e){}
-          renderByRoom(data);
-        }
-      }catch(e){
-        // نتجاهل هنا (الـ listenRoom شغال)
-      }
-    }
-
-    function startFastSync(){
-      if(fastSyncTimer) return;
-      fastSyncTries = 0;
-      fastSyncTimer = setInterval(async () => {
-        fastSyncTries++;
-        await syncFromServerOnce();
-        if(fastSyncTries >= 12){ // ~6 ثواني
-          stopFastSync();
-        }
-      }, 500);
-    }
-
-    function stopFastSync(){
-      if(fastSyncTimer){
-        clearInterval(fastSyncTimer);
-        fastSyncTimer = null;
-      }
-    }
-
-    // لما ترجع الصفحة من الخلفية على iOS
-    document.addEventListener("visibilitychange", () => {
-      if(document.visibilityState === "visible"){
-        syncFromServerOnce();
-      }
-    });
-    window.addEventListener("online", () => {
-      syncFromServerOnce();
-    });
 
     // ---------- التصويت ----------
     async function voteFor(targetName){
@@ -942,26 +890,18 @@
       const guessBy = (data?.guessBy && typeof data?.guessBy === "object") ? data.guessBy : {};
       const chosen = outName ? clean(guessBy?.[outName]) : "";
 
-      // ✅ لو الخيارات لسه ما وصلت: نفعّل مزامنة سريعة من السيرفر عشان ما يعلق
       if(opts.length !== 7 || !correct){
-        startFastSync();
-
         cardEl.innerHTML = `
           <div style="width:100%;">
             <div class="hint">جاري تجهيز خيارات السالفة...</div>
           </div>
         `;
-
-        // ✅ (مطلوب) زر التالي عند المقدم يكون باهت ومقفول لين تتجهز الصفحة/الاختيار
         if(isHost){
           ctaBtn.textContent = "التالي";
           ctaBtn.disabled = true;
         }
         return;
       }
-
-      // إذا وصلت الخيارات نوقف المزامنة السريعة
-      stopFastSync();
 
       const isOut = !!outName && myName === outName;
 
@@ -998,10 +938,9 @@
         });
       }
 
-      // ✅ (مطلوب) تجميد زر التالي عند المقدم لين يختار برا السالفة كلمة
       if(isHost){
         ctaBtn.textContent = "التالي";
-        ctaBtn.disabled = !chosen;
+        ctaBtn.disabled = false;
       }
     }
 
@@ -1101,8 +1040,6 @@
         </div>
       `;
 
-      stopFastSync();
-
       if(isHost){
         ctaBtn.textContent = "التالي";
         ctaBtn.disabled = false;
@@ -1132,8 +1069,6 @@
           ` : ``}
         </div>
       `;
-
-      stopFastSync();
 
       if(isHost){
         ctaBtn.disabled = true;
@@ -1177,14 +1112,6 @@
       }
 
       if(phase === "guess"){
-        // ✅ حماية إضافية: لا ينتقل إلا بعد اختيار برا السالفة
-        const outName = getOutName(data);
-        const guessBy = (data?.guessBy && typeof data?.guessBy === "object") ? data.guessBy : {};
-        const chosen = outName ? clean(guessBy?.[outName]) : "";
-        if(!chosen){
-          showErr("انتظر لين يختار اللي برا السالفة السالفة.");
-          return;
-        }
         await setRoom({ phase: "results" });
         return;
       }
@@ -1216,12 +1143,12 @@
       const names = getPlayersNames(data);
 
       if(isHost){
+        ctaBtn.disabled = false;
         ctaBtn.classList.remove("vote");
         ctaBtn.textContent = "التالي";
       }
 
       if(phase === "vote"){
-        stopFastSync();
         const votesBy = (data?.votesBy && typeof data.votesBy === "object") ? data.votesBy : {};
         if(isHost){
           ctaBtn.disabled = !canHostNextVote(names, votesBy);
@@ -1231,26 +1158,22 @@
       }
 
       if(phase === "reveal"){
-        stopFastSync();
         const outName = getOutName(data);
         renderReveal(names, outName, data?.revealTs);
         return;
       }
 
       if(phase === "guess"){
-        // (renderGuess يتحكم بالمزامنة وبزر التالي حسب الاختيار)
         renderGuess(data, names);
         return;
       }
 
       if(phase === "results"){
-        stopFastSync();
         renderResults(data, names);
         return;
       }
 
       if(phase === "round_end"){
-        stopFastSync();
         renderRoundEnd();
         return;
       }
@@ -1258,6 +1181,17 @@
       pageTitle.textContent = "بانتظار...";
       cardEl.innerHTML = `<div class="hint">بانتظار المقدم...</div>`;
       if(isHost) ctaBtn.disabled = true;
+    }
+
+    // ✅ إصلاح جذري لنتائج المقدم:
+    // لا نعرض شاشة النتائج قبل ما تنتهي عملية احتساب النقاط وتوصلنا Snapshot جديد بالنقاط المحدثة
+    function renderResultsLoadingForHost(){
+      pageTitle.textContent = "النتائج";
+      cardEl.innerHTML = `<div class="hint" style="font-size:22px;">جاري احتساب النتائج...</div>`;
+      if(isHost){
+        ctaBtn.textContent = "التالي";
+        ctaBtn.disabled = true;
+      }
     }
 
     (async () => {
@@ -1269,11 +1203,23 @@
       try{
         await ensureRoom(roomId);
 
-        // ✅ (جديد) أول ما تفتح الصفحة: نجيب من السيرفر مباشرة عشان ما يعلق
-        await syncFromServerOnce();
-
         listenRoom(roomId, async (data) => {
           if(!data) return;
+
+          const phaseNow = clean(data?.phase) || "vote";
+          const namesNow = getPlayersNames(data);
+
+          // ✅ مهم: في مرحلة النتائج عند المقدم — إذا ما تم تطبيق النقاط لهذه الجولة
+          // نعرض "جاري الاحتساب" ثم نطبق النقاط وننتظر Snapshot جديد (بدون عرض أصفار مؤقتة)
+          if(isHost && phaseNow === "results"){
+            const currentRoundId = clean(data?.roundId) || clean(data?.questionsRoundId) || "round";
+            const applied = clean(data?.scoresAppliedFor);
+            if(applied !== currentRoundId){
+              renderResultsLoadingForHost();
+              try{ await applyScoresIfHost(data, namesNow); }catch(e){}
+              return; // ننتظر التحديث القادم الذي يحمل scoresBy الصحيح
+            }
+          }
 
           try{ await ensureGuessSetupIfHost(data); }catch(e){}
           try{
@@ -1284,9 +1230,6 @@
           renderByRoom(data);
         });
 
-        // ✅ (جديد) دفعة مزامنة سريعة بالبداية (خصوصًا iOS)
-        startFastSync();
-
       }catch(e){
         console.warn(e);
         showErr("تعذر الاتصال. حدّث الصفحة وجرب مرة ثانية.");
@@ -1296,4 +1239,4 @@
 </body>
 </html>
 
-<!-- multi_round.html برا السالفة – إصدار 3 (Fix: instant server sync + freeze Next until out chooses) -->
+<!-- multi_round.html برا السالفة – إصدار 3 -->
