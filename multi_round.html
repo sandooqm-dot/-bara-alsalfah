@@ -195,7 +195,12 @@
       -webkit-tap-highlight-color:transparent;
     }
     .cta:active{ transform: translateY(1px); box-shadow: 0 9px 0 rgba(0,0,0,0.25); }
-    .cta:disabled{ opacity:.55; cursor:not-allowed; filter: grayscale(.15); transform:none; }
+    .cta:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      filter: grayscale(.25);
+      transform:none;
+    }
 
     .cta.vote{
       background: var(--vote);
@@ -470,7 +475,8 @@
       runTransaction,
       updateDoc,
       serverTimestamp,
-      increment
+      increment,
+      getDocFromServer
     } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
     const pageTitle = document.getElementById("pageTitle");
@@ -600,7 +606,11 @@
         || "";
     }
 
-    // نفس قوائم الكلمات الموجودة في ready.html
+    function getRoundId(data){
+      return clean(data?.roundId) || clean(data?.questionsRoundId) || "round";
+    }
+
+    // نفس قوائم الكلمات (fallback)
     const WORDS = {
       eat:  ["كبسة","مفطح","جريش","مندي","مراصيع","بسبوسة","هريس"],
       zoo:  ["أسد","نمر","زرافة","فيل","ذئب","غزال","قندس"],
@@ -614,7 +624,6 @@
       const story = getStoryWord(data);
 
       let pool = Array.isArray(data?.categoryWords) ? data.categoryWords : [];
-
       if(!Array.isArray(pool) || pool.length < 7){
         const key = clean(data?.categoryKey);
         pool = Array.isArray(WORDS[key]) ? WORDS[key] : [];
@@ -638,7 +647,6 @@
       if(picks.length < 6) return null;
 
       const opts = picks.concat([story]);
-
       for(let i=opts.length-1;i>0;i--){
         const j = Math.floor(Math.random()*(i+1));
         [opts[i], opts[j]] = [opts[j], opts[i]];
@@ -653,6 +661,52 @@
         tick: increment(1)
       });
     }
+
+    // ---------- مزامنة سريعة من السيرفر ----------
+    let fastSyncTimer = null;
+    let fastSyncTries = 0;
+
+    async function syncFromServerOnce(){
+      if(!roomId) return;
+      try{
+        const snap = await getDocFromServer(roomRef(roomId));
+        if(snap.exists()){
+          const data = snap.data();
+          try{ await ensureGuessSetupIfHost(data); }catch(e){}
+          renderByRoom(data);
+        }
+      }catch(e){
+        // تجاهل (الـ listenRoom شغال)
+      }
+    }
+
+    function startFastSync(){
+      if(fastSyncTimer) return;
+      fastSyncTries = 0;
+      fastSyncTimer = setInterval(async () => {
+        fastSyncTries++;
+        await syncFromServerOnce();
+        if(fastSyncTries >= 12){ // ~6 ثواني
+          stopFastSync();
+        }
+      }, 500);
+    }
+
+    function stopFastSync(){
+      if(fastSyncTimer){
+        clearInterval(fastSyncTimer);
+        fastSyncTimer = null;
+      }
+    }
+
+    document.addEventListener("visibilitychange", () => {
+      if(document.visibilityState === "visible"){
+        syncFromServerOnce();
+      }
+    });
+    window.addEventListener("online", () => {
+      syncFromServerOnce();
+    });
 
     // ---------- التصويت ----------
     async function voteFor(targetName){
@@ -804,7 +858,7 @@
 
       const ref = roomRef(roomId);
 
-      const currentRoundId = clean(data?.roundId) || clean(data?.questionsRoundId) || "";
+      const currentRoundId = getRoundId(data);
       const guessRoundId = clean(data?.guessRoundId) || "";
       const hasOpts = Array.isArray(data?.guessOptions) && data.guessOptions.length === 7;
       const story = getStoryWord(data);
@@ -822,7 +876,7 @@
         const ph = clean(d?.phase);
         if(ph !== "guess") return;
 
-        const cr = clean(d?.roundId) || clean(d?.questionsRoundId) || "";
+        const cr = getRoundId(d);
         const gr = clean(d?.guessRoundId) || "";
         const ok = Array.isArray(d?.guessOptions) && d.guessOptions.length === 7;
         const st = getStoryWord(d);
@@ -891,17 +945,22 @@
       const chosen = outName ? clean(guessBy?.[outName]) : "";
 
       if(opts.length !== 7 || !correct){
+        startFastSync();
+
         cardEl.innerHTML = `
           <div style="width:100%;">
             <div class="hint">جاري تجهيز خيارات السالفة...</div>
           </div>
         `;
+
         if(isHost){
           ctaBtn.textContent = "التالي";
           ctaBtn.disabled = true;
         }
         return;
       }
+
+      stopFastSync();
 
       const isOut = !!outName && myName === outName;
 
@@ -940,7 +999,7 @@
 
       if(isHost){
         ctaBtn.textContent = "التالي";
-        ctaBtn.disabled = false;
+        ctaBtn.disabled = !chosen;
       }
     }
 
@@ -948,7 +1007,7 @@
     function computeWinners(data, names){
       const outName = getOutName(data);
       const votesBy = (data?.votesBy && typeof data.votesBy === "object") ? data.votesBy : {};
-      const guessBy = (data?.guessBy && typeof data.guessBy === "object") ? data.guessBy : {};
+      const guessBy = (data?.guessBy && typeof data?.guessBy === "object") ? data.guessBy : {};
       const correct = clean(data?.correctWord);
 
       let votesAgainstOut = 0;
@@ -973,16 +1032,16 @@
     }
 
     async function applyScoresIfHost(data, names){
-      if(!isHost) return;
+      if(!isHost) return false;
 
       const phase = clean(data?.phase);
-      if(phase !== "results") return;
+      if(phase !== "results") return false;
 
       const ref = roomRef(roomId);
-      const currentRoundId = clean(data?.roundId) || clean(data?.questionsRoundId) || "round";
+      const currentRoundId = getRoundId(data);
       const applied = clean(data?.scoresAppliedFor);
 
-      if(applied === currentRoundId) return;
+      if(applied === currentRoundId) return false;
 
       await runTransaction(db, async (tx) => {
         const snap = await tx.get(ref);
@@ -992,7 +1051,7 @@
         const ph = clean(d?.phase);
         if(ph !== "results") return;
 
-        const cr = clean(d?.roundId) || clean(d?.questionsRoundId) || "round";
+        const cr = getRoundId(d);
         const ap = clean(d?.scoresAppliedFor);
         if(ap === cr) return;
 
@@ -1018,21 +1077,57 @@
           scoresAppliedFor: cr
         });
       });
+
+      return true;
+    }
+
+    function resultsReady(data, names){
+      const roundId = getRoundId(data);
+      const applied = clean(data?.scoresAppliedFor);
+      const scoresBy = (data?.scoresBy && typeof data.scoresBy === "object") ? data.scoresBy : null;
+      if(applied !== roundId) return false;
+      if(!scoresBy) return false;
+      // لازم يكون عندنا درجات لكل لاعب (أو على الأقل مفاتيح موجودة)
+      for(const n of names){
+        if(!(n in scoresBy)) return false;
+      }
+      return true;
     }
 
     function renderResults(data, names){
       pageTitle.textContent = "النتائج";
 
-      const scoresBy = (data?.scoresBy && typeof data.scoresBy === "object") ? data.scoresBy : {};
-      const rows = names.slice().sort((a,b)=>Number(scoresBy[b]||0)-Number(scoresBy[a]||0)).map(n => {
-        const s = Number(scoresBy[n] || 0);
-        return `
-          <div class="resultRow">
-            <div class="scoreBadge">${s}</div>
-            <div class="resultName">${escapeHtml(n)}</div>
+      // ✅ إذا النتائج مو جاهزة عند المقدم: نعمل مزامنة سريعة من السيرفر تلقائياً
+      if(!resultsReady(data, names)){
+        startFastSync();
+        cardEl.innerHTML = `
+          <div style="width:100%; max-width: 460px; margin: 0 auto;">
+            <div class="hint" style="font-size:22px; font-weight:1000;">جاري تجهيز النتائج...</div>
           </div>
         `;
-      }).join("");
+        if(isHost){
+          ctaBtn.textContent = "التالي";
+          ctaBtn.disabled = true;
+        }
+        return;
+      }
+
+      // جاهزة
+      stopFastSync();
+
+      const scoresBy = (data?.scoresBy && typeof data.scoresBy === "object") ? data.scoresBy : {};
+      const rows = names
+        .slice()
+        .sort((a,b)=>Number(scoresBy[b]||0)-Number(scoresBy[a]||0))
+        .map(n => {
+          const s = Number(scoresBy[n] || 0);
+          return `
+            <div class="resultRow">
+              <div class="scoreBadge">${s}</div>
+              <div class="resultName">${escapeHtml(n)}</div>
+            </div>
+          `;
+        }).join("");
 
       cardEl.innerHTML = `
         <div style="width:100%; max-width: 460px; margin: 0 auto;">
@@ -1069,6 +1164,8 @@
           ` : ``}
         </div>
       `;
+
+      stopFastSync();
 
       if(isHost){
         ctaBtn.disabled = true;
@@ -1112,11 +1209,25 @@
       }
 
       if(phase === "guess"){
+        const outName = getOutName(data);
+        const guessBy = (data?.guessBy && typeof data?.guessBy === "object") ? data.guessBy : {};
+        const chosen = outName ? clean(guessBy?.[outName]) : "";
+        if(!chosen){
+          showErr("انتظر لين يختار اللي برا السالفة السالفة.");
+          return;
+        }
         await setRoom({ phase: "results" });
         return;
       }
 
       if(phase === "results"){
+        // ✅ لا نطلع من النتائج إلا إذا كانت جاهزة فعلاً
+        const namesNow = getPlayersNames(data);
+        if(!resultsReady(data, namesNow)){
+          showErr("لحظة... جاري تجهيز النتائج.");
+          startFastSync();
+          return;
+        }
         await setRoom({ phase: "round_end" });
         return;
       }
@@ -1143,12 +1254,12 @@
       const names = getPlayersNames(data);
 
       if(isHost){
-        ctaBtn.disabled = false;
         ctaBtn.classList.remove("vote");
         ctaBtn.textContent = "التالي";
       }
 
       if(phase === "vote"){
+        stopFastSync();
         const votesBy = (data?.votesBy && typeof data.votesBy === "object") ? data.votesBy : {};
         if(isHost){
           ctaBtn.disabled = !canHostNextVote(names, votesBy);
@@ -1158,6 +1269,7 @@
       }
 
       if(phase === "reveal"){
+        stopFastSync();
         const outName = getOutName(data);
         renderReveal(names, outName, data?.revealTs);
         return;
@@ -1169,11 +1281,13 @@
       }
 
       if(phase === "results"){
+        // ✅ لا نوقف fastSync هنا، renderResults هو اللي يقرر حسب جاهزية النتائج
         renderResults(data, names);
         return;
       }
 
       if(phase === "round_end"){
+        stopFastSync();
         renderRoundEnd();
         return;
       }
@@ -1181,17 +1295,6 @@
       pageTitle.textContent = "بانتظار...";
       cardEl.innerHTML = `<div class="hint">بانتظار المقدم...</div>`;
       if(isHost) ctaBtn.disabled = true;
-    }
-
-    // ✅ إصلاح جذري لنتائج المقدم:
-    // لا نعرض شاشة النتائج قبل ما تنتهي عملية احتساب النقاط وتوصلنا Snapshot جديد بالنقاط المحدثة
-    function renderResultsLoadingForHost(){
-      pageTitle.textContent = "النتائج";
-      cardEl.innerHTML = `<div class="hint" style="font-size:22px;">جاري احتساب النتائج...</div>`;
-      if(isHost){
-        ctaBtn.textContent = "التالي";
-        ctaBtn.disabled = true;
-      }
     }
 
     (async () => {
@@ -1203,32 +1306,36 @@
       try{
         await ensureRoom(roomId);
 
+        await syncFromServerOnce();
+
         listenRoom(roomId, async (data) => {
           if(!data) return;
 
-          const phaseNow = clean(data?.phase) || "vote";
-          const namesNow = getPlayersNames(data);
-
-          // ✅ مهم: في مرحلة النتائج عند المقدم — إذا ما تم تطبيق النقاط لهذه الجولة
-          // نعرض "جاري الاحتساب" ثم نطبق النقاط وننتظر Snapshot جديد (بدون عرض أصفار مؤقتة)
-          if(isHost && phaseNow === "results"){
-            const currentRoundId = clean(data?.roundId) || clean(data?.questionsRoundId) || "round";
-            const applied = clean(data?.scoresAppliedFor);
-            if(applied !== currentRoundId){
-              renderResultsLoadingForHost();
-              try{ await applyScoresIfHost(data, namesNow); }catch(e){}
-              return; // ننتظر التحديث القادم الذي يحمل scoresBy الصحيح
-            }
-          }
-
           try{ await ensureGuessSetupIfHost(data); }catch(e){}
+
+          // ✅ مهم: في النتائج عند المقدم، بعد تطبيق السكورات نسوي سحب فوري من السيرفر عشان تظهر مباشرة
           try{
             const names = getPlayersNames(data);
-            await applyScoresIfHost(data, names);
+            const didApply = await applyScoresIfHost(data, names);
+            if(didApply){
+              await syncFromServerOnce();
+              return;
+            }
+          }catch(e){}
+
+          // ✅ إذا كنا في النتائج والمقدم وماهي جاهزة: فعل fast sync
+          try{
+            const ph = clean(data?.phase);
+            if(ph === "results" && isHost){
+              const names = getPlayersNames(data);
+              if(!resultsReady(data, names)) startFastSync();
+            }
           }catch(e){}
 
           renderByRoom(data);
         });
+
+        startFastSync();
 
       }catch(e){
         console.warn(e);
@@ -1239,4 +1346,4 @@
 </body>
 </html>
 
-<!-- multi_round.html برا السالفة – إصدار 3 -->
+<!-- multi_round.html برا السالفة – إصدار 4 (Fix: results fast-sync until scores ready + force server fetch after applyScores) -->
