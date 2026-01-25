@@ -418,9 +418,26 @@
       });
     }
 
+    // ✅ توحيد القراءة (عشان لو ملف ثاني يستخدم outName بدل outsiderName)
+    function getOutNameAny(data){
+      return cleanName(data?.outsiderName)
+        || cleanName(data?.outName)
+        || cleanName(data?.outPlayer)
+        || cleanName(data?.outsideName)
+        || cleanName(data?.baraOut)
+        || "";
+    }
+    function getStoryWordAny(data){
+      return cleanName(data?.storyWord)
+        || cleanName(data?.topicWord)
+        || cleanName(data?.salfahWord)
+        || cleanName(data?.word)
+        || "";
+    }
+
     function revealForMe(data){
-      const outsiderName = cleanName(data?.outsiderName);
-      const storyWord = cleanName(data?.storyWord);
+      const outsiderName = getOutNameAny(data);
+      const storyWord = getStoryWordAny(data);
 
       const iAmOutsider = (myName && outsiderName && myName === outsiderName);
 
@@ -441,6 +458,7 @@
       flip.classList.add("isFlipped");
     }
 
+    // ✅ FIX: توحيد مفاتيح برا السالفة داخل Firebase (outsiderName + outName + ...)
     async function ensureRoundSetup(roomId){
       const ref = roomRef(roomId);
 
@@ -449,31 +467,87 @@
         if(!snap.exists()) return;
 
         const data = snap.data() || {};
-        if(data.storyWord && data.outsiderName && data.roundId) return;
+
+        const existingRoundId = cleanName(data?.roundId);
+        const existingOut = getOutNameAny(data);
+        const existingStory = getStoryWordAny(data);
+
+        // لو الجولة مجهزة لكن المفاتيح غير موحدة (مثلاً outName قديم) نصلحها فقط
+        if(existingRoundId && existingOut && existingStory){
+          const needsFix =
+            cleanName(data?.outsiderName) !== existingOut ||
+            cleanName(data?.outName) !== existingOut ||
+            cleanName(data?.outPlayer) !== existingOut ||
+            cleanName(data?.outsideName) !== existingOut ||
+            cleanName(data?.baraOut) !== existingOut;
+
+          if(needsFix){
+            tx.update(ref, {
+              updatedAt: serverTimestamp(),
+              tick: increment(1),
+
+              outsiderName: existingOut,
+              outName: existingOut,
+              outPlayer: existingOut,
+              outsideName: existingOut,
+              baraOut: existingOut,
+
+              // نخلي القصة كما هي
+              storyWord: existingStory
+            });
+          }
+          return;
+        }
 
         const players = Array.isArray(data.players) ? data.players : [];
         const names = players.map(p => cleanName(p?.name)).filter(Boolean);
         if(names.length < 3) return;
 
-        const outsider = names[Math.floor(Math.random() * names.length)];
+        const outsider = existingOut || names[Math.floor(Math.random() * names.length)];
 
-        const words = Array.isArray(data.words) ? data.words : null;
-        let word = "";
-        if(Array.isArray(words) && words.length){
-          word = words[Math.floor(Math.random() * words.length)];
-        }else{
-          const fallback = Array.isArray(data.storyWords) ? data.storyWords : null;
-          if(Array.isArray(fallback) && fallback.length){
-            word = fallback[Math.floor(Math.random() * fallback.length)];
+        // الأفضل: storyWord يكون جاهز من categories.html
+        let word = existingStory;
+
+        // احتياط: لو ما موجود، خذ من categoryWords إن وجد
+        if(!word){
+          const pool = Array.isArray(data?.categoryWords) ? data.categoryWords : [];
+          if(Array.isArray(pool) && pool.length){
+            const cleanPool = pool.map(w => cleanName(w)).filter(Boolean);
+            if(cleanPool.length){
+              word = cleanPool[Math.floor(Math.random() * cleanPool.length)];
+            }
           }
         }
+
+        // احتياط قديم جدًا (ما نفضّله، بس ما نكسر اللعبة)
+        if(!word){
+          const words = Array.isArray(data.words) ? data.words : null;
+          if(Array.isArray(words) && words.length){
+            word = cleanName(words[Math.floor(Math.random() * words.length)]);
+          }else{
+            const fallback = Array.isArray(data.storyWords) ? data.storyWords : null;
+            if(Array.isArray(fallback) && fallback.length){
+              word = cleanName(fallback[Math.floor(Math.random() * fallback.length)]);
+            }
+          }
+        }
+
+        const rid = existingRoundId || String(Date.now());
 
         tx.update(ref, {
           updatedAt: serverTimestamp(),
           tick: increment(1),
-          roundId: String(Date.now()),
+
+          roundId: rid,
+
+          // ✅ نفس الاسم في كل المفاتيح حتى ما يختلف الكشف
           outsiderName: outsider,
-          storyWord: cleanName(word) || (cleanName(data.storyWord) || "—"),
+          outName: outsider,
+          outPlayer: outsider,
+          outsideName: outsider,
+          baraOut: outsider,
+
+          storyWord: cleanName(word) || "—",
           phase: "ready"
         });
       });
@@ -553,8 +627,8 @@
         listenRoom(roomId, (data) => {
           if(!data) return;
 
-          const word = cleanName(data?.storyWord);
-          const outsider = cleanName(data?.outsiderName);
+          const word = getStoryWordAny(data);
+          const outsider = getOutNameAny(data);
 
           if(flip.classList.contains("isFlipped") && (word || outsider)){
             revealForMe(data);
@@ -573,4 +647,4 @@
 </body>
 </html>
 
-<!-- ready.html برا السالفة – إصدار 4 (زر "فهمت" بأسفل المربع الزيتي) -->
+<!-- ready.html برا السالفة – إصدار 5 (Fix: توحيد مفاتيح برا السالفة في Firebase حتى ما يختلف الكشف) -->
