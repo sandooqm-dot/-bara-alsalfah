@@ -378,7 +378,6 @@
       line-height: 1.4;
     }
 
-    /* (تركناها كما هي - ما نستخدمها الآن) */
     .toast{
       position: fixed;
       left: 50%;
@@ -495,7 +494,14 @@
     let listenRoom   = () => () => {};
     let addPlayer    = async () => {};
     let setRoomStatus= async () => {};
+    let roomRef      = null;
     let firebaseReady = false;
+
+    import {
+      updateDoc,
+      serverTimestamp,
+      increment
+    } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
     const hostInput   = document.getElementById("hostInput");
     const playersWrap = document.getElementById("playersWrap");
@@ -540,13 +546,13 @@
     }
     function normalizeName(x){ return String(x||"").trim(); }
 
-    // ✅ مفاتيح التخزين (تم تغييرها فقط لحل ظهور أسماء قديمة مثل "أحمد")
+    // ✅ مفاتيح التخزين
     const KEY_ROOM = "bara_roomId_multi_v4";
     const KEY_ROOM_TS = "bara_roomTs_multi_v4";
     const KEY_HOST = "bara_hostName_multi_v4";
     const KEY_HOST_ADDED = "bara_hostAdded_multi_v4";
 
-    // ✅ لو جاي من index.html نبدأ جلسة جديدة أكيد (حل تداخل الألعاب)
+    // ✅ لو جاي من index.html نبدأ جلسة جديدة أكيد
     const ref = String(document.referrer || "");
     const FROM_INDEX = /index\.html(\?|#|$)/i.test(ref);
 
@@ -571,7 +577,6 @@
       localStorage.removeItem(KEY_HOST);
 
       hostInput.value = "";
-      hostInput.style.display = "";
       playersWrap.innerHTML = "";
       emptyHint.style.display = "block";
       startBtn.disabled = true;
@@ -585,19 +590,18 @@
       roomId = roomFromUrl;
       sessionStorage.setItem(KEY_ROOM, roomId);
       sessionStorage.setItem(KEY_ROOM_TS, String(Date.now()));
+      // ✅ مهم: ما نكسر جلسة المقدم هنا، فقط نثبت الغرفة
     }else{
       const existing = (sessionStorage.getItem(KEY_ROOM) || "").trim();
       const ts = Number(sessionStorage.getItem(KEY_ROOM_TS) || "0");
       const ageMs = ts ? (Date.now() - ts) : 999999999;
 
-      // نسمح فقط بالـ reload يحتفظ بنفس الغرفة، غير كذا نبدأ جديد
       if(existing && NAV_TYPE === "reload" && ageMs < 6 * 60 * 60 * 1000){
         roomId = existing;
       }else{
         roomId = startFreshSession();
       }
 
-      // ✅ لو جاء من index بالذات، لازم جديد 100% حتى لو Safari لخبط navType
       if(FROM_INDEX){
         roomId = startFreshSession();
       }
@@ -612,14 +616,16 @@
     roomCodeEl.textContent = roomId;
     joinLinkBox.textContent = joinUrl;
 
-    // ✅✅ FIX: إذا اسم المقدم محفوظ (حتى لو التنقل Navigate) رجّعه وخفِّ خانة الاسم
-    if(!FROM_INDEX){
-      const savedHost = (localStorage.getItem(KEY_HOST) || "").trim();
-      if(savedHost){
-        hostInput.value = savedHost;
-        hostInput.placeholder = "";
-        hostInput.style.display = "none"; // ما نبي خانة تجبره يكتب اسمه ثانية
-      }
+    // ✅ (Fix #1) استرجاع اسم المقدم عند الرجوع من نهاية الجولة (navigate + room موجود)
+    const savedHostAny = (localStorage.getItem(KEY_HOST) || "").trim();
+    if(savedHostAny){
+      hostInput.value = savedHostAny;
+
+      // نخفي خانة الإدخال إذا الاسم موجود (مقدم ما يحتاج يكتبه ثانية)
+      hostInput.style.display = "none";
+    }else{
+      // فقط في حالة ما عندنا اسم: نخلي الإدخال ظاهر
+      hostInput.style.display = "";
     }
 
     function sortPlayers(list){
@@ -638,6 +644,14 @@
 
       const hostName = normalizeName(hostInput.value);
 
+      // ✅ عرض اسم المقدم كعنصر ثابت داخل القائمة
+      if(hostName){
+        const hostDiv = document.createElement("div");
+        hostDiv.className = "playerItem";
+        hostDiv.textContent = hostName;
+        playersWrap.appendChild(hostDiv);
+      }
+
       const ordered = sortPlayers(list);
       const others = ordered
         .map(p => normalizeName(p?.name))
@@ -645,7 +659,7 @@
         .filter(n => !hostName || n !== hostName);
 
       if(others.length === 0){
-        emptyHint.style.display = "block";
+        emptyHint.style.display = hostName ? "none" : "block";
       }else{
         emptyHint.style.display = "none";
       }
@@ -661,7 +675,7 @@
       startBtn.disabled = !(hostName && total >= 3);
     }
 
-    /* ✅ فتح المودال فورًا بدون انتظار أي عمليات شبكة */
+    /* ✅ فتح المودال فورًا بدون انتظار */
     function openModalFast(){
       joinUrl = buildJoinUrl();
       joinLinkBox.textContent = joinUrl;
@@ -720,21 +734,22 @@
         return;
       }
 
-      const hostAdded = sessionStorage.getItem(KEY_HOST_ADDED) === "1";
-      if(hostAdded) return;
-
+      // ✅ (Fix #1 مكمل) حتى لو KEY_HOST_ADDED=1 لازم نتأكد إن الاسم موجود داخل players
       const exists = (currentPlayers || []).some(p => normalizeName(p?.name) === hostName);
-      if(!exists){
-        try{
-          await addPlayer(roomId, hostName);
-        }catch(e){
-          console.warn("Add host failed:", e);
-          pendingHostAdd = true;
-          return;
-        }
+      if(exists){
+        sessionStorage.setItem(KEY_HOST_ADDED, "1");
+        pendingHostAdd = false;
+        return;
       }
-      sessionStorage.setItem(KEY_HOST_ADDED, "1");
-      pendingHostAdd = false;
+
+      try{
+        await addPlayer(roomId, hostName);
+        sessionStorage.setItem(KEY_HOST_ADDED, "1");
+        pendingHostAdd = false;
+      }catch(e){
+        console.warn("Add host failed:", e);
+        pendingHostAdd = true;
+      }
     }
 
     let hostDebTimer = null;
@@ -749,13 +764,12 @@
       }, 450);
     });
 
-    /* ✅ زر المشاركة: افتح فورًا + الإضافة بالخلفية */
+    /* ✅ زر المشاركة */
     shareBtn.addEventListener("click", () => {
       openModalFast();
       ensureHostAddedNow();
     });
 
-    /* ✅ نسخ الرابط: زر يصفر + "تم النسخ" ثانية */
     const COPY_DEFAULT_TEXT = "نسخ الرابط";
     let copyResetTimer = null;
 
@@ -826,6 +840,7 @@
         listenRoom    = fb.listenRoom;
         addPlayer     = fb.addPlayer;
         setRoomStatus = fb.setRoomStatus;
+        roomRef       = fb.roomRef;
 
         firebaseReady = true;
 
@@ -838,7 +853,10 @@
 
         renderPlayers(currentPlayers);
 
-        if(pendingHostAdd){
+        // ✅ لو عندنا اسم محفوظ، نضمن إضافته فوراً
+        if(savedHostAny){
+          await ensureHostAddedNow();
+        }else if(pendingHostAdd){
           await ensureHostAddedNow();
         }
 
@@ -850,6 +868,36 @@
       }
     }
     initFirebaseSafe();
+
+    // ✅ (Fix #2) تصفير بيانات الجولة قبل بدء كتاغوري جديد (عشان العشوائية تتجدد)
+    async function resetRoundFields(){
+      if(!firebaseReady || !roomRef) return;
+      try{
+        await updateDoc(roomRef(roomId), {
+          updatedAt: serverTimestamp(),
+          tick: increment(1),
+
+          // أهم 3 حقول تسبب تكرار التوزيع إذا بقيت
+          outsiderName: null,
+          storyWord: null,
+          roundId: null,
+
+          // تنظيف القوائم/الحقول التابعة للجولة
+          readyList: [],
+          understoodList: [],
+          votesBy: {},
+          guessBy: {},
+          guessOptions: [],
+          correctWord: null,
+          guessRoundId: null,
+          scoresAppliedFor: null,
+          revealTs: null
+        });
+      }catch(e){
+        // إذا فشل ما نوقف اللعب، بس نحاول بقدر الإمكان
+        console.warn("resetRoundFields failed:", e);
+      }
+    }
 
     startBtn.addEventListener("click", async () => {
       const hostName = normalizeName(hostInput.value);
@@ -865,11 +913,9 @@
 
       await ensureHostAddedNow();
 
-      /* ✅ التعديل المطلوب فقط:
-         - نبقي اللاعبين في wait.html (لا نحول status إلى playing)
-         - نحفظ أسماء اللاعبين بالمفاتيح اللي تعتمد عليها categories.html
-         - ننقل المقدم إلى categories.html
-      */
+      // ✅ تصفير الجولة قبل الانتقال (Fix #2)
+      await resetRoundFields();
+
       const ordered = sortPlayers(currentPlayers);
       const names = [hostName].concat(
         ordered.map(p => normalizeName(p?.name)).filter(Boolean)
@@ -880,7 +926,6 @@
       sessionStorage.setItem("bara_players", JSON.stringify(uniq));
       sessionStorage.setItem("bara_players_list", JSON.stringify(uniq));
 
-      // (اختياري للمراحل القادمة) نثبت إن هذا Multi + رقم الغرفة
       sessionStorage.setItem("bara_mode", "multi");
       sessionStorage.setItem("bara_room_multi", roomId);
 
@@ -903,4 +948,4 @@
 </body>
 </html>
 
-<!-- players.html برا السالفة – أجهزة متعددة (المقدم) – إصدار 3 (Fix: استرجاع اسم المقدم عند التنقل وإخفاء خانة الاسم) -->
+<!-- players.html برا السالفة – أجهزة متعددة (المقدم) – إصدار 3 (Fix: عرض اسم المقدم ثابت + Reset round fields لضمان العشوائية) -->
