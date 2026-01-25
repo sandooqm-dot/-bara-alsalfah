@@ -83,7 +83,7 @@
       white-space:nowrap;
     }
 
-    /* ✅ (تعديل) إخفاء النص اللي فوق البطاقة */
+    /* ✅ مخفي (صار النص تحت البطاقة) */
     .sub{
       display:none;
     }
@@ -155,7 +155,7 @@
       font-size: 36px;
       line-height: 1.35;
       padding: 0 6px;
-      margin-bottom: 12px; /* ✅ فراغ بين الكلام وزر جاهز */
+      margin-bottom: 12px;
     }
 
     .revealText{
@@ -191,7 +191,7 @@
       transform:none;
     }
 
-    /* ✅ التعديل المطلوب فقط: زر "فهمت" أسفل المربع الزيتي */
+    /* ✅ زر "فهمت" أسفل المربع الزيتي */
     .cardFace.back{ padding-bottom: 130px; }
     .cardFace.back #understoodBtn{
       position: absolute;
@@ -220,20 +220,19 @@
       margin: 10px auto 0;
     }
 
-    /* ✅ (تعديل) مربع أبيض تحت البطاقة لعرض عبارة الشرح */
-    .infoBox{
+    /* ✅ (تعديل) النص فقط بدون مربع */
+    .infoText{
       width: min(460px, 92%);
-      background:#fff;
-      border-radius: 22px;
-      padding: 16px 14px;
       text-align:center;
       color:#111;
       font-weight: 900;
       font-size: 18px;
       line-height: 1.6;
-      border: 4px solid rgba(0,0,0,0.20);
-      box-shadow: 0 8px 0 rgba(0,0,0,0.12);
       margin-top: 6px;
+      padding: 0;            /* بدون حواف داخلية */
+      background: transparent;/* بدون خلفية */
+      border: none;          /* بدون إطار */
+      box-shadow: none;      /* بدون ظل */
     }
 
     .homeBtn{
@@ -262,7 +261,7 @@
       .frontText{ font-size: 34px; }
       .revealText{ font-size: 54px; }
       .btn{ font-size: 44px; }
-      .infoBox{ font-size: 18px; }
+      .infoText{ font-size: 18px; }
     }
     @media (max-width: 360px){
       .h1{ font-size: 30px; top: 20px; right: 16px; }
@@ -274,7 +273,7 @@
       .flip{ min-height: 400px; }
       .homeBtn{ width:66px;height:66px; }
       .homeBtn svg{ width:40px;height:40px; }
-      .infoBox{ font-size: 17px; }
+      .infoText{ font-size: 17px; }
     }
   </style>
 </head>
@@ -288,7 +287,6 @@
         <div class="h1">لعبة برا السالفة</div>
       </div>
 
-      <!-- ✅ (تعديل) مخفي -->
       <div class="sub">اضغط "جاهز" عشان تنقلب البطاقة وتظهر لك السالفة</div>
 
       <div class="center">
@@ -322,8 +320,8 @@
           </div>
         </div>
 
-        <!-- ✅ (تعديل) نقل العبارة للمربع الأبيض تحت البطاقة -->
-        <div class="infoBox">اضغط "جاهز" عشان تنقلب البطاقة وتظهر لك السالفة</div>
+        <!-- ✅ النص فقط -->
+        <div class="infoText">اضغط "جاهز" عشان تنقلب البطاقة وتظهر لك السالفة</div>
       </div>
 
       <div id="err" class="err"></div>
@@ -437,7 +435,6 @@
       });
     }
 
-    // ✅ توحيد القراءة (عشان لو ملف ثاني يستخدم outName بدل outsiderName)
     function getOutNameAny(data){
       return cleanName(data?.outsiderName)
         || cleanName(data?.outName)
@@ -477,7 +474,6 @@
       flip.classList.add("isFlipped");
     }
 
-    // ✅ FIX: توحيد مفاتيح برا السالفة داخل Firebase (outsiderName + outName + ...)
     async function ensureRoundSetup(roomId){
       const ref = roomRef(roomId);
 
@@ -491,7 +487,6 @@
         const existingOut = getOutNameAny(data);
         const existingStory = getStoryWordAny(data);
 
-        // لو الجولة مجهزة لكن المفاتيح غير موحدة (مثلاً outName قديم) نصلحها فقط
         if(existingRoundId && existingOut && existingStory){
           const needsFix =
             cleanName(data?.outsiderName) !== existingOut ||
@@ -511,7 +506,6 @@
               outsideName: existingOut,
               baraOut: existingOut,
 
-              // نخلي القصة كما هي
               storyWord: existingStory
             });
           }
@@ -524,10 +518,8 @@
 
         const outsider = existingOut || names[Math.floor(Math.random() * names.length)];
 
-        // الأفضل: storyWord يكون جاهز من categories.html
         let word = existingStory;
 
-        // احتياط: لو ما موجود، خذ من categoryWords إن وجد
         if(!word){
           const pool = Array.isArray(data?.categoryWords) ? data.categoryWords : [];
           if(Array.isArray(pool) && pool.length){
@@ -538,7 +530,6 @@
           }
         }
 
-        // احتياط قديم جدًا (ما نفضّله، بس ما نكسر اللعبة)
         if(!word){
           const words = Array.isArray(data.words) ? data.words : null;
           if(Array.isArray(words) && words.length){
@@ -559,7 +550,6 @@
 
           roundId: rid,
 
-          // ✅ نفس الاسم في كل المفاتيح حتى ما يختلف الكشف
           outsiderName: outsider,
           outName: outsider,
           outPlayer: outsider,
@@ -666,4 +656,4 @@
 </body>
 </html>
 
-<!-- ready.html برا السالفة – إصدار 6 (Move top instruction into white box under the card) -->
+<!-- ready.html برا السالفة – إصدار 7 (تحويل العبارة لنص فقط بدون مربع) -->
