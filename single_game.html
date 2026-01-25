@@ -441,17 +441,6 @@
    9) نهاية الجولة (تغيير اللاعبين / كمل لعب) مع حفظ الأسماء والنتائج
    ========================================================= */
 
-/* ✅✅ FIX المطلوب فقط:
-   iOS/Safari أحياناً يحفظ الصفحة في ذاكرة الرجوع (BFCache)
-   فيرجع لها بدون ما يعيد قراءة اللاعبين من sessionStorage
-   الحل: إذا رجعنا بـ pageshow.persisted نعمل Reload مرة وحدة.
-*/
-window.addEventListener("pageshow", (e) => {
-  if (e && e.persisted) {
-    location.reload();
-  }
-});
-
 function getSessionJSON(key){
   try{
     const v = sessionStorage.getItem(key);
@@ -462,17 +451,69 @@ function setSessionJSON(key, val){
   sessionStorage.setItem(key, JSON.stringify(val));
 }
 
+/* ✅ التعديل المطلوب فقط:
+   قراءة اللاعبين بشكل مرن حتى لو single.html يخزنهم في مفتاح مختلف
+   أو بصيغة مختلفة (strings أو objects فيها name)
+*/
+function normalizePlayersArray(arr){
+  if(!Array.isArray(arr)) return [];
+  const out = [];
+  for(const item of arr){
+    if(typeof item === "string"){
+      const n = item.trim();
+      if(n) out.push(n);
+    }else if(item && typeof item === "object"){
+      const n = String(item.name || item.player || item.value || "").trim();
+      if(n) out.push(n);
+    }
+  }
+  return out;
+}
+
+function pickBestPlayers(candidates){
+  // candidates: Array<{key, arr}>
+  // اختر الأطول (وغالباً هو اللي فيه اللاعب الجديد)
+  let best = [];
+  let bestKey = "";
+  for(const c of candidates){
+    const a = normalizePlayersArray(c.arr);
+    if(a.length > best.length){
+      best = a;
+      bestKey = c.key;
+    }
+  }
+  return best;
+}
+
 function readPlayers(){
-  const a = getSessionJSON("bara_players");
-  if (Array.isArray(a) && a.length) return a;
+  const candidates = [];
 
-  const b = getSessionJSON("players");
-  if (Array.isArray(b) && b.length) return b;
+  // 1) المفاتيح المعروفة
+  const knownKeys = ["bara_players", "players", "baraPlayers"];
+  for(const k of knownKeys){
+    const a = getSessionJSON(k);
+    if(Array.isArray(a) && a.length) candidates.push({ key: k, arr: a });
+  }
 
-  const c = getSessionJSON("baraPlayers");
-  if (Array.isArray(c) && c.length) return c;
+  // 2) مسح sessionStorage لأي مفتاح آخر قد يحتوي قائمة لاعبين
+  // (بدون لمس أي شيء آخر في النظام)
+  const ignoreKeys = new Set(["singleState","bara_single_scores"]);
+  for(let i=0; i<sessionStorage.length; i++){
+    const key = sessionStorage.key(i);
+    if(!key || ignoreKeys.has(key)) continue;
 
-  return [];
+    // احتمال كبير يكون اسمه فيه players أو bara
+    const lk = key.toLowerCase();
+    if(!(lk.includes("players") || lk.includes("bara"))) continue;
+
+    const a = getSessionJSON(key);
+    if(Array.isArray(a) && a.length){
+      candidates.push({ key, arr: a });
+    }
+  }
+
+  const best = pickBestPlayers(candidates);
+  return best;
 }
 
 function readCategoryKey(){
@@ -1145,12 +1186,11 @@ function render(){
 
     // تغيير اللاعبين: يرجع لصفحة إضافة اللاعبين مع بقاء الأسماء والنتيجة (ما نمسح شيء)
     document.getElementById("changePlayersBtn").addEventListener("click", () => {
-      /* ✅ التعديل المطلوب فقط: تأكيد حفظ الأسماء في كل المفاتيح قبل الرجوع */
+      /* ✅ كما هو (بدون تغيير خارج المطلوب) */
       setSessionJSON("bara_players", players);
       setSessionJSON("players", players);
       setSessionJSON("baraPlayers", players);
 
-      // فقط نمسح حالة الجولة الحالية عشان تبدأ بشكل نظيف
       sessionStorage.removeItem("singleState");
       location.href = "single.html";
     });
@@ -1221,24 +1261,21 @@ function next(){
   }
 
   if(s === 5){
-    // لازم يختار
     if(state.currentPick === -1){
       alert("اختر لاعب قبل المتابعة");
       return;
     }
 
-    // حفظ التصويت
     state.votes[state.voteIndex] = state.currentPick;
 
     const isLast = (state.voteIndex === players.length - 1);
     if(!isLast){
       state.voteIndex++;
-      state.currentPick = -1; // تصفير اختيار الصفحة التالية
+      state.currentPick = -1;
       saveAndRender();
       return;
     }
 
-    // آخر مصوّت -> نروح للكشف
     state.screen = 6;
     state.currentPick = -1;
     saveAndRender();
@@ -1252,7 +1289,6 @@ function next(){
   }
 
   if(s === 7){
-    // ما يسمح إلا بعد اختيار
     if(!state.guessPicked){
       alert("اختر كلمة قبل المتابعة");
       return;
@@ -1294,4 +1330,4 @@ function escapeHtml(str){
 </body>
 </html>
 
-<!-- single_game.html برا السالفة – إصدار 5 (Fix: Reload عند الرجوع من BFCache حتى يتم تحديث اللاعبين الجدد) -->
+<!-- single_game.html برا السالفة – إصدار 6 (Fix: قراءة اللاعبين من أي مفتاح players محفوظ في sessionStorage) -->
