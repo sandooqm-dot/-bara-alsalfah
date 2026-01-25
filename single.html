@@ -295,7 +295,7 @@
       window.location.href = 'index.html';
     });
 
-    /* ✅ (التعديل المطلوب فقط) تعبئة الأسماء عند الرجوع من "تغيير اللاعبين" */
+    /* ✅ تعبئة الأسماء عند الرجوع من "تغيير اللاعبين" */
     function readSavedPlayers(){
       try{
         const a = sessionStorage.getItem('bara_players');
@@ -355,11 +355,16 @@
         return;
       }
 
+      /* ✅ (التعديل المطلوب فقط) حفظ الأسماء في كل المفاتيح */
       sessionStorage.setItem('bara_players', JSON.stringify(names));
+      sessionStorage.setItem('players', JSON.stringify(names));
+      sessionStorage.setItem('baraPlayers', JSON.stringify(names));
+      /* ✅ نهاية التعديل */
+
       window.location.href = 'categories.html';
     });
   </script>
 </body>
 </html>
 
-<!-- single.html برا السالفة – إصلاح تعبئة الأسماء عند الرجوع -->
+<!-- single.html برا السالفة – إصدار 2 (Fix: حفظ أسماء اللاعبين في كل المفاتيح) -->
