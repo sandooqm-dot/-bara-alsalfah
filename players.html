@@ -565,7 +565,7 @@
     roomCodeEl.textContent = roomId;
     joinLinkBox.textContent = joinUrl;
 
-    // ✅ استرجاع اسم المقدم عند الرجوع لنفس الغرفة (حتى لو NAV_TYPE navigate)
+    // ✅ استرجاع اسم المقدم عند الرجوع لنفس الغرفة
     if(!FROM_INDEX){
       const savedHost = (localStorage.getItem(KEY_HOST) || "").trim();
       if(savedHost && roomFromUrl){
@@ -575,8 +575,15 @@
       }
     }
 
-    function updateHostUI(){
+    // ✅ (جديد) لا نخفي حقل الاسم أثناء الكتابة (عشان ما يطفي الكيبورد)
+    let isEditingHost = false;
+
+    function updateHostUI(force){
       const hostName = normalizeName(hostInput.value);
+
+      // أثناء الكتابة: ممنوع تبديل الواجهة
+      if(!force && isEditingHost) return;
+
       if(hostName){
         hostFixed.textContent = hostName;
         hostFixed.style.display = "block";
@@ -588,14 +595,28 @@
       }
     }
 
+    hostInput.addEventListener("focus", () => {
+      isEditingHost = true;
+      // نخلي input ظاهر دائمًا وقت التركيز
+      hostInput.style.display = "block";
+      hostFixed.style.display = "none";
+    });
+
+    hostInput.addEventListener("blur", () => {
+      isEditingHost = false;
+      // بعد ما يخلص كتابة (طلع من الحقل) ثبّت الاسم لو موجود
+      updateHostUI(true);
+    });
+
     // يسمح للمقدم يغير اسمه إذا ضغط على صندوق اسمه
     hostFixed.addEventListener("click", () => {
       hostInput.style.display = "block";
       hostFixed.style.display = "none";
+      isEditingHost = true;
       hostInput.focus();
     });
 
-    updateHostUI();
+    updateHostUI(true);
 
     function sortPlayers(list){
       return (list || []).slice().sort((a,b)=>{
@@ -635,7 +656,8 @@
       const total = (hostName ? 1 : 0) + others.length;
       startBtn.disabled = !(hostName && total >= 3);
 
-      updateHostUI();
+      // ✅ (تعديل) لا نبدّل UI داخل الكتابة
+      updateHostUI(false);
     }
 
     /* ✅ فتح المودال فورًا */
@@ -684,7 +706,7 @@
     tabCode.addEventListener("click", () => setTab("code"));
     tabLink.addEventListener("click", () => setTab("link"));
 
-    // ✅ إضافة المقدم (فقط عند الضغط على مشاركة / ابدأ اللعب) — ممنوع أثناء الكتابة
+    // ✅ إضافة المقدم (فقط عند الضغط على مشاركة / ابدأ اللعب)
     let pendingHostAdd = false;
     async function ensureHostAddedNow(){
       const hostName = normalizeName(hostInput.value);
@@ -715,15 +737,19 @@
       pendingHostAdd = false;
     }
 
-    // ✅ أثناء الكتابة: فقط حفظ محلي + تحديث UI — بدون أي إضافة Firebase
+    // ✅ أثناء الكتابة: فقط حفظ محلي + تحديث قائمة اللاعبين — بدون إخفاء input
     hostInput.addEventListener("input", () => {
       const v = normalizeName(hostInput.value);
       localStorage.setItem(KEY_HOST, v);
       renderPlayers(currentPlayers);
     });
 
-    /* ✅ زر المشاركة: افتح فورًا + بعدها أضف المقدم مرة وحدة */
+    /* ✅ زر المشاركة: افتح فورًا + بعدها أضف المقدم */
     shareBtn.addEventListener("click", () => {
+      // ✅ قبل أي شيء: ثبّت الاسم لو كان مكتوب
+      isEditingHost = false;
+      updateHostUI(true);
+
       openModalFast();
       ensureHostAddedNow();
     });
@@ -795,6 +821,8 @@
       if(!hostName){
         alert("اكتب اسمك أولاً.");
         hostInput.style.display = "block";
+        hostFixed.style.display = "none";
+        isEditingHost = true;
         hostInput.focus();
         return;
       }
@@ -802,6 +830,10 @@
         alert("في مشكلة اتصال/تحميل Firebase حالياً، جرب تحدّث الصفحة.");
         return;
       }
+
+      // ✅ ثبّت الاسم قبل الانتقال
+      isEditingHost = false;
+      updateHostUI(true);
 
       await ensureHostAddedNow();
 
@@ -837,4 +869,4 @@
 </body>
 </html>
 
-<!-- players.html برا السالفة – أجهزة متعددة (المقدم) – إصدار 3 (Fix: منع إضافة اسم المقدم أثناء الكتابة + عرض اسمه كصندوق ثابت عند حفظه) -->
+<!-- players.html برا السالفة – أجهزة متعددة (المقدم) – إصدار 4 (Fix: منع تبديل input/box أثناء الكتابة لتثبيت الكيبورد) -->
