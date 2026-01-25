@@ -420,14 +420,12 @@ function normalizePlayersArray(arr){
       if(n) out.push(n);
     }
   }
-  // إزالة تكرار
   return [...new Set(out)];
 }
 
 function looksLikePlayersList(list){
   if(!Array.isArray(list)) return false;
   if(list.length < 2 || list.length > 30) return false;
-  // أسماء معقولة (لا نبي نلقط أشياء مثل state أو scores)
   let ok = 0;
   for(const n of list){
     if(typeof n === "string" && n.trim() && n.length <= 30) ok++;
@@ -439,7 +437,6 @@ function collectCandidates(){
   const candidates = [];
   const ignore = new Set(["singleState","bara_single_scores"]);
 
-  // sessionStorage جميع المفاتيح
   for(let i=0; i<sessionStorage.length; i++){
     const key = sessionStorage.key(i);
     if(!key || ignore.has(key)) continue;
@@ -450,7 +447,6 @@ function collectCandidates(){
     }
   }
 
-  // localStorage جميع المفاتيح (المهم هنا!)
   for(let i=0; i<localStorage.length; i++){
     const key = localStorage.key(i);
     if(!key) continue;
@@ -465,7 +461,6 @@ function collectCandidates(){
 }
 
 function readPlayers(){
-  // أولاً المفاتيح المعروفة (كأولوية)
   const known = [];
   const knownKeys = ["bara_players", "players", "baraPlayers"];
   for(const k of knownKeys){
@@ -473,20 +468,13 @@ function readPlayers(){
     if(looksLikePlayersList(a)) known.push({store:"session", key:k, list:a});
   }
 
-  // ثم أي قائمة أخرى
   const all = collectCandidates();
-
-  // خلي known داخلة ضمن التقييم
   const pool = [...known, ...all];
-
-  // إذا ما فيه شيء
   if(!pool.length) return [];
 
-  // خذ الأطول (وغالبًا هي اللي فيها اللاعب الجديد)
   pool.sort((a,b) => (b.list.length - a.list.length));
   const best = pool[0].list.slice();
 
-  // ✅ توحيد وكتابة القائمة المعتمدة في المفاتيح اللي اللعبة تعتمد عليها
   setSessionJSON("bara_players", best);
   setSessionJSON("players", best);
   setSessionJSON("baraPlayers", best);
@@ -815,14 +803,10 @@ function render(){
     setPageTitle("");
     const voter = players[state.voteIndex];
 
-    const isLast = (state.voteIndex === players.length - 1);
-    if(isLast){
-      ctaBtn.textContent = "التالي";
-      ctaBtn.classList.remove("vote");
-    }else{
-      ctaBtn.textContent = "تصويت";
-      ctaBtn.classList.add("vote");
-    }
+    /* ✅ التعديل المطلوب: آخر لاعب أيضًا زرّه "تصويت" أحمر */
+    ctaBtn.textContent = "تصويت";
+    ctaBtn.classList.add("vote");
+    ctaBtn.classList.add("compact");
 
     const wrapper = document.createElement("div");
     wrapper.innerHTML = `
@@ -870,6 +854,25 @@ function render(){
     });
 
     listHost.appendChild(list);
+    return;
+  }
+
+  /* ✅ التعديل المطلوب: صفحة "لحظة الحقيقة!" قبل الكشف */
+  if(s === 10){
+    setPageTitle("لحظة الحقيقة!");
+    ctaBtn.textContent = "التالي";
+    ctaBtn.classList.remove("vote");
+    ctaBtn.classList.add("compact");
+
+    content.innerHTML = `
+      <div class="bigCard" style="min-height:420px;">
+        <div class="msgText" style="font-size:44px; font-weight:1000; line-height:1.35;">
+          اضغط <span style="color:var(--yellow);">التالي</span><br/>
+          عشان تعرف مين اللاعب<br/>
+          الي برا السالفة 👀
+        </div>
+      </div>
+    `;
     return;
   }
 
@@ -1129,11 +1132,15 @@ function next(){
       return;
     }
 
-    state.screen = 6;
+    /* ✅ التعديل المطلوب: بعد آخر تصويت نروح لصفحة "لحظة الحقيقة!" */
+    state.screen = 10;
     state.currentPick = -1;
     saveAndRender();
     return;
   }
+
+  /* ✅ التعديل المطلوب: بعد "لحظة الحقيقة!" نفتح الكشف مباشرة */
+  if(s === 10){ state.screen = 6; saveAndRender(); return; }
 
   if(s === 6){ state.screen = 7; saveAndRender(); return; }
 
@@ -1164,4 +1171,4 @@ function escapeHtml(str){
 </body>
 </html>
 
-<!-- single_game.html برا السالفة – إصدار 7 (Fix: قراءة اللاعبين من sessionStorage + localStorage ومن أي مفتاح، ثم توحيدهم) -->
+<!-- single_game.html برا السالفة – إصدار 8 (إضافة صفحة لحظة الحقيقة قبل الكشف + آخر تصويت زر تصويت) -->
