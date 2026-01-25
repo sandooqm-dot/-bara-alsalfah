@@ -342,14 +342,14 @@
       align-items:center;
       justify-content:center;
       z-index:10000;
-      padding: 16px;
+      padding: 10px; /* ✅ أكبر (قريب من حجم الرسم) */
     }
     .modal{
-      width: min(520px, 94vw);
+      width: min(520px, 96vw); /* ✅ أكبر (قريب من حجم الرسم) */
       border:10px solid var(--frame);
       border-radius: 26px;
       background: var(--bg);
-      padding: 18px 16px 18px;
+      padding: 16px 14px 16px; /* ✅ تعديل بسيط للمقاس */
       box-shadow: 0 14px 0 rgba(0,0,0,.22);
     }
     .modalInner{
@@ -421,10 +421,6 @@
     }
     .modalNext{
       background: var(--yellow);
-      color:#111;
-    }
-    .modalClose{
-      background:#fff;
       color:#111;
     }
 
@@ -509,9 +505,6 @@
 
           <!-- للاعبين فقط -->
           <button class="modalBtn modalBuy" id="modalBuy" style="display:none;">لشراء اللعبة اضغط هنا</button>
-
-          <!-- إغلاق للجميع -->
-          <button class="modalBtn modalClose" id="modalOk">حسناً</button>
         </div>
       </div>
     </div>
@@ -538,7 +531,6 @@
     const errBox    = document.getElementById("err");
 
     const modalBack  = document.getElementById("modalBack");
-    const modalOk    = document.getElementById("modalOk");
     const modalVotes = document.getElementById("modalVotes");
     const modalNext  = document.getElementById("modalNext");
     const modalBuy   = document.getElementById("modalBuy");
@@ -635,9 +627,6 @@
       modalBack.style.display = "none";
       modalBack.setAttribute("aria-hidden","true");
     }
-
-    modalOk.addEventListener("click", closeVoteModal);
-    modalBack.addEventListener("click", (e)=>{ if(e.target === modalBack) closeVoteModal(); });
 
     modalBuy.addEventListener("click", () => {
       window.open("https://sandooq-m.com", "_blank", "noopener,noreferrer");
@@ -855,6 +844,10 @@
           if(phase !== "vote") return;
 
           const votesBy = (d.votesBy && typeof d.votesBy === "object") ? d.votesBy : {};
+
+          // ✅ تثبيت التصويت: إذا سبق وصوّت، ما يقدر يغيّر
+          if(clean(votesBy[myName])) return;
+
           votesBy[myName] = targetName;
 
           tx.update(ref, {
@@ -891,6 +884,9 @@
       const selected = myName ? clean(votesBy?.[myName]) : "";
       const canVote = !!myName;
 
+      // ✅ بعد التصويت: تقفل الأزرار (تثبيت)
+      const locked = !!selected;
+
       // ✅ التعديل المطلوب: إزالة اسم اللاعب نفسه من القائمة تماماً
       const listNames = (names || []).filter(n => {
         if(!myName) return true;
@@ -898,7 +894,7 @@
       });
 
       const list = listNames.map(n => {
-        const dis = (!canVote) ? " disabled" : "";
+        const dis = (!canVote || locked) ? " disabled" : "";
         const sel = (selected === n) ? " selected" : "";
         return `<button class="rowBtn${sel}" data-name="${escapeHtml(n)}"${dis}>${escapeHtml(n)}</button>`;
       }).join("");
@@ -913,6 +909,10 @@
       const voteList = document.getElementById("voteList");
       if(voteList){
         voteList.addEventListener("click", (e) => {
+          // ✅ بعد التصويت: ممنوع تغيير الاختيار
+          const already = myName ? clean(votesBy?.[myName]) : "";
+          if(already) return;
+
           const btn = e.target.closest("button.rowBtn");
           if(!btn || btn.disabled) return;
           const n = clean(btn.getAttribute("data-name"));
@@ -1542,4 +1542,4 @@
 </body>
 </html>
 
-<!-- multi_round.html برا السالفة – إصدار 6 (Vote: hide self option + modal appears only for voters + live vote list + host next / player buy inside modal) -->
+<!-- multi_round.html برا السالفة – إصدار 7 (Vote: remove OK button + modal bigger + lock vote after first vote) -->
