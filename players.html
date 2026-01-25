@@ -460,10 +460,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <script type="module">
+    import { updateDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
     let ensureRoom   = async () => {};
     let listenRoom   = () => () => {};
     let addPlayer    = async () => {};
     let setRoomStatus= async () => {};
+    let roomRefFn    = null;
     let firebaseReady = false;
 
     const hostInput   = document.getElementById("hostInput");
@@ -737,6 +740,60 @@
       pendingHostAdd = false;
     }
 
+    // ✅ (جديد) Reset للجولة قبل بدء لعبة جديدة من صفحة اللاعبين (حل تكرار برا السالفة بعد إضافة لاعب)
+    async function resetRoundBeforeStart(){
+      if(!firebaseReady) return;
+
+      const fields = {
+        phase: "category",
+
+        roundId: "",
+        questionsRoundId: "",
+        revealTs: null,
+
+        outsiderName: "",
+        outName: "",
+        outPlayer: "",
+        outsideName: "",
+        baraOut: "",
+
+        storyWord: "",
+        topicWord: "",
+        salfahWord: "",
+        word: "",
+
+        readyList: [],
+        understoodList: [],
+
+        votesBy: {},
+        guessBy: {},
+        guessOptions: [],
+        correctWord: "",
+        guessRoundId: "",
+        scoresAppliedFor: "",
+
+        categoryKey: "",
+        categoryWords: []
+      };
+
+      // الأفضل: لو firebase.js عندك فيه roomRef نستخدمه (نفس multi_round)
+      if(typeof roomRefFn === "function"){
+        await updateDoc(roomRefFn(roomId), {
+          ...fields,
+          updatedAt: serverTimestamp(),
+          tick: increment(1)
+        });
+        return;
+      }
+
+      // بديل: لو عندك setRoomStatus يدعم تحديث الحقول
+      try{
+        await setRoomStatus(roomId, fields);
+      }catch(e){
+        // تجاهل لو ما يدعم
+      }
+    }
+
     // ✅ أثناء الكتابة: فقط حفظ محلي + تحديث قائمة اللاعبين — بدون إخفاء input
     hostInput.addEventListener("input", () => {
       const v = normalizeName(hostInput.value);
@@ -792,6 +849,9 @@
         addPlayer     = fb.addPlayer;
         setRoomStatus = fb.setRoomStatus;
 
+        // ✅ (جديد) نلتقط roomRef لو موجود عشان نقدر نسوي Reset مضمون
+        roomRefFn     = fb.roomRef || null;
+
         firebaseReady = true;
 
         await ensureRoom(roomId);
@@ -837,6 +897,13 @@
 
       await ensureHostAddedNow();
 
+      // ✅ (جديد) Reset الجولة هنا قبل ما نبدأ (حل تكرار برا السالفة بعد إضافة لاعب)
+      try{
+        await resetRoundBeforeStart();
+      }catch(e){
+        console.warn("Reset round failed:", e);
+      }
+
       const ordered = sortPlayers(currentPlayers);
       const names = [hostName].concat(
         ordered.map(p => normalizeName(p?.name)).filter(Boolean)
@@ -869,4 +936,4 @@
 </body>
 </html>
 
-<!-- players.html برا السالفة – أجهزة متعددة (المقدم) – إصدار 4 (Fix: منع تبديل input/box أثناء الكتابة لتثبيت الكيبورد) -->
+<!-- players.html برا السالفة – أجهزة متعددة (المقدم) – إصدار 5 (Fix: Reset للجولة في Firebase عند "ابدأ اللعب" لمنع تكرار برا السالفة بعد إضافة لاعب) -->
