@@ -403,24 +403,21 @@
     }
 
     // =========================
-    // ✅ (جديد) تحميل كلمات الكتاغوري كاملة + اختيار سالفة عشوائية بدون تكرار
+    // ✅ تحميل كلمات الكتاغوري كاملة + اختيار سالفة عشوائية بدون تكرار
     // =========================
     async function loadCategoryWords(key){
       const k = clean(key);
       if(!k) return [];
 
-      // حمّل ملف الداتا الخاص بالكتاغوري (ينشئ window.BARA_WORDS[k])
       try{
         await import(`./data/${encodeURIComponent(k)}.js?v=${Date.now()}`);
       }catch(e){
-        // لو فشل التحميل، نحاول بدون encode (احتياط)
         try{ await import(`./data/${k}.js?v=${Date.now()}`); }catch(_e){}
       }
 
       const poolRaw = window.BARA_WORDS && window.BARA_WORDS[k] ? window.BARA_WORDS[k] : [];
       const arr = Array.isArray(poolRaw) ? poolRaw : [];
 
-      // تنظيف + إزالة الفاضي + إزالة التكرار
       const seen = new Set();
       const out = [];
       for(const w of arr){
@@ -438,6 +435,19 @@
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
+    function uniqueNamesFromRoomPlayers(d){
+      const players = Array.isArray(d?.players) ? d.players : [];
+      const names = players.map(p => clean(p?.name)).filter(Boolean);
+      const seen = new Set();
+      const uniq = [];
+      for(const n of names){
+        if(seen.has(n)) continue;
+        seen.add(n);
+        uniq.push(n);
+      }
+      return uniq;
+    }
+
     async function setRoomCategoryAndStory(roomId, catKey, catLabel, words){
       const ref = roomRef(roomId);
 
@@ -446,13 +456,13 @@
         if(!snap.exists()) return;
 
         const d = snap.data() || {};
+
         const usedMap = (d.usedStoryWords && typeof d.usedStoryWords === "object") ? d.usedStoryWords : {};
         const usedArrRaw = Array.isArray(usedMap[catKey]) ? usedMap[catKey] : [];
         const usedArr = usedArrRaw.map(clean).filter(Boolean);
 
         let candidates = words.filter(w => !usedArr.includes(w));
 
-        // إذا خلصت الكلمات كلها، نبدأ دورة جديدة
         if(candidates.length === 0){
           usedMap[catKey] = [];
           candidates = words.slice();
@@ -460,10 +470,20 @@
 
         const storyWord = pickRandom(candidates) || pickRandom(words) || "";
 
-        // حدّث سجل الاستخدام
         usedMap[catKey] = Array.from(new Set([...(Array.isArray(usedMap[catKey]) ? usedMap[catKey] : []), storyWord]))
           .map(clean)
           .filter(Boolean);
+
+        // =========================
+        // ✅ (المهم للمشاكل)
+        // 1) برا السالفة عشوائي كل جولة
+        // 2) تصفير مربعات فهمت/الانتظار
+        // 3) تصفير بيانات الجولة السابقة
+        // =========================
+        const names = uniqueNamesFromRoomPlayers(d);
+        const outName = pickRandom(names) || "";
+
+        const newRoundId = String(Date.now());
 
         tx.update(ref, {
           updatedAt: serverTimestamp(),
@@ -472,17 +492,34 @@
           categoryKey: catKey,
           categoryLabel: catLabel,
 
-          // ✅ مهم: كلمات الكتاغوري كاملة
+          // كلمات الكتاغوري كاملة
           categoryWords: words,
 
-          // ✅ مهم: سالفة الجولة (تُقرأ في multi_round.html)
+          // سالفة الجولة
           storyWord: storyWord,
+
+          // ✅ برا السالفة عشوائي + جولة جديدة
+          outName: outName,
+          roundId: newRoundId,
+
+          // ✅ تصفير بيانات الجولة السابقة
+          votesBy: {},
+          guessBy: {},
+          guessOptions: [],
+          correctWord: "",
+          guessRoundId: "",
+          revealTs: 0,
+          scoresAppliedFor: "",
+
+          // ✅ تصفير مربعات "فهمت/الانتظار"
+          readyBy: {},
+          understoodBy: {},
 
           // نفس سلوكك السابق
           phase: "ready",
           phaseAt: Date.now(),
 
-          // ✅ منع التكرار
+          // منع تكرار السوالف
           usedStoryWords: usedMap
         });
       });
@@ -506,7 +543,6 @@
 
           await ensureRoom(multiRoomId);
 
-          // ✅ (جديد) خذ كلمات الكتاغوري من الداتا كاملة
           const words = await loadCategoryWords(selectedKey);
 
           if(!words.length){
@@ -515,10 +551,8 @@
             return;
           }
 
-          // ✅ (جديد) احفظ الكلمات كاملة + اختر سالفة عشوائية بدون تكرار
           await setRoomCategoryAndStory(multiRoomId, selectedKey, selectedLabel, words);
 
-          // ✅ مهم: مرر roomId
           window.location.href = "ready.html?room=" + encodeURIComponent(multiRoomId);
 
         }catch(e){
@@ -543,4 +577,4 @@
 </body>
 </html>
 
-<!-- categories.html برا السالفة – إصدار 7 (Fix: random storyWord from full data + prevent repeats in multi) -->
+<!-- categories.html برا السالفة – إصدار 8 (Fix: random outName each round + reset vote/guess + reset ready/understood) -->
