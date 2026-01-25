@@ -333,7 +333,7 @@
     .optBtn.wrong{ background:#b92b2b; color:#fff; }
     .optBtn.correct{ background:#1f8a3a; color:#fff; }
 
-    /* مودال تأكيد التصويت */
+    /* مودال نتائج التصويت (يظهر فقط لمن صوّت) */
     .modalBack{
       position: fixed;
       inset: 0;
@@ -356,26 +356,48 @@
       border-radius: 22px;
       background: var(--card);
       color:#fff;
-      padding: 20px 16px;
+      padding: 20px 16px 18px;
       box-shadow: 0 0 0 8px rgba(216,207,177,.75) inset;
       text-align:center;
+      position: relative;
     }
     .modalTitle{
-      font-size: 32px;
+      font-size: 34px;
       font-weight: 1000;
       margin-bottom: 14px;
       color: #fff;
     }
-    .modalLine{
-      font-size: 22px;
+
+    .voteListBox{
+      width:100%;
+      max-width: 440px;
+      margin: 0 auto;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      padding-top: 6px;
+    }
+    .voteLine{
+      width:100%;
+      border-radius: 18px;
+      padding: 16px 14px;
+      background: rgba(43,62,26,0.55);
+      box-shadow: 0 8px 0 rgba(0,0,0,0.18);
+      font-size: 24px;
       font-weight: 1000;
-      line-height: 1.7;
+      line-height: 1.4;
+      color:#fff;
+      text-align:center;
     }
     .hl{ color: var(--yellow); }
+
     .modalActions{
       display:flex;
+      flex-direction:column;
+      gap:12px;
       justify-content:center;
-      margin-top: 14px;
+      align-items:center;
+      margin-top: 16px;
     }
     .modalBtn{
       width: min(360px, 86%);
@@ -391,6 +413,20 @@
       -webkit-tap-highlight-color:transparent;
     }
     .modalBtn:active{ transform: translateY(1px); box-shadow: 0 7px 0 rgba(0,0,0,0.18); }
+    .modalBtn[disabled]{ opacity:.55; cursor:not-allowed; transform:none; }
+
+    .modalBuy{
+      background: var(--blue);
+      color:#111;
+    }
+    .modalNext{
+      background: var(--yellow);
+      color:#111;
+    }
+    .modalClose{
+      background:#fff;
+      color:#111;
+    }
 
     .hostOnlyRow{
       display:flex;
@@ -412,6 +448,8 @@
       .cta{ font-size: 26px; }
       .bigName{ font-size: 50px; }
       .pillName{ font-size: 30px; }
+      .voteLine{ font-size: 22px; }
+      .modalTitle{ font-size: 32px; }
     }
   </style>
 </head>
@@ -455,14 +493,25 @@
     </div>
   </div>
 
-  <!-- مودال نتيجة التصويت -->
+  <!-- ✅ مودال نتائج التصويت (يظهر فقط لمن صوّت) -->
   <div class="modalBack" id="modalBack" aria-hidden="true">
     <div class="modal">
       <div class="modalInner">
         <div class="modalTitle">نتائج التصويت</div>
-        <div class="modalLine" id="modalLine">...</div>
+
+        <div class="voteListBox" id="modalVotes">
+          <!-- تُملأ تلقائياً -->
+        </div>
+
         <div class="modalActions">
-          <button class="modalBtn" id="modalOk">حسناً</button>
+          <!-- للمقدم فقط -->
+          <button class="modalBtn modalNext" id="modalNext" style="display:none;" disabled>التالي</button>
+
+          <!-- للاعبين فقط -->
+          <button class="modalBtn modalBuy" id="modalBuy" style="display:none;">لشراء اللعبة اضغط هنا</button>
+
+          <!-- إغلاق للجميع -->
+          <button class="modalBtn modalClose" id="modalOk">حسناً</button>
         </div>
       </div>
     </div>
@@ -488,9 +537,11 @@
     const homeBtn   = document.getElementById("homeBtn");
     const errBox    = document.getElementById("err");
 
-    const modalBack = document.getElementById("modalBack");
-    const modalLine = document.getElementById("modalLine");
-    const modalOk   = document.getElementById("modalOk");
+    const modalBack  = document.getElementById("modalBack");
+    const modalOk    = document.getElementById("modalOk");
+    const modalVotes = document.getElementById("modalVotes");
+    const modalNext  = document.getElementById("modalNext");
+    const modalBuy   = document.getElementById("modalBuy");
 
     function showErr(msg){ errBox.textContent = msg; errBox.style.display = "block"; }
     function hideErr(){ errBox.textContent = ""; errBox.style.display = "none"; }
@@ -564,21 +615,53 @@
       window.location.href = "index.html";
     });
 
-    function openVoteModal(voter, target){
-      modalLine.innerHTML = `
-        <span>${escapeHtml(voter)}</span>
-        <span> صوّت على </span>
-        <span class="hl">${escapeHtml(target)}</span>
-      `;
+    // ✅ التحكم في ظهور المودال (يظهر فقط لمن صوّت)
+    let voteModalOpenedByMe = false;
+
+    function openVoteModal(){
       modalBack.style.display = "flex";
       modalBack.setAttribute("aria-hidden","false");
+
+      // زر داخل المودال حسب النوع
+      if(isHost){
+        modalNext.style.display = "block";
+        modalBuy.style.display = "none";
+      }else{
+        modalNext.style.display = "none";
+        modalBuy.style.display = "block";
+      }
     }
     function closeVoteModal(){
       modalBack.style.display = "none";
       modalBack.setAttribute("aria-hidden","true");
     }
+
     modalOk.addEventListener("click", closeVoteModal);
     modalBack.addEventListener("click", (e)=>{ if(e.target === modalBack) closeVoteModal(); });
+
+    modalBuy.addEventListener("click", () => {
+      window.open("https://sandooq-m.com", "_blank", "noopener,noreferrer");
+    });
+
+    function updateVoteModalList(names, votesBy){
+      const obj = (votesBy && typeof votesBy === "object") ? votesBy : {};
+      const lines = [];
+
+      // ترتيب العرض حسب ترتيب أسماء اللاعبين
+      for(const voter of (names || [])){
+        const target = clean(obj[voter]);
+        if(!target) continue;
+        lines.push(`
+          <div class="voteLine">
+            <span>${escapeHtml(voter)}</span>
+            <span class="hl"> صوّت على </span>
+            <span>${escapeHtml(target)}</span>
+          </div>
+        `);
+      }
+
+      modalVotes.innerHTML = lines.join("") || `<div class="voteLine">بانتظار التصويت...</div>`;
+    }
 
     function getPlayersNames(data){
       const players = Array.isArray(data?.players) ? data.players : [];
@@ -781,7 +864,9 @@
           });
         });
 
-        openVoteModal(myName, targetName);
+        // ✅ يظهر المودال فقط للي صوّت
+        voteModalOpenedByMe = true;
+        openVoteModal();
 
       }catch(e){
         console.warn(e);
@@ -806,8 +891,14 @@
       const selected = myName ? clean(votesBy?.[myName]) : "";
       const canVote = !!myName;
 
-      const list = names.map(n => {
-        const dis = (!canVote || (myName && n === myName)) ? " disabled" : "";
+      // ✅ التعديل المطلوب: إزالة اسم اللاعب نفسه من القائمة تماماً
+      const listNames = (names || []).filter(n => {
+        if(!myName) return true;
+        return n !== myName;
+      });
+
+      const list = listNames.map(n => {
+        const dis = (!canVote) ? " disabled" : "";
         const sel = (selected === n) ? " selected" : "";
         return `<button class="rowBtn${sel}" data-name="${escapeHtml(n)}"${dis}>${escapeHtml(n)}</button>`;
       }).join("");
@@ -828,6 +919,15 @@
           if(!n) return;
           voteFor(n);
         });
+      }
+
+      // ✅ تحديث المودال لكل من صوّت وفتح المودال عنده
+      if(voteModalOpenedByMe && modalBack.style.display === "flex"){
+        updateVoteModalList(names, votesBy);
+
+        if(isHost){
+          modalNext.disabled = !canHostNextVote(names, votesBy);
+        }
       }
 
       if(isHost){
@@ -985,7 +1085,7 @@
       const outName = getOutName(data);
       const opts = Array.isArray(data?.guessOptions) ? data.guessOptions.map(x=>clean(x)).filter(Boolean) : [];
       const correct = clean(data?.correctWord);
-      const guessBy = (data?.guessBy && typeof data?.guessBy === "object") ? data.guessBy : {};
+      const guessBy = (data?.guessBy && typeof data?.guessBy === "object") ? data?.guessBy : {};
       const chosen = outName ? clean(guessBy?.[outName]) : "";
 
       if(opts.length !== 7 || !correct){
@@ -1128,7 +1228,7 @@
     function resultsReady(data, names){
       const roundId = getRoundId(data);
       const applied = clean(data?.scoresAppliedFor);
-      const scoresBy = (data?.scoresBy && typeof data.scoresBy === "object") ? data.scoresBy : null;
+      const scoresBy = (data?.scoresBy && typeof data.scoresBy === "object") ? data?.scoresBy : null;
       if(applied !== roundId) return false;
       if(!scoresBy) return false;
       for(const n of names){
@@ -1296,6 +1396,20 @@
       }
     });
 
+    // ✅ زر التالي داخل المودال للمقدم
+    modalNext.addEventListener("click", async () => {
+      if(!isHost) return;
+      const data = window.__lastRoomData || {};
+      const names = getPlayersNames(data);
+      try{
+        await hostNext(data, names);
+        closeVoteModal();
+      }catch(e){
+        console.warn(e);
+        showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
+      }
+    });
+
     // ---------- Render by phase ----------
     function renderByRoom(data){
       window.__lastRoomData = data || {};
@@ -1303,6 +1417,12 @@
 
       const phase = clean(data?.phase) || "vote";
       const names = getPlayersNames(data);
+
+      // ✅ إذا خرجنا من التصويت نقفل المودال ونصفر العلم
+      if(phase !== "vote"){
+        closeVoteModal();
+        voteModalOpenedByMe = false;
+      }
 
       // ✅ FIX: إذا المقدم بدأ الجولة (phase=ready) لازم كل اللاعبين يروحون ready.html
       if(phase === "ready"){
@@ -1331,6 +1451,15 @@
       if(phase === "vote"){
         stopFastSync();
         const votesBy = (data?.votesBy && typeof data.votesBy === "object") ? data.votesBy : {};
+
+        // ✅ تحديث محتوى المودال لحظياً عند من فتحه
+        if(voteModalOpenedByMe && modalBack.style.display === "flex"){
+          updateVoteModalList(names, votesBy);
+          if(isHost){
+            modalNext.disabled = !canHostNextVote(names, votesBy);
+          }
+        }
+
         if(isHost){
           ctaBtn.disabled = !canHostNextVote(names, votesBy);
         }
@@ -1413,4 +1542,4 @@
 </body>
 </html>
 
-<!-- multi_round.html برا السالفة – إصدار 5 (Fix: Continue resets round + phase=category, Redirect all to ready on phase=ready, Hide Home for players) -->
+<!-- multi_round.html برا السالفة – إصدار 6 (Vote: hide self option + modal appears only for voters + live vote list + host next / player buy inside modal) -->
