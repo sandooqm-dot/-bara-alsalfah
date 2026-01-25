@@ -196,7 +196,7 @@
     }
     .homeBtn svg{ width: 34px; height: 34px; fill: #111; }
 
-    /* ✅ مودال متوافق مع ستايل اللعبة */
+    /* ✅ مودال */
     .modalBack{
       position: fixed;
       inset:0;
@@ -269,10 +269,7 @@
       text-align:center;
       color:#111;
     }
-    .tab.active{
-      background: var(--green);
-      color:#fff;
-    }
+    .tab.active{ background: var(--green); color:#fff; }
     .tab.yellow{ background: #fff; }
     .tab.orange{ background: #fff; }
     .tab.yellow.active{ background: var(--yellow); color:#111; }
@@ -342,8 +339,6 @@
       justify-content:center;
       padding-top: 12px;
     }
-
-    /* ✅ زر النسخ + حالة "تم النسخ" */
     .miniBtn{
       border: 4px solid #000;
       border-radius: 16px;
@@ -359,15 +354,8 @@
       transition: background .15s ease, transform .05s ease;
     }
     .miniBtn:active{ transform: translateY(1px); box-shadow: 0 6px 0 rgba(0,0,0,0.18); }
-    .miniBtn.copied{
-      background: var(--yellow);
-      color:#111;
-    }
-    .miniBtn[disabled]{
-      opacity: .85;
-      cursor: not-allowed;
-      transform:none;
-    }
+    .miniBtn.copied{ background: var(--yellow); color:#111; }
+    .miniBtn[disabled]{ opacity: .85; cursor: not-allowed; transform:none; }
 
     .modalNote{
       text-align:center;
@@ -376,27 +364,6 @@
       margin-top: 10px;
       font-size: 15px;
       line-height: 1.4;
-    }
-
-    .toast{
-      position: fixed;
-      left: 50%;
-      bottom: calc(18px + env(safe-area-inset-bottom));
-      transform: translateX(-50%) translateY(20px);
-      background:#111;
-      color:#fff;
-      padding: 10px 14px;
-      border-radius: 999px;
-      font-weight: 1000;
-      opacity:0;
-      transition: opacity .18s ease, transform .18s ease;
-      z-index: 10000;
-      font-size: 16px;
-      pointer-events:none;
-    }
-    .toast.show{
-      opacity: 0.95;
-      transform: translateX(-50%) translateY(0);
     }
 
     @media (max-width: 360px){
@@ -422,7 +389,12 @@
         <div class="namesTitle">اسماء اللاعبين</div>
 
         <div class="list" id="list">
+          <!-- ✅ اسم المقدم يظهر كصندوق ثابت إذا كان محفوظ -->
+          <div id="hostFixed" class="playerItem" style="display:none;"></div>
+
+          <!-- ✅ حقل الاسم يظهر فقط إذا ما عندنا اسم محفوظ -->
           <input id="hostInput" class="nameBox" type="text" placeholder="اكتب اسمك هنا" autocomplete="off" />
+
           <div class="emptyHint" id="emptyHint">بعد مشاركة الرابط، أسماء اللاعبين راح تظهر هنا</div>
           <div id="playersWrap"></div>
         </div>
@@ -485,8 +457,6 @@
     </div>
   </div>
 
-  <div class="toast" id="toast">تم النسخ ✓</div>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <script type="module">
@@ -494,16 +464,10 @@
     let listenRoom   = () => () => {};
     let addPlayer    = async () => {};
     let setRoomStatus= async () => {};
-    let roomRef      = null;
     let firebaseReady = false;
 
-    import {
-      updateDoc,
-      serverTimestamp,
-      increment
-    } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
-
     const hostInput   = document.getElementById("hostInput");
+    const hostFixed   = document.getElementById("hostFixed");
     const playersWrap = document.getElementById("playersWrap");
     const emptyHint   = document.getElementById("emptyHint");
 
@@ -526,20 +490,6 @@
     const joinLinkBox  = document.getElementById("joinLinkBox");
     const copyBtn      = document.getElementById("copyBtn");
     const qrBox        = document.getElementById("qrBox");
-
-    document.addEventListener('focusin', (e) => {
-      if (e.target === hostInput) {
-        hostInput.dataset.ph = hostInput.placeholder;
-        hostInput.placeholder = '';
-      }
-    });
-    document.addEventListener('focusout', (e) => {
-      if (e.target === hostInput) {
-        if (!hostInput.value.trim()) {
-          hostInput.placeholder = hostInput.dataset.ph || '';
-        }
-      }
-    });
 
     function genRoomId(){
       return String(Math.floor(100000 + Math.random() * 900000));
@@ -590,7 +540,6 @@
       roomId = roomFromUrl;
       sessionStorage.setItem(KEY_ROOM, roomId);
       sessionStorage.setItem(KEY_ROOM_TS, String(Date.now()));
-      // ✅ مهم: ما نكسر جلسة المقدم هنا، فقط نثبت الغرفة
     }else{
       const existing = (sessionStorage.getItem(KEY_ROOM) || "").trim();
       const ts = Number(sessionStorage.getItem(KEY_ROOM_TS) || "0");
@@ -616,17 +565,37 @@
     roomCodeEl.textContent = roomId;
     joinLinkBox.textContent = joinUrl;
 
-    // ✅ (Fix #1) استرجاع اسم المقدم عند الرجوع من نهاية الجولة (navigate + room موجود)
-    const savedHostAny = (localStorage.getItem(KEY_HOST) || "").trim();
-    if(savedHostAny){
-      hostInput.value = savedHostAny;
-
-      // نخفي خانة الإدخال إذا الاسم موجود (مقدم ما يحتاج يكتبه ثانية)
-      hostInput.style.display = "none";
-    }else{
-      // فقط في حالة ما عندنا اسم: نخلي الإدخال ظاهر
-      hostInput.style.display = "";
+    // ✅ استرجاع اسم المقدم عند الرجوع لنفس الغرفة (حتى لو NAV_TYPE navigate)
+    if(!FROM_INDEX){
+      const savedHost = (localStorage.getItem(KEY_HOST) || "").trim();
+      if(savedHost && roomFromUrl){
+        hostInput.value = savedHost;
+      }else if(savedHost && NAV_TYPE === "reload"){
+        hostInput.value = savedHost;
+      }
     }
+
+    function updateHostUI(){
+      const hostName = normalizeName(hostInput.value);
+      if(hostName){
+        hostFixed.textContent = hostName;
+        hostFixed.style.display = "block";
+        hostInput.style.display = "none";
+      }else{
+        hostFixed.textContent = "";
+        hostFixed.style.display = "none";
+        hostInput.style.display = "block";
+      }
+    }
+
+    // يسمح للمقدم يغير اسمه إذا ضغط على صندوق اسمه
+    hostFixed.addEventListener("click", () => {
+      hostInput.style.display = "block";
+      hostFixed.style.display = "none";
+      hostInput.focus();
+    });
+
+    updateHostUI();
 
     function sortPlayers(list){
       return (list || []).slice().sort((a,b)=>{
@@ -644,14 +613,6 @@
 
       const hostName = normalizeName(hostInput.value);
 
-      // ✅ عرض اسم المقدم كعنصر ثابت داخل القائمة
-      if(hostName){
-        const hostDiv = document.createElement("div");
-        hostDiv.className = "playerItem";
-        hostDiv.textContent = hostName;
-        playersWrap.appendChild(hostDiv);
-      }
-
       const ordered = sortPlayers(list);
       const others = ordered
         .map(p => normalizeName(p?.name))
@@ -659,7 +620,7 @@
         .filter(n => !hostName || n !== hostName);
 
       if(others.length === 0){
-        emptyHint.style.display = hostName ? "none" : "block";
+        emptyHint.style.display = "block";
       }else{
         emptyHint.style.display = "none";
       }
@@ -673,9 +634,11 @@
 
       const total = (hostName ? 1 : 0) + others.length;
       startBtn.disabled = !(hostName && total >= 3);
+
+      updateHostUI();
     }
 
-    /* ✅ فتح المودال فورًا بدون انتظار */
+    /* ✅ فتح المودال فورًا */
     function openModalFast(){
       joinUrl = buildJoinUrl();
       joinLinkBox.textContent = joinUrl;
@@ -721,7 +684,7 @@
     tabCode.addEventListener("click", () => setTab("code"));
     tabLink.addEventListener("click", () => setTab("link"));
 
-    // ✅ إضافة المقدم تلقائيًا
+    // ✅ إضافة المقدم (فقط عند الضغط على مشاركة / ابدأ اللعب) — ممنوع أثناء الكتابة
     let pendingHostAdd = false;
     async function ensureHostAddedNow(){
       const hostName = normalizeName(hostInput.value);
@@ -734,103 +697,65 @@
         return;
       }
 
-      // ✅ (Fix #1 مكمل) حتى لو KEY_HOST_ADDED=1 لازم نتأكد إن الاسم موجود داخل players
+      const hostAdded = sessionStorage.getItem(KEY_HOST_ADDED) === "1";
+      if(hostAdded) return;
+
       const exists = (currentPlayers || []).some(p => normalizeName(p?.name) === hostName);
-      if(exists){
-        sessionStorage.setItem(KEY_HOST_ADDED, "1");
-        pendingHostAdd = false;
-        return;
+      if(!exists){
+        try{
+          await addPlayer(roomId, hostName);
+        }catch(e){
+          console.warn("Add host failed:", e);
+          pendingHostAdd = true;
+          return;
+        }
       }
 
-      try{
-        await addPlayer(roomId, hostName);
-        sessionStorage.setItem(KEY_HOST_ADDED, "1");
-        pendingHostAdd = false;
-      }catch(e){
-        console.warn("Add host failed:", e);
-        pendingHostAdd = true;
-      }
+      sessionStorage.setItem(KEY_HOST_ADDED, "1");
+      pendingHostAdd = false;
     }
 
-    let hostDebTimer = null;
+    // ✅ أثناء الكتابة: فقط حفظ محلي + تحديث UI — بدون أي إضافة Firebase
     hostInput.addEventListener("input", () => {
       const v = normalizeName(hostInput.value);
       localStorage.setItem(KEY_HOST, v);
       renderPlayers(currentPlayers);
-
-      clearTimeout(hostDebTimer);
-      hostDebTimer = setTimeout(() => {
-        ensureHostAddedNow();
-      }, 450);
     });
 
-    /* ✅ زر المشاركة */
+    /* ✅ زر المشاركة: افتح فورًا + بعدها أضف المقدم مرة وحدة */
     shareBtn.addEventListener("click", () => {
       openModalFast();
       ensureHostAddedNow();
     });
 
-    const COPY_DEFAULT_TEXT = "نسخ الرابط";
-    let copyResetTimer = null;
-
-    function flashCopyBtn(){
-      clearTimeout(copyResetTimer);
-      copyBtn.classList.add("copied");
-      copyBtn.textContent = "تم النسخ";
-      copyBtn.disabled = true;
-
-      copyResetTimer = setTimeout(() => {
-        copyBtn.classList.remove("copied");
-        copyBtn.textContent = COPY_DEFAULT_TEXT;
-        copyBtn.disabled = false;
-      }, 1000);
-    }
-
     async function copyText(text){
       try{
         await navigator.clipboard.writeText(text);
-        flashCopyBtn();
+        copyBtn.classList.add("copied");
+        copyBtn.textContent = "تم النسخ";
+        copyBtn.disabled = true;
+        setTimeout(() => {
+          copyBtn.classList.remove("copied");
+          copyBtn.textContent = "نسخ الرابط";
+          copyBtn.disabled = false;
+        }, 1000);
         return true;
       }catch(e){
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        ta.style.position = "fixed";
-        ta.style.opacity = "0";
-        document.body.appendChild(ta);
-        ta.select();
-        try{
-          document.execCommand("copy");
-          document.body.removeChild(ta);
-          flashCopyBtn();
-          return true;
-        }catch(err){
-          document.body.removeChild(ta);
-          alert("ما قدرت أنسخ الرابط. انسخه يدويًا.");
-          return false;
-        }
+        alert("ما قدرت أنسخ الرابط. انسخه يدويًا.");
+        return false;
       }
     }
-
     copyBtn.addEventListener("click", () => copyText(joinUrl));
 
     function renderQR(text){
       qrBox.innerHTML = "";
-      try{
-        // eslint-disable-next-line no-undef
-        new QRCode(qrBox, {
-          text,
-          width: 220,
-          height: 220,
-          correctLevel: QRCode.CorrectLevel.M
-        });
-      }catch(e){
-        const img = document.createElement("img");
-        img.alt = "QR";
-        img.style.width = "220px";
-        img.style.height = "220px";
-        img.src = "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" + encodeURIComponent(text);
-        qrBox.appendChild(img);
-      }
+      // eslint-disable-next-line no-undef
+      new QRCode(qrBox, {
+        text,
+        width: 220,
+        height: 220,
+        correctLevel: QRCode.CorrectLevel.M
+      });
     }
 
     async function initFirebaseSafe(){
@@ -840,7 +765,6 @@
         listenRoom    = fb.listenRoom;
         addPlayer     = fb.addPlayer;
         setRoomStatus = fb.setRoomStatus;
-        roomRef       = fb.roomRef;
 
         firebaseReady = true;
 
@@ -853,10 +777,7 @@
 
         renderPlayers(currentPlayers);
 
-        // ✅ لو عندنا اسم محفوظ، نضمن إضافته فوراً
-        if(savedHostAny){
-          await ensureHostAddedNow();
-        }else if(pendingHostAdd){
+        if(pendingHostAdd){
           await ensureHostAddedNow();
         }
 
@@ -869,40 +790,11 @@
     }
     initFirebaseSafe();
 
-    // ✅ (Fix #2) تصفير بيانات الجولة قبل بدء كتاغوري جديد (عشان العشوائية تتجدد)
-    async function resetRoundFields(){
-      if(!firebaseReady || !roomRef) return;
-      try{
-        await updateDoc(roomRef(roomId), {
-          updatedAt: serverTimestamp(),
-          tick: increment(1),
-
-          // أهم 3 حقول تسبب تكرار التوزيع إذا بقيت
-          outsiderName: null,
-          storyWord: null,
-          roundId: null,
-
-          // تنظيف القوائم/الحقول التابعة للجولة
-          readyList: [],
-          understoodList: [],
-          votesBy: {},
-          guessBy: {},
-          guessOptions: [],
-          correctWord: null,
-          guessRoundId: null,
-          scoresAppliedFor: null,
-          revealTs: null
-        });
-      }catch(e){
-        // إذا فشل ما نوقف اللعب، بس نحاول بقدر الإمكان
-        console.warn("resetRoundFields failed:", e);
-      }
-    }
-
     startBtn.addEventListener("click", async () => {
       const hostName = normalizeName(hostInput.value);
       if(!hostName){
         alert("اكتب اسمك أولاً.");
+        hostInput.style.display = "block";
         hostInput.focus();
         return;
       }
@@ -912,9 +804,6 @@
       }
 
       await ensureHostAddedNow();
-
-      // ✅ تصفير الجولة قبل الانتقال (Fix #2)
-      await resetRoundFields();
 
       const ordered = sortPlayers(currentPlayers);
       const names = [hostName].concat(
@@ -948,4 +837,4 @@
 </body>
 </html>
 
-<!-- players.html برا السالفة – أجهزة متعددة (المقدم) – إصدار 3 (Fix: عرض اسم المقدم ثابت + Reset round fields لضمان العشوائية) -->
+<!-- players.html برا السالفة – أجهزة متعددة (المقدم) – إصدار 3 (Fix: منع إضافة اسم المقدم أثناء الكتابة + عرض اسمه كصندوق ثابت عند حفظه) -->
