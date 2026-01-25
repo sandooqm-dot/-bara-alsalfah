@@ -83,11 +83,6 @@
       white-space:nowrap;
     }
 
-    /* ✅ مخفي (صار النص تحت البطاقة) */
-    .sub{
-      display:none;
-    }
-
     .center{
       flex:1;
       display:flex;
@@ -155,7 +150,7 @@
       font-size: 36px;
       line-height: 1.35;
       padding: 0 6px;
-      margin-bottom: 12px;
+      margin-bottom: 12px; /* ✅ فراغ بين الكلام وزر جاهز */
     }
 
     .revealText{
@@ -191,7 +186,7 @@
       transform:none;
     }
 
-    /* ✅ زر "فهمت" أسفل المربع الزيتي */
+    /* ✅ التعديل المطلوب فقط: زر "فهمت" أسفل المربع الزيتي */
     .cardFace.back{ padding-bottom: 130px; }
     .cardFace.back #understoodBtn{
       position: absolute;
@@ -220,21 +215,6 @@
       margin: 10px auto 0;
     }
 
-    /* ✅ (تعديل) النص فقط بدون مربع */
-    .infoText{
-      width: min(460px, 92%);
-      text-align:center;
-      color:#111;
-      font-weight: 900;
-      font-size: 18px;
-      line-height: 1.6;
-      margin-top: 6px;
-      padding: 0;            /* بدون حواف داخلية */
-      background: transparent;/* بدون خلفية */
-      border: none;          /* بدون إطار */
-      box-shadow: none;      /* بدون ظل */
-    }
-
     .homeBtn{
       position:absolute;
       left: 18px;
@@ -261,7 +241,6 @@
       .frontText{ font-size: 34px; }
       .revealText{ font-size: 54px; }
       .btn{ font-size: 44px; }
-      .infoText{ font-size: 18px; }
     }
     @media (max-width: 360px){
       .h1{ font-size: 30px; top: 20px; right: 16px; }
@@ -273,7 +252,6 @@
       .flip{ min-height: 400px; }
       .homeBtn{ width:66px;height:66px; }
       .homeBtn svg{ width:40px;height:40px; }
-      .infoText{ font-size: 17px; }
     }
   </style>
 </head>
@@ -286,8 +264,6 @@
         <img class="logo" src="logo.PNG" alt="logo">
         <div class="h1">لعبة برا السالفة</div>
       </div>
-
-      <div class="sub">اضغط "جاهز" عشان تنقلب البطاقة وتظهر لك السالفة</div>
 
       <div class="center">
         <div class="namePill" id="namePill"></div>
@@ -319,9 +295,6 @@
 
           </div>
         </div>
-
-        <!-- ✅ النص فقط -->
-        <div class="infoText">اضغط "جاهز" عشان تنقلب البطاقة وتظهر لك السالفة</div>
       </div>
 
       <div id="err" class="err"></div>
@@ -656,4 +629,4 @@
 </body>
 </html>
 
-<!-- ready.html برا السالفة – إصدار 7 (تحويل العبارة لنص فقط بدون مربع) -->
+<!-- ready.html برا السالفة – إصدار 8 (حذف العبارة بالكامل) -->
