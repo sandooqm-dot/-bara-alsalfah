@@ -105,6 +105,28 @@
       text-align:center;
     }
 
+    /* ✅ ستايل خاص لنهاية الجولة */
+    .card.roundEndCard{
+      min-height: 420px;
+      align-items:flex-start;
+      justify-content:center;
+    }
+    .endMain{
+      font-size: 34px;
+      font-weight: 1000;
+      line-height: 1.35;
+      margin-top: 10px;
+      margin-bottom: 26px;
+      padding: 0 6px;
+    }
+    .endSub{
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1.55;
+      opacity: .95;
+      padding: 0 6px;
+    }
+
     .hint{
       text-align:center;
       font-weight:900;
@@ -231,6 +253,18 @@
     }
     .buyBtn:active{ transform: translateY(1px); box-shadow: 0 7px 0 rgba(0,0,0,0.18); }
 
+    /* ✅ حقوق أسفل */
+    .rights{
+      width:100%;
+      text-align:center;
+      font-weight: 900;
+      color:#2f3f22;
+      opacity:.95;
+      margin-top: 12px;
+      font-size: 16px;
+      display:none;
+    }
+
     .err{
       width:100%;
       max-width: 420px;
@@ -342,14 +376,14 @@
       align-items:center;
       justify-content:center;
       z-index:10000;
-      padding: 10px; /* ✅ أكبر (قريب من حجم الرسم) */
+      padding: 10px;
     }
     .modal{
-      width: min(520px, 96vw); /* ✅ أكبر (قريب من حجم الرسم) */
+      width: min(520px, 96vw);
       border:10px solid var(--frame);
       border-radius: 26px;
       background: var(--bg);
-      padding: 16px 14px 16px; /* ✅ تعديل بسيط للمقاس */
+      padding: 16px 14px 16px;
       box-shadow: 0 14px 0 rgba(0,0,0,.22);
     }
     .modalInner{
@@ -424,14 +458,6 @@
       color:#111;
     }
 
-    .hostOnlyRow{
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      width: 100%;
-      max-width: 420px;
-      margin: 0 auto;
-    }
     .cta.secondary{
       background: var(--blue);
       color:#111;
@@ -446,6 +472,8 @@
       .pillName{ font-size: 30px; }
       .voteLine{ font-size: 22px; }
       .modalTitle{ font-size: 32px; }
+      .endMain{ font-size: 30px; }
+      .endSub{ font-size: 18px; }
     }
   </style>
 </head>
@@ -473,6 +501,9 @@
       <div class="buyArea" id="buyArea">
         <button class="buyBtn" id="buyBtn">لشراء اللعبة اضغط هنا</button>
       </div>
+
+      <!-- ✅ حقوق -->
+      <div class="rights" id="rights">© جميع الحقوق محفوظة لمتجر صندوق المسابقات ©</div>
 
       <div class="err" id="err"></div>
     </div>
@@ -529,6 +560,7 @@
     const buyBtn    = document.getElementById("buyBtn");
     const homeBtn   = document.getElementById("homeBtn");
     const errBox    = document.getElementById("err");
+    const rightsEl  = document.getElementById("rights");
 
     const modalBack  = document.getElementById("modalBack");
     const modalVotes = document.getElementById("modalVotes");
@@ -592,7 +624,13 @@
     ctaArea.classList.toggle("hidden", !isHost);
     ctaBtn.disabled = true;
 
+    // ✅ وضع زر الشراء الافتراضي (للاعبين) + يتحول في نهاية الجولة للمقدم إلى "إضافة لاعبين"
+    let buyBtnMode = "store"; // "store" | "addPlayers"
     buyBtn.addEventListener("click", () => {
+      if(isHost && buyBtnMode === "addPlayers"){
+        window.location.href = "players.html?room=" + encodeURIComponent(roomId);
+        return;
+      }
       window.open("https://sandooq-m.com", "_blank", "noopener,noreferrer");
     });
 
@@ -692,7 +730,7 @@
       eat:  ["كبسة","مفطح","جريش","مندي","مراصيع","بسبوسة","هريس"],
       zoo:  ["أسد","نمر","زرافة","فيل","ذئب","غزال","قندس"],
       play: ["حارس","مهاجم","مدرب","حكم","جمهور","كابتن","بديل"],
-      car:  ["كامري","باترول","كورولا","جي كلاس","لاندكروزر","سوناتا","اكسبلورر"],
+      car:  ["كامري","باترول","كورولا","جي كلاس","لاندكروزر","سوناتا","اكسبلورr"],
       frot: ["تفاح","موز","عنب","رمان","خيار","طماطم","فراولة"],
       cola: ["ماء","شاي","قهوة","عصير","موهيتو","كولا","لبن"]
     };
@@ -743,10 +781,7 @@
     async function resetRoundForNewGame(){
       if(!isHost) return;
       await setRoom({
-        // إعلان الدخول لمرحلة اختيار الكتاغوري
         phase: "category",
-
-        // تصفير بيانات الجولة القديمة (عشان ما يتكرر نفس برا السالفة)
         roundId: "",
         questionsRoundId: "",
         revealTs: null,
@@ -772,7 +807,6 @@
         guessRoundId: "",
         scoresAppliedFor: "",
 
-        // تصفير الكتاغوري الحالية حتى ما تتعلق القديم
         categoryKey: "",
         categoryWords: []
       });
@@ -791,9 +825,7 @@
           try{ await ensureGuessSetupIfHost(data); }catch(e){}
           renderByRoom(data);
         }
-      }catch(e){
-        // تجاهل
-      }
+      }catch(e){}
     }
 
     function startFastSync(){
@@ -845,7 +877,7 @@
 
           const votesBy = (d.votesBy && typeof d.votesBy === "object") ? d.votesBy : {};
 
-          // ✅ تثبيت التصويت: إذا سبق وصوّت، ما يقدر يغيّر
+          // ✅ تثبيت التصويت: إذا سبق وصوّت، ما يقدر يغيّر (حتى في الفايربيس)
           if(clean(votesBy[myName])) return;
 
           votesBy[myName] = targetName;
@@ -883,11 +915,8 @@
 
       const selected = myName ? clean(votesBy?.[myName]) : "";
       const canVote = !!myName;
-
-      // ✅ بعد التصويت: تقفل الأزرار (تثبيت)
       const locked = !!selected;
 
-      // ✅ التعديل المطلوب: إزالة اسم اللاعب نفسه من القائمة تماماً
       const listNames = (names || []).filter(n => {
         if(!myName) return true;
         return n !== myName;
@@ -909,7 +938,6 @@
       const voteList = document.getElementById("voteList");
       if(voteList){
         voteList.addEventListener("click", (e) => {
-          // ✅ بعد التصويت: ممنوع تغيير الاختيار
           const already = myName ? clean(votesBy?.[myName]) : "";
           if(already) return;
 
@@ -921,10 +949,8 @@
         });
       }
 
-      // ✅ تحديث المودال لكل من صوّت وفتح المودال عنده
       if(voteModalOpenedByMe && modalBack.style.display === "flex"){
         updateVoteModalList(names, votesBy);
-
         if(isHost){
           modalNext.disabled = !canHostNextVote(names, votesBy);
         }
@@ -1286,55 +1312,39 @@
     function renderRoundEnd(){
       pageTitle.textContent = "نهاية الجولة";
 
+      cardEl.classList.add("roundEndCard");
       cardEl.innerHTML = `
         <div style="width:100%; max-width: 460px; margin: 0 auto;">
-          <div class="hint" style="font-size:22px; font-weight:1000;">
-            تقدرون تكملون لعب أو تغيّرون لاعب أو ترجعون لشاشة اختيار الأسئلة
+          <div class="endMain">
+            تقدرون تكملون لعب أو تغيّرون لاعب أو ترجعون للشاشة اختيار الأسئلة
           </div>
-          <div style="height:10px;"></div>
-          <div class="hint" style="font-size:20px; font-weight:900; opacity:.95;">
-            المتحكم الوحيد هنا هو المقدم
+          <div class="endSub">
+            أرهب شعور لما تكون برا السالفة وتتسأل أول سؤال ومع ذلك مع ما يكشفونك!! 👀
           </div>
-          <div style="height:12px;"></div>
-
-          ${isHost ? `
-            <div class="hostOnlyRow">
-              <button class="cta secondary" id="btnChangePlayers">تغيير اللاعبين</button>
-              <button class="cta" id="btnContinue">كمل لعب</button>
-            </div>
-          ` : ``}
         </div>
       `;
 
       stopFastSync();
 
+      rightsEl.style.display = "block";
+
       if(isHost){
-        ctaBtn.disabled = true;
-      }
+        // ✅ للمقدم: زر أزرق (إضافة لاعبين) + زر أصفر (كمل لعب)
+        buyBtnMode = "addPlayers";
+        buyBtn.textContent = "إضافة لاعبين";
+        buyArea.classList.remove("hidden");
 
-      const b1 = document.getElementById("btnChangePlayers");
-      const b2 = document.getElementById("btnContinue");
+        ctaBtn.textContent = "كمل لعب";
+        ctaBtn.disabled = false;
+        ctaArea.classList.remove("hidden");
 
-      if(isHost && b1){
-        b1.addEventListener("click", () => {
-          window.location.href = "players.html?room=" + encodeURIComponent(roomId);
-        });
-      }
+      }else{
+        // ✅ للاعبين: زر شراء فقط
+        buyBtnMode = "store";
+        buyBtn.textContent = "لشراء اللعبة اضغط هنا";
+        buyArea.classList.remove("hidden");
 
-      // ✅ FIX: كمل لعب = Reset للجولة + phase=category ثم يروح المقدم للكتاغوريات
-      if(isHost && b2){
-        b2.addEventListener("click", async () => {
-          hideErr();
-          b2.disabled = true;
-          try{
-            await resetRoundForNewGame();
-            window.location.href = "categories.html?room=" + encodeURIComponent(roomId) + "&mode=multi";
-          }catch(e){
-            console.warn(e);
-            showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
-            b2.disabled = false;
-          }
-        });
+        ctaArea.classList.add("hidden");
       }
     }
 
@@ -1384,9 +1394,26 @@
       }
     }
 
+    // ✅ زر الأصفر (ctaBtn): في نهاية الجولة = كمل لعب للمقدم
     ctaBtn.addEventListener("click", async () => {
       if(!isHost) return;
       const data = window.__lastRoomData || {};
+      const phase = clean(data?.phase);
+
+      if(phase === "round_end"){
+        hideErr();
+        ctaBtn.disabled = true;
+        try{
+          await resetRoundForNewGame();
+          window.location.href = "categories.html?room=" + encodeURIComponent(roomId) + "&mode=multi";
+        }catch(e){
+          console.warn(e);
+          showErr("صار خطأ في الاتصال. حدّث الصفحة وجرب مرة ثانية.");
+          ctaBtn.disabled = false;
+        }
+        return;
+      }
+
       const names = getPlayersNames(data);
       try{
         await hostNext(data, names);
@@ -1418,24 +1445,38 @@
       const phase = clean(data?.phase) || "vote";
       const names = getPlayersNames(data);
 
+      // ✅ إخفاء عنوان "الكشف" (badge) في مرحلة الكشف فقط
+      pageTitle.style.display = (phase === "reveal") ? "none" : "block";
+
+      // ✅ حقوق تظهر فقط في نهاية الجولة
+      rightsEl.style.display = (phase === "round_end") ? "block" : "none";
+
+      // ✅ إزالة ستايل نهاية الجولة إذا خرجنا منها
+      if(phase !== "round_end"){
+        cardEl.classList.remove("roundEndCard");
+      }
+
+      // ✅ إعادة وضع الأزرار الافتراضي خارج نهاية الجولة
+      if(phase !== "round_end"){
+        buyBtnMode = "store";
+        buyBtn.textContent = "لشراء اللعبة اضغط هنا";
+        buyArea.classList.toggle("hidden", isHost);
+        ctaArea.classList.toggle("hidden", !isHost);
+      }
+
       // ✅ إذا خرجنا من التصويت نقفل المودال ونصفر العلم
       if(phase !== "vote"){
         closeVoteModal();
         voteModalOpenedByMe = false;
       }
 
-      // ✅ FIX: إذا المقدم بدأ الجولة (phase=ready) لازم كل اللاعبين يروحون ready.html
       if(phase === "ready"){
         window.location.href = "ready.html?room=" + encodeURIComponent(roomId);
         return;
       }
 
-      // مرحلة اختيار الكتاغوري: المقدم فقط يروح للكتاغوريات، اللاعب ينتظر
       if(phase === "category" || phase === "categories"){
-        if(isHost){
-          // لو المقدم رجع هنا من أي مكان
-          // (ما نغير شيء ثاني)
-        }else{
+        if(!isHost){
           pageTitle.textContent = "بانتظار...";
           cardEl.innerHTML = `<div class="hint">بانتظار المقدم...</div>`;
         }
@@ -1443,7 +1484,7 @@
         return;
       }
 
-      if(isHost){
+      if(isHost && phase !== "round_end"){
         ctaBtn.classList.remove("vote");
         ctaBtn.textContent = "التالي";
       }
@@ -1452,7 +1493,6 @@
         stopFastSync();
         const votesBy = (data?.votesBy && typeof data.votesBy === "object") ? data.votesBy : {};
 
-        // ✅ تحديث محتوى المودال لحظياً عند من فتحه
         if(voteModalOpenedByMe && modalBack.style.display === "flex"){
           updateVoteModalList(names, votesBy);
           if(isHost){
@@ -1542,4 +1582,4 @@
 </body>
 </html>
 
-<!-- multi_round.html برا السالفة – إصدار 7 (Vote: remove OK button + modal bigger + lock vote after first vote) -->
+<!-- multi_round.html برا السالفة – إصدار 8 (Round End: new style + host add players + players buy only + rights footer | Reveal: hide badge title only) -->
