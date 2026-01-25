@@ -287,7 +287,7 @@
     </div>
   </div>
 
-  <div class="bottomBar">
+  <div class="bottomBar" id="bottomBar">
     <div class="bottomInner">
       <button class="homeBtn" id="homeBtn" aria-label="الرئيسية" title="الرئيسية">
         <svg viewBox="0 0 24 24" fill="none">
@@ -315,6 +315,7 @@
     const buyArea   = document.getElementById("buyArea");
     const buyBtn    = document.getElementById("buyBtn");
     const homeBtn   = document.getElementById("homeBtn");
+    const bottomBar = document.getElementById("bottomBar");
     const errBox    = document.getElementById("err");
 
     function showErr(msg){
@@ -386,6 +387,12 @@
 
     const hostRoomId = getHostRoomId();
     const isHost = (!!roomId && ((!!hostRoomId && hostRoomId === roomId) || isHostByName()));
+
+    // ✅ زر المنزل للمقدم فقط (إخفاء كامل الشريط عند اللاعبين)
+    if(!isHost){
+      if(homeBtn) homeBtn.style.display = "none";
+      if(bottomBar) bottomBar.style.display = "none";
+    }
 
     // ✅ تثبيت roomId للمقدم (يحمي من ضياع تحديد المقدم بين الصفحات)
     if(isHost && roomId){
@@ -687,4 +694,4 @@
 </body>
 </html>
 
-<!-- multi_questions.html برا السالفة – إصدار 7 (تحسين تحديد المقدم + تثبيت roundId + تهيئة التخمين كل جولة) -->
+<!-- multi_questions.html برا السالفة – إصدار 8 (إخفاء زر الرئيسية عن اللاعبين فقط) -->
