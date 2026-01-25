@@ -441,6 +441,17 @@
    9) نهاية الجولة (تغيير اللاعبين / كمل لعب) مع حفظ الأسماء والنتائج
    ========================================================= */
 
+/* ✅✅ FIX المطلوب فقط:
+   iOS/Safari أحياناً يحفظ الصفحة في ذاكرة الرجوع (BFCache)
+   فيرجع لها بدون ما يعيد قراءة اللاعبين من sessionStorage
+   الحل: إذا رجعنا بـ pageshow.persisted نعمل Reload مرة وحدة.
+*/
+window.addEventListener("pageshow", (e) => {
+  if (e && e.persisted) {
+    location.reload();
+  }
+});
+
 function getSessionJSON(key){
   try{
     const v = sessionStorage.getItem(key);
@@ -1283,4 +1294,4 @@ function escapeHtml(str){
 </body>
 </html>
 
-<!-- single_game.html برا السالفة – إصدار 4 -->
+<!-- single_game.html برا السالفة – إصدار 5 (Fix: Reload عند الرجوع من BFCache حتى يتم تحديث اللاعبين الجدد) -->
