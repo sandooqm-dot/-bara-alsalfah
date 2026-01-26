@@ -20,6 +20,11 @@
       --sky:#d8efff;
       --yellow:#f3c515;
       --black:#111;
+
+      /* تفعيل */
+      --act-bg: rgba(0,0,0,.55);
+      --ok:#16a34a;
+      --bad:#dc2626;
     }
 
     *{box-sizing:border-box}
@@ -177,6 +182,7 @@
       padding:18px 16px 16px;
       box-shadow:0 18px 35px rgba(0,0,0,.35);
       overflow:auto;
+      position:relative;
     }
 
     .modal-title{
@@ -225,6 +231,120 @@
       transition:transform .05s ease;
     }
     .back:active{transform:translateY(1px)}
+
+    /* ====== تفعيل اللعبة (Overlay) ====== */
+    .actOverlay{
+      position:fixed;
+      inset:0;
+      background:var(--act-bg);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:22px 14px;
+      z-index:2000;
+    }
+    .actOverlay.show{display:flex}
+
+    .actCard{
+      width:min(560px, 96vw);
+      background:var(--olive);
+      border-radius:18px;
+      padding:18px 16px 16px;
+      box-shadow:0 18px 35px rgba(0,0,0,.35);
+      overflow:hidden;
+    }
+
+    .actLogo{
+      width:96px;
+      height:auto;
+      display:block;
+      margin:0 auto 10px;
+      pointer-events:none;
+      user-select:none;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.25));
+    }
+
+    .actTitle{
+      text-align:center;
+      margin:4px 0 12px;
+      background:var(--beige);
+      color:var(--olive-dark);
+      font-weight:900;
+      font-size:clamp(26px, 5.5vw, 42px);
+      padding:10px 18px;
+      border-radius:16px;
+    }
+
+    .actInner{
+      background:rgba(241,233,215,.96);
+      border:4px solid var(--black);
+      border-radius:18px;
+      padding:14px;
+      color:#111;
+    }
+
+    .actLabel{
+      font-weight:900;
+      font-size:18px;
+      margin:0 0 8px;
+      text-align:right;
+      color:#111;
+    }
+
+    .actInput{
+      width:100%;
+      height:56px;
+      border-radius:14px;
+      border:2px solid rgba(17,17,17,.25);
+      background:#fff;
+      padding:0 14px;
+      font-size:18px;
+      font-weight:800;
+      outline:none;
+      text-align:left;
+      direction:ltr;
+    }
+    .actInput:focus{
+      border-color: rgba(17,17,17,.45);
+      box-shadow: 0 0 0 4px rgba(17,17,17,.12);
+    }
+
+    .actBtn{
+      width:100%;
+      margin-top:12px;
+      height:58px;
+      border:4px solid var(--black);
+      border-radius:18px;
+      background:var(--yellow);
+      color:#111;
+      font-weight:900;
+      font-size:24px;
+      cursor:pointer;
+      box-shadow:0 12px 0 rgba(0,0,0,.22);
+      -webkit-tap-highlight-color:transparent;
+    }
+    .actBtn:active{transform:translateY(1px)}
+    .actBtn[disabled]{opacity:.75; cursor:not-allowed}
+
+    .actMsg{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:900;
+      display:none;
+      text-align:center;
+      font-size:16px;
+    }
+    .actMsg.ok{display:block; background:rgba(22,163,74,.12); border:2px solid rgba(22,163,74,.35); color:#0b3d1d}
+    .actMsg.err{display:block; background:rgba(220,38,38,.10); border:2px solid rgba(220,38,38,.35); color:#7a1212}
+
+    .actNote{
+      margin:10px 0 0;
+      font-size:13px;
+      font-weight:900;
+      color:rgba(17,17,17,.75);
+      text-align:center;
+    }
 
     /* شاشات كبيرة */
     @media (min-width: 900px){
@@ -285,7 +405,125 @@
     </div>
   </div>
 
+  <!-- نافذة تفعيل اللعبة (تظهر تلقائيًا إذا الجهاز غير مُفعّل) -->
+  <div id="actOverlay" class="actOverlay" role="dialog" aria-modal="true" aria-labelledby="actTitle">
+    <div class="actCard">
+      <img class="actLogo" src="logo.PNG" alt="صندوق المسابقات">
+      <div id="actTitle" class="actTitle">تفعيل اللعبة</div>
+
+      <div class="actInner">
+        <div class="actLabel">أدخل كود اللعبة</div>
+        <input id="actCode" class="actInput" inputmode="text" autocomplete="off" autocapitalize="characters"
+               placeholder="مثال: SNDQ-XXXX-XXXX-XXXX" />
+
+        <button id="actBtn" class="actBtn" type="button">تفعيل</button>
+
+        <div id="actMsg" class="actMsg"></div>
+
+        <div class="actNote">بعد التفعيل سيتم ربط الكود بهذا الجهاز.</div>
+      </div>
+    </div>
+  </div>
+
   <script>
+    /***********************
+     * إعدادات التفعيل
+     ***********************/
+    const ACTIVATION_API = "https://script.google.com/macros/s/AKfycbwDxN4zps9dwADEcjCNw-RbnlYnGYvoNbwQh1R-6MHXFx8AVA1EVEuA6m4miuyctQm3Eg/exec";
+
+    // معرف خاص لهذه اللعبة عشان ما يتعارض مع ألعاب ثانية بنفس الجهاز
+    const GAME_KEY = "bara_alsalfah";
+
+    const LS_ACTIVE = `SNDQ_ACTIVE_${GAME_KEY}`;
+    const LS_CODE   = `SNDQ_CODE_${GAME_KEY}`;
+    const LS_DEVICE = `SNDQ_DEVICEKEY`;
+
+    function normalizeCode(v){
+      return (v || "")
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, "")
+        .replace(/[—–]/g, "-");
+    }
+
+    function isValidCodeFormat(code){
+      return /^SNDQ-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code);
+    }
+
+    function getDeviceKey(){
+      let k = localStorage.getItem(LS_DEVICE);
+      if(k && k.length >= 16) return k;
+
+      // توليد DeviceKey عشوائي
+      const bytes = new Uint8Array(16);
+      (crypto && crypto.getRandomValues) ? crypto.getRandomValues(bytes) : bytes.forEach((_,i)=>bytes[i]=Math.floor(Math.random()*256));
+      k = Array.from(bytes).map(b => b.toString(16).padStart(2,'0')).join('');
+      localStorage.setItem(LS_DEVICE, k);
+      return k;
+    }
+
+    function isActivated(){
+      return localStorage.getItem(LS_ACTIVE) === "1" && !!localStorage.getItem(LS_CODE);
+    }
+
+    function setActivated(code){
+      localStorage.setItem(LS_ACTIVE, "1");
+      localStorage.setItem(LS_CODE, code);
+    }
+
+    function showAct(msg, type){
+      const el = document.getElementById("actMsg");
+      el.className = "actMsg " + (type === "ok" ? "ok" : "err");
+      el.textContent = msg;
+      el.style.display = "block";
+    }
+
+    /***********************
+     * JSONP (لتفادي CORS)
+     ***********************/
+    function jsonp(url){
+      return new Promise((resolve, reject) => {
+        const cbName = "cb_" + Math.random().toString(36).slice(2);
+        const script = document.createElement("script");
+        const sep = url.includes("?") ? "&" : "?";
+        const full = url + sep + "cb=" + encodeURIComponent(cbName);
+
+        let done = false;
+        const timer = setTimeout(() => {
+          if(done) return;
+          done = true;
+          cleanup();
+          reject(new Error("timeout"));
+        }, 12000);
+
+        function cleanup(){
+          clearTimeout(timer);
+          delete window[cbName];
+          if(script && script.parentNode) script.parentNode.removeChild(script);
+        }
+
+        window[cbName] = (data) => {
+          if(done) return;
+          done = true;
+          cleanup();
+          resolve(data);
+        };
+
+        script.onerror = () => {
+          if(done) return;
+          done = true;
+          cleanup();
+          reject(new Error("network"));
+        };
+
+        script.src = full;
+        document.body.appendChild(script);
+      });
+    }
+
+    /***********************
+     * واجهة الصفحة الأصلية
+     ***********************/
     // اختيار النمط: الزر المختار يصير سماوي
     let mode = "single"; // single | multi
 
@@ -326,14 +564,96 @@
       if(e.target === overlay) overlay.classList.remove("show");
     });
 
-    // ابدأ اللعب: ينقلك حسب النمط المختار
+    // ابدأ اللعب: ينقلك حسب النمط المختار (لكن فقط بعد التفعيل)
     btnStart.addEventListener("click", () => {
+      if(!isActivated()){
+        openActivation();
+        return;
+      }
       if(mode === "single"){
         window.location.href = "single.html";
       }else{
         window.location.href = "players.html";
       }
     });
+
+    /***********************
+     * منطق التفعيل
+     ***********************/
+    const actOverlay = document.getElementById("actOverlay");
+    const actCode = document.getElementById("actCode");
+    const actBtn = document.getElementById("actBtn");
+
+    function openActivation(){
+      actOverlay.classList.add("show");
+      setTimeout(() => actCode.focus(), 60);
+    }
+
+    function closeActivation(){
+      actOverlay.classList.remove("show");
+    }
+
+    // تمنع إغلاق التفعيل بالنقر خارجها (عشان ما يدخل بدون كود)
+    // actOverlay.addEventListener("click", (e) => {
+    //   if(e.target === actOverlay) closeActivation();
+    // });
+
+    async function activateNow(){
+      const code = normalizeCode(actCode.value);
+      actCode.value = code;
+
+      if(!code){
+        showAct("اكتب الكود أولاً.", "err");
+        return;
+      }
+      if(!isValidCodeFormat(code)){
+        showAct("صيغة الكود غير صحيحة. مثال: SNDQ-XXXX-XXXX-XXXX", "err");
+        return;
+      }
+
+      actBtn.disabled = true;
+      showAct("جاري التحقق من الكود…", "ok");
+
+      const deviceKey = getDeviceKey();
+
+      try{
+        const url = `${ACTIVATION_API}?code=${encodeURIComponent(code)}&device=${encodeURIComponent(deviceKey)}`;
+        const res = await jsonp(url);
+
+        // نتوقع: { ok:true/false, status:'NEW/USED/INVALID/ERROR', msg:'...' }
+        if(res && res.ok){
+          setActivated(code);
+          showAct("تم التفعيل بنجاح ✅", "ok");
+          setTimeout(() => {
+            closeActivation();
+            actBtn.disabled = false;
+          }, 650);
+          return;
+        }
+
+        const msg = (res && res.msg) ? String(res.msg) : "الكود غير صحيح أو مستخدم.";
+        showAct(msg, "err");
+        actBtn.disabled = false;
+
+      }catch(e){
+        showAct("صار خطأ بالاتصال. جرّب مرة ثانية.", "err");
+        actBtn.disabled = false;
+      }
+    }
+
+    actBtn.addEventListener("click", activateNow);
+    actCode.addEventListener("keydown", (e) => {
+      if(e.key === "Enter") activateNow();
+    });
+
+    // عند فتح الصفحة: إذا غير مفعل -> افتح شاشة التفعيل مباشرة
+    window.addEventListener("load", () => {
+      if(!isActivated()){
+        openActivation();
+      }
+    });
   </script>
 </body>
 </html>
+
+<!-- اسم النسخة: index.html برا السالفة – تفعيل داخل الصفحة – إصدار 1 -->
