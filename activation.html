@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>تفعيل لعبة برا السالفة</title>
+  <style>
+    :root{
+      --bg:#0f5a4a;
+      --card:#ffffff;
+      --text:#111;
+      --muted:#666;
+      --ok:#1f9d55;
+      --bad:#d64545;
+      --btn:#0b3d33;
+      --border:rgba(0,0,0,.12);
+    }
+    body{
+      margin:0;
+      min-height:100vh;
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,0)) , var(--bg);
+      font-family: Arial, sans-serif;
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      box-sizing:border-box;
+    }
+    .wrap{
+      width:min(520px, 100%);
+    }
+    .card{
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.18);
+      box-shadow:0 12px 30px rgba(0,0,0,.18);
+      border-radius:18px;
+      padding:18px;
+      backdrop-filter: blur(10px);
+    }
+    .inner{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:16px;
+      color:var(--text);
+    }
+    h1{
+      margin:0 0 10px;
+      font-size:22px;
+      color:#fff;
+      letter-spacing:.2px;
+    }
+    .sub{
+      margin:0 0 14px;
+      color:rgba(255,255,255,.85);
+      font-size:14px;
+      line-height:1.6;
+    }
+    label{
+      display:block;
+      font-size:13px;
+      color:var(--muted);
+      margin:0 0 6px;
+    }
+    input{
+      width:100%;
+      padding:12px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      font-size:16px;
+      outline:none;
+      box-sizing:border-box;
+      direction:ltr; /* الأكواد أفضل LTR */
+      text-transform:uppercase;
+    }
+    input:focus{ border-color:rgba(11,61,51,.5); box-shadow:0 0 0 4px rgba(11,61,51,.10); }
+    .row{
+      display:flex;
+      gap:10px;
+      margin-top:12px;
+      flex-wrap:wrap;
+    }
+    button{
+      border:0;
+      border-radius:12px;
+      padding:12px 14px;
+      font-size:16px;
+      cursor:pointer;
+      flex:1;
+      min-width:160px;
+    }
+    .btn{
+      background:var(--btn);
+      color:#fff;
+    }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; }
+    .btn2{
+      background:#f2f2f2;
+      color:#111;
+      border:1px solid var(--border);
+    }
+    .msg{
+      margin-top:12px;
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:14px;
+      line-height:1.6;
+      border:1px solid var(--border);
+      display:none;
+    }
+    .msg.ok{
+      display:block;
+      background:rgba(31,157,85,.10);
+      border-color:rgba(31,157,85,.30);
+      color:var(--ok);
+    }
+    .msg.bad{
+      display:block;
+      background:rgba(214,69,69,.10);
+      border-color:rgba(214,69,69,.30);
+      color:var(--bad);
+    }
+    .hint{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.6;
+    }
+    .small{
+      margin-top:10px;
+      color:rgba(255,255,255,.75);
+      font-size:12px;
+      line-height:1.6;
+      text-align:center;
+    }
+    .pill{
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      background:rgba(0,0,0,.10);
+      border:1px solid rgba(0,0,0,.08);
+      font-size:12px;
+      color:#333;
+      direction:ltr;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>تفعيل لعبة برا السالفة</h1>
+    <p class="sub">أدخل كود التفعيل لفتح اللعبة على هذا الجهاز.</p>
+
+    <div class="card">
+      <div class="inner">
+        <label for="code">كود التفعيل</label>
+        <input id="code" autocomplete="one-time-code" inputmode="latin" placeholder="SNDQ-XXXX-XXXX-XXXX" />
+
+        <div class="row">
+          <button id="btnActivate" class="btn">تفعيل</button>
+          <button id="btnClear" class="btn2" type="button">مسح التفعيل</button>
+        </div>
+
+        <div id="msgOk" class="msg ok"></div>
+        <div id="msgBad" class="msg bad"></div>
+
+        <div class="hint">
+          حالة الجهاز: <span id="state" class="pill">غير مُفعّل</span><br/>
+          ملاحظة: التصفح الخاص قد لا يحفظ التفعيل.
+        </div>
+      </div>
+    </div>
+
+    <div class="small">© صندوق المسابقات</div>
+  </div>
+
+<script>
+/**
+ * مهم جداً:
+ * ضع رابط API الخاص بالتحقق (Google Apps Script Web App) هنا.
+ * مثال: https://script.google.com/macros/s/XXXX/exec
+ */
+const API_URL = ""; // <-- اكتب الرابط هنا لاحقاً
+
+const LS_ACTIVATED = "bara_activated_v1";
+const LS_CODE = "bara_code_v1";
+const LS_DEVICE = "bara_device_key_v1";
+
+const els = {
+  code: document.getElementById("code"),
+  btnActivate: document.getElementById("btnActivate"),
+  btnClear: document.getElementById("btnClear"),
+  msgOk: document.getElementById("msgOk"),
+  msgBad: document.getElementById("msgBad"),
+  state: document.getElementById("state"),
+};
+
+function uuid(){
+  // UUID v4 بسيط
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+    const r = (crypto.getRandomValues(new Uint8Array(1))[0] & 15);
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+function getDeviceKey(){
+  let k = localStorage.getItem(LS_DEVICE);
+  if(!k){
+    k = "dev_" + uuid();
+    localStorage.setItem(LS_DEVICE, k);
+  }
+  return k;
+}
+
+function setMsg(ok, text){
+  els.msgOk.style.display = ok ? "block" : "none";
+  els.msgBad.style.display = ok ? "none" : "block";
+  if(ok) els.msgOk.textContent = text;
+  else els.msgBad.textContent = text;
+}
+
+function setState(isOn){
+  els.state.textContent = isOn ? "مُفعّل" : "غير مُفعّل";
+  els.state.style.background = isOn ? "rgba(31,157,85,.12)" : "rgba(214,69,69,.12)";
+  els.state.style.borderColor = isOn ? "rgba(31,157,85,.30)" : "rgba(214,69,69,.30)";
+  els.state.style.color = isOn ? "#1f9d55" : "#d64545";
+}
+
+function normalizeCode(v){
+  return (v || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g,"")
+    .replace(/–/g,"-");
+}
+
+function getRedirect(){
+  const url = new URL(location.href);
+  const r = url.searchParams.get("r");
+  if(!r) return "index.html"; // الافتراضي
+  // حماية بسيطة: لا نسمح بروابط خارجية
+  if(r.includes("http://") || r.includes("https://")) return "index.html";
+  return r;
+}
+
+function isActivated(){
+  return localStorage.getItem(LS_ACTIVATED) === "1";
+}
+
+function markActivated(code){
+  localStorage.setItem(LS_ACTIVATED, "1");
+  localStorage.setItem(LS_CODE, code);
+}
+
+function clearActivation(){
+  localStorage.removeItem(LS_ACTIVATED);
+  localStorage.removeItem(LS_CODE);
+  setState(false);
+  setMsg(true, "تم مسح التفعيل من هذا الجهاز.");
+}
+
+async function verifyCode(code){
+  if(!API_URL){
+    throw new Error("API_URL غير مضبوط. ضع رابط Google Apps Script أولاً.");
+  }
+  const deviceKey = getDeviceKey();
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type":"application/json" },
+    body: JSON.stringify({ code, deviceKey })
+  });
+  const data = await res.json().catch(()=> ({}));
+  if(!res.ok || !data || data.ok !== true){
+    const msg = (data && data.message) ? data.message : "فشل التحقق من الكود.";
+    throw new Error(msg);
+  }
+  return data;
+}
+
+async function onActivate(){
+  els.btnActivate.disabled = true;
+  els.btnClear.disabled = true;
+  try{
+    const code = normalizeCode(els.code.value);
+    if(!code){
+      setMsg(false, "اكتب كود التفعيل أولاً.");
+      return;
+    }
+    // تحقق من السيرفر
+    await verifyCode(code);
+    // تفعيل محلي
+    markActivated(code);
+    setState(true);
+    setMsg(true, "تم التفعيل بنجاح. يتم تحويلك الآن للعبة…");
+    setTimeout(()=> location.href = getRedirect(), 600);
+  }catch(e){
+    setState(false);
+    setMsg(false, e.message || "حدث خطأ.");
+  }finally{
+    els.btnActivate.disabled = false;
+    els.btnClear.disabled = false;
+  }
+}
+
+(function init(){
+  // لو الجهاز مفعل مسبقاً نحوله مباشرة
+  if(isActivated()){
+    setState(true);
+    setMsg(true, "الجهاز مُفعّل مسبقاً. تحويل للعبة…");
+    setTimeout(()=> location.href = getRedirect(), 400);
+  }else{
+    setState(false);
+  }
+
+  els.btnActivate.addEventListener("click", onActivate);
+  els.btnClear.addEventListener("click", clearActivation);
+
+  els.code.addEventListener("input", ()=>{
+    els.code.value = normalizeCode(els.code.value);
+  });
+
+  els.code.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter") onActivate();
+  });
+})();
+</script>
+</body>
+</html>
