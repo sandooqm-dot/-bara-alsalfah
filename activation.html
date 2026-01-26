@@ -5,16 +5,15 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>تفعيل اللعبة</title>
 
-  <!-- خط قريب من ستايل ألعابك -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      --blue:#1f4fa3;       /* أزرق الهوية */
+      --blue:#1f4fa3;
       --blue2:#173e84;
-      --yellow:#f4c400;     /* أصفر الهوية */
+      --yellow:#f4c400;
       --card:#ffffff;
       --text:#0f172a;
       --muted:#64748b;
@@ -41,7 +40,6 @@
       overflow-x:hidden;
     }
 
-    /* خلفية “نقط” لطيفة */
     body:before{
       content:"";
       position:fixed; inset:0;
@@ -105,7 +103,7 @@
       padding:0 14px;
       font-size:18px;
       outline:none;
-      text-align:left; /* الكود لاتيني */
+      text-align:left;
       direction:ltr;
     }
     .input:focus{
@@ -147,8 +145,8 @@
     }
     .msg.ok{background:#e8fff0; color:#0f5132; border:1px solid rgba(15,81,50,.18)}
     .msg.err{background:#fff1f2; color:#991b1b; border:1px solid rgba(153,27,27,.18)}
+    .msg.info{background:#eef2ff; color:#1e293b; border:1px solid rgba(30,41,59,.14)}
 
-    /* ملاحظة صغيرة أسفل */
     .sub{
       margin-top:14px;
       color: rgba(255,255,255,.85);
@@ -161,19 +159,24 @@
 
 <body>
   <main class="wrap">
-    <!-- ✅ تم التعديل هنا فقط: logo.PNG بدل logo.png لأن ملفك اسمه logo.PNG -->
+    <!-- ملاحظة: عندك الملف اسمه logo.PNG في المستودع -->
     <img class="logo" src="logo.PNG" alt="صندوق المسابقات" />
     <h1>تفعيل اللعبة</h1>
 
     <section class="card" aria-label="Activation">
       <div class="label">أدخل كود اللعبة</div>
-      <input id="code" class="input" inputmode="text" autocomplete="off" autocapitalize="characters"
+
+      <input id="code" class="input"
+             inputmode="text"
+             autocomplete="off"
+             autocapitalize="characters"
              placeholder="مثال: SNDQ-XXXX-XXXX-XXXX" />
 
       <button id="btn" class="btn">تفعيل</button>
 
-      <div id="msgOk" class="msg ok">تم التفعيل بنجاح ✅</div>
+      <div id="msgOk" class="msg ok">تم التفعيل بنجاح</div>
       <div id="msgErr" class="msg err">الكود غير صحيح أو مستخدم.</div>
+      <div id="msgInfo" class="msg info">جارِ التحقق...</div>
 
       <p class="note">بعد التفعيل سيتم ربط الكود بهذا الجهاز.</p>
     </section>
@@ -182,17 +185,31 @@
   </main>
 
   <script>
-    // هذا ملف “ستايل موحد”. التحقق الحقيقي من الأكواد راح نربطه بالجدول/السكربت في الخطوة الجاية.
-    // حالياً: يعطيك تجربة شكلية + تهيئة للمستقبل.
+    /***********************
+     * إعدادات مهمة
+     ************************/
+    const API_URL = "https://script.google.com/macros/s/AKfycbwDxN4zps9dwADEcjCNw-RbnlYnGYvoNbwQh1R-6MHXFx8AVA1EVEuA6m4miuyctQm3Eg/exec";
 
+    // بعد التفعيل يروح لهذه الصفحة (أو يرجع للـ next لو موجود)
+    const DEFAULT_NEXT = "index.html";
+
+    /***********************
+     * عناصر الصفحة
+     ************************/
     const codeEl = document.getElementById('code');
     const btn = document.getElementById('btn');
     const ok = document.getElementById('msgOk');
     const err = document.getElementById('msgErr');
+    const info = document.getElementById('msgInfo');
 
-    function show(el){
+    function hideAll(){
       ok.style.display = 'none';
       err.style.display = 'none';
+      info.style.display = 'none';
+    }
+    function show(el, text){
+      hideAll();
+      if (text) el.textContent = text;
       el.style.display = 'block';
     }
 
@@ -204,35 +221,153 @@
         .replace(/—/g,'-');
     }
 
+    function getNext(){
+      const p = new URLSearchParams(location.search);
+      const next = p.get('next');
+      return next ? next : DEFAULT_NEXT;
+    }
+
+    function randHex(n){
+      const chars = "0123456789abcdef";
+      let out = "";
+      for(let i=0;i<n;i++) out += chars[Math.floor(Math.random()*chars.length)];
+      return out;
+    }
+
+    function getDeviceKey(){
+      let k = localStorage.getItem('SNDQ_DEVICE_KEY');
+      if(!k){
+        // DeviceKey ثابت لهذا الجهاز
+        k = "DEV-" + randHex(24);
+        localStorage.setItem('SNDQ_DEVICE_KEY', k);
+      }
+      return k;
+    }
+
+    // JSONP لأن Web App يرد callback
+    function jsonp(url, params){
+      return new Promise((resolve, reject) => {
+        const cbName = "cb_" + Date.now() + "_" + Math.floor(Math.random()*100000);
+        const qs = new URLSearchParams(params || {});
+        qs.set("callback", cbName);
+
+        const s = document.createElement("script");
+        const timeout = setTimeout(() => {
+          cleanup();
+          reject(new Error("TIMEOUT"));
+        }, 12000);
+
+        function cleanup(){
+          clearTimeout(timeout);
+          try { delete window[cbName]; } catch(e){}
+          if (s && s.parentNode) s.parentNode.removeChild(s);
+        }
+
+        window[cbName] = (data) => {
+          cleanup();
+          resolve(data);
+        };
+
+        s.onerror = () => {
+          cleanup();
+          reject(new Error("NETWORK"));
+        };
+
+        s.src = url + "?" + qs.toString();
+        document.body.appendChild(s);
+      });
+    }
+
+    async function verifyWithServer(code){
+      const device = getDeviceKey();
+      return await jsonp(API_URL, { code, device });
+    }
+
+    function saveActivation(code){
+      localStorage.setItem('SNDQ_ACTIVE_CODE', code);
+      localStorage.setItem('SNDQ_ACTIVE_AT', String(Date.now()));
+    }
+
+    function clearActivation(){
+      localStorage.removeItem('SNDQ_ACTIVE_CODE');
+      localStorage.removeItem('SNDQ_ACTIVE_AT');
+    }
+
+    function goNext(){
+      const next = getNext();
+      location.href = next;
+    }
+
+    /***********************
+     * تفعيل بالزر
+     ************************/
     btn.addEventListener('click', async () => {
       const code = normalizeCode(codeEl.value);
       codeEl.value = code;
 
       if(!code){
-        show(err);
-        err.textContent = 'اكتب الكود أولاً.';
+        show(err, 'اكتب الكود أولاً.');
         return;
       }
       if(!/^SNDQ-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)){
-        show(err);
-        err.textContent = 'صيغة الكود غير صحيحة. مثال: SNDQ-XXXX-XXXX-XXXX';
+        show(err, 'صيغة الكود غير صحيحة. مثال: SNDQ-XXXX-XXXX-XXXX');
         return;
       }
 
-      // مؤقتاً نجاح شكلي (بنبدله بالتحقق الحقيقي لاحقاً)
       btn.disabled = true;
-      err.style.display='none';
-      ok.style.display='none';
+      show(info, 'جارِ التحقق...');
 
-      setTimeout(() => {
-        // خزنة محلية مؤقتة (بنغيرها للربط الحقيقي بالجهاز + التحقق من الشيت)
-        localStorage.setItem('SNDQ_ACTIVE_CODE', code);
-        show(ok);
+      try{
+        const res = await verifyWithServer(code);
+
+        if(res && res.ok){
+          saveActivation(code);
+          show(ok, 'تم التفعيل بنجاح');
+          setTimeout(goNext, 650);
+        }else{
+          const msg = (res && res.msg) ? res.msg : 'الكود غير صحيح أو مستخدم.';
+          show(err, msg);
+        }
+      }catch(e){
+        // لو فيه مشكلة شبكة
+        show(err, 'تعذر الاتصال. تأكد من النت وحاول مرة أخرى.');
+      }finally{
         btn.disabled = false;
-      }, 450);
+      }
     });
+
+    /***********************
+     * تحقق تلقائي إذا سبق تفعيل الجهاز
+     ************************/
+    (async () => {
+      const saved = localStorage.getItem('SNDQ_ACTIVE_CODE');
+      if(!saved) return;
+
+      const code = normalizeCode(saved);
+      show(info, 'جارِ التحقق من التفعيل...');
+      btn.disabled = true;
+
+      try{
+        const res = await verifyWithServer(code);
+        if(res && res.ok){
+          // فعال على هذا الجهاز
+          setTimeout(goNext, 250);
+          return;
+        }else{
+          // غير صالح/انفك الربط
+          clearActivation();
+          hideAll();
+        }
+      }catch(e){
+        // لو الشبكة فصلت: نخليه يدخل بناءً على التفعيل المحلي (عشان ما يقفل اللعبة على العميل)
+        setTimeout(goNext, 250);
+        return;
+      }finally{
+        btn.disabled = false;
+      }
+    })();
   </script>
 </body>
 </html>
 
-<!-- اسم النسخة: activation.html (صفحة التفعيل الموحدة) – إصدار 2 -->
+<!-- اسم النسخة: activation.html – إصدار 2 -->
