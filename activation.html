@@ -39,7 +39,6 @@
         linear-gradient(180deg, var(--blue), var(--blue2));
       overflow-x:hidden;
     }
-
     body:before{
       content:"";
       position:fixed; inset:0;
@@ -50,29 +49,18 @@
       transform: translateZ(0);
     }
 
-    .wrap{
-      width:min(520px, 100%);
-      text-align:center;
-      position:relative;
-    }
-
+    .wrap{width:min(520px, 100%); text-align:center; position:relative;}
     .logo{
-      width:160px;
-      max-width:60vw;
-      height:auto;
-      display:block;
+      width:160px; max-width:60vw; height:auto; display:block;
       margin:0 auto 14px;
       filter: drop-shadow(0 10px 18px rgba(0,0,0,.25));
-      user-select:none;
-      pointer-events:none;
+      user-select:none; pointer-events:none;
     }
-
     h1{
       margin:0 0 14px;
       font-size: clamp(28px, 5.2vw, 44px);
       font-weight:800;
       color: var(--yellow);
-      letter-spacing:.2px;
       text-shadow: 0 10px 22px rgba(0,0,0,.28);
     }
 
@@ -87,24 +75,13 @@
       -webkit-backdrop-filter: blur(10px);
     }
 
-    .label{
-      text-align:right;
-      font-size:18px;
-      font-weight:800;
-      margin:2px 2px 10px;
-    }
+    .label{ text-align:right; font-size:18px; font-weight:800; margin:2px 2px 10px; }
 
     .input{
-      width:100%;
-      height:56px;
-      border-radius:16px;
-      border:1px solid var(--border);
-      background:#fff;
-      padding:0 14px;
-      font-size:18px;
-      outline:none;
-      text-align:left;
-      direction:ltr;
+      width:100%; height:56px; border-radius:16px;
+      border:1px solid var(--border); background:#fff;
+      padding:0 14px; font-size:18px; outline:none;
+      text-align:left; direction:ltr;
     }
     .input:focus{
       border-color: rgba(31,79,163,.45);
@@ -112,15 +89,11 @@
     }
 
     .btn{
-      width:100%;
-      height:58px;
-      margin-top:12px;
-      border:0;
-      border-radius:16px;
+      width:100%; height:58px; margin-top:12px;
+      border:0; border-radius:16px;
       background: var(--yellow);
       color:#1b1b1b;
-      font-weight:900;
-      font-size:22px;
+      font-weight:900; font-size:22px;
       cursor:pointer;
       box-shadow: 0 14px 30px rgba(244,196,0,.28);
       transition: transform .08s ease, filter .12s ease;
@@ -128,88 +101,73 @@
     .btn:active{transform: scale(.99)}
     .btn[disabled]{opacity:.7; cursor:not-allowed; filter:grayscale(.2)}
 
-    .note{
-      margin:10px 0 0;
-      color: #334155;
-      font-size:14px;
-      font-weight:700;
-    }
+    .note{ margin:10px 0 0; color:#334155; font-size:14px; font-weight:700; }
 
     .msg{
-      margin-top:10px;
-      padding:10px 12px;
-      border-radius:14px;
-      font-weight:800;
-      display:none;
-      text-align:center;
+      margin-top:10px; padding:10px 12px; border-radius:14px;
+      font-weight:800; display:none; text-align:center;
     }
     .msg.ok{background:#e8fff0; color:#0f5132; border:1px solid rgba(15,81,50,.18)}
     .msg.err{background:#fff1f2; color:#991b1b; border:1px solid rgba(153,27,27,.18)}
-    .msg.info{background:#eef2ff; color:#1e293b; border:1px solid rgba(30,41,59,.14)}
 
     .sub{
       margin-top:14px;
       color: rgba(255,255,255,.85);
-      font-size:13px;
-      font-weight:700;
+      font-size:13px; font-weight:700;
       text-shadow: 0 8px 18px rgba(0,0,0,.22);
+    }
+
+    .small{
+      margin-top:8px;
+      color:#475569;
+      font-size:13px;
+      font-weight:800;
     }
   </style>
 </head>
 
 <body>
   <main class="wrap">
-    <!-- ملاحظة: عندك الملف اسمه logo.PNG في المستودع -->
     <img class="logo" src="logo.PNG" alt="صندوق المسابقات" />
     <h1>تفعيل اللعبة</h1>
 
     <section class="card" aria-label="Activation">
       <div class="label">أدخل كود اللعبة</div>
 
-      <input id="code" class="input"
-             inputmode="text"
-             autocomplete="off"
-             autocapitalize="characters"
+      <input id="code" class="input" inputmode="text" autocomplete="off" autocapitalize="characters"
              placeholder="مثال: SNDQ-XXXX-XXXX-XXXX" />
 
       <button id="btn" class="btn">تفعيل</button>
 
-      <div id="msgOk" class="msg ok">تم التفعيل بنجاح</div>
+      <div id="msgOk" class="msg ok">تم التفعيل بنجاح ✅</div>
       <div id="msgErr" class="msg err">الكود غير صحيح أو مستخدم.</div>
-      <div id="msgInfo" class="msg info">جارِ التحقق...</div>
 
       <p class="note">بعد التفعيل سيتم ربط الكود بهذا الجهاز.</p>
+      <div class="small" id="devHint" style="display:none;"></div>
     </section>
 
     <div class="sub">© صندوق المسابقات</div>
   </main>
 
   <script>
-    /***********************
-     * إعدادات مهمة
-     ************************/
+    // ✅ رابط Apps Script (اللي أرسلته)
     const API_URL = "https://script.google.com/macros/s/AKfycbwDxN4zps9dwADEcjCNw-RbnlYnGYvoNbwQh1R-6MHXFx8AVA1EVEuA6m4miuyctQm3Eg/exec";
 
-    // بعد التفعيل يروح لهذه الصفحة (أو يرجع للـ next لو موجود)
-    const DEFAULT_NEXT = "index.html";
+    // مفاتيح التخزين
+    const LS_ACTIVE_CODE = "SNDQ_ACTIVE_CODE";
+    const LS_DEVICE_KEY  = "SNDQ_DEVICE_KEY";
+    const LS_ACTIVE_AT   = "SNDQ_ACTIVE_AT";
 
-    /***********************
-     * عناصر الصفحة
-     ************************/
     const codeEl = document.getElementById('code');
     const btn = document.getElementById('btn');
     const ok = document.getElementById('msgOk');
     const err = document.getElementById('msgErr');
-    const info = document.getElementById('msgInfo');
+    const devHint = document.getElementById('devHint');
 
-    function hideAll(){
+    function show(el, text){
       ok.style.display = 'none';
       err.style.display = 'none';
-      info.style.display = 'none';
-    }
-    function show(el, text){
-      hideAll();
-      if (text) el.textContent = text;
+      if(text) el.textContent = text;
       el.style.display = 'block';
     }
 
@@ -221,86 +179,84 @@
         .replace(/—/g,'-');
     }
 
-    function getNext(){
-      const p = new URLSearchParams(location.search);
-      const next = p.get('next');
-      return next ? next : DEFAULT_NEXT;
+    function isValidFormat(code){
+      return /^SNDQ-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code);
     }
 
-    function randHex(n){
-      const chars = "0123456789abcdef";
-      let out = "";
-      for(let i=0;i<n;i++) out += chars[Math.floor(Math.random()*chars.length)];
-      return out;
+    function genDeviceKey(){
+      // UUID-ish
+      try{
+        const a = new Uint8Array(16);
+        crypto.getRandomValues(a);
+        const hex = [...a].map(b => b.toString(16).padStart(2,'0')).join('');
+        return "DEV-" + hex;
+      }catch(e){
+        return "DEV-" + Math.random().toString(16).slice(2) + Date.now().toString(16);
+      }
     }
 
     function getDeviceKey(){
-      let k = localStorage.getItem('SNDQ_DEVICE_KEY');
+      let k = localStorage.getItem(LS_DEVICE_KEY);
       if(!k){
-        // DeviceKey ثابت لهذا الجهاز
-        k = "DEV-" + randHex(24);
-        localStorage.setItem('SNDQ_DEVICE_KEY', k);
+        k = genDeviceKey();
+        localStorage.setItem(LS_DEVICE_KEY, k);
       }
       return k;
     }
 
-    // JSONP لأن Web App يرد callback
+    // JSONP helper (بدون مشاكل CORS)
     function jsonp(url, params){
       return new Promise((resolve, reject) => {
-        const cbName = "cb_" + Date.now() + "_" + Math.floor(Math.random()*100000);
-        const qs = new URLSearchParams(params || {});
-        qs.set("callback", cbName);
+        const cb = "cb_" + Date.now() + "_" + Math.random().toString(16).slice(2);
+        const script = document.createElement("script");
 
-        const s = document.createElement("script");
-        const timeout = setTimeout(() => {
+        const qs = new URLSearchParams(params);
+        qs.set("cb", cb);
+
+        const cleanup = () => {
+          try{ delete window[cb]; }catch(_){}
+          if(script && script.parentNode) script.parentNode.removeChild(script);
+        };
+
+        const timer = setTimeout(() => {
           cleanup();
           reject(new Error("TIMEOUT"));
         }, 12000);
 
-        function cleanup(){
-          clearTimeout(timeout);
-          try { delete window[cbName]; } catch(e){}
-          if (s && s.parentNode) s.parentNode.removeChild(s);
-        }
-
-        window[cbName] = (data) => {
+        window[cb] = (data) => {
+          clearTimeout(timer);
           cleanup();
           resolve(data);
         };
 
-        s.onerror = () => {
+        script.onerror = () => {
+          clearTimeout(timer);
           cleanup();
           reject(new Error("NETWORK"));
         };
 
-        s.src = url + "?" + qs.toString();
-        document.body.appendChild(s);
+        script.src = url + (url.includes("?") ? "&" : "?") + qs.toString();
+        document.body.appendChild(script);
       });
     }
 
-    async function verifyWithServer(code){
-      const device = getDeviceKey();
-      return await jsonp(API_URL, { code, device });
+    function getNext(){
+      const u = new URL(location.href);
+      return u.searchParams.get("next") || "index.html";
     }
 
-    function saveActivation(code){
-      localStorage.setItem('SNDQ_ACTIVE_CODE', code);
-      localStorage.setItem('SNDQ_ACTIVE_AT', String(Date.now()));
-    }
+    // إذا الجهاز مفعل من قبل → ودّه مباشرة
+    (function autoGoIfActive(){
+      const c = localStorage.getItem(LS_ACTIVE_CODE);
+      const d = localStorage.getItem(LS_DEVICE_KEY);
+      if(c && d){
+        // ما نعيد تحقق هنا عشان السرعة (نقدر نسويه لاحقاً بصمت)
+        // نوديه للصفحة المطلوبة
+        // ملاحظة: نخليها Replace عشان ما يرجع لصفحة التفعيل بالباك
+        location.replace(getNext());
+      }
+    })();
 
-    function clearActivation(){
-      localStorage.removeItem('SNDQ_ACTIVE_CODE');
-      localStorage.removeItem('SNDQ_ACTIVE_AT');
-    }
-
-    function goNext(){
-      const next = getNext();
-      location.href = next;
-    }
-
-    /***********************
-     * تفعيل بالزر
-     ************************/
     btn.addEventListener('click', async () => {
       const code = normalizeCode(codeEl.value);
       codeEl.value = code;
@@ -309,65 +265,47 @@
         show(err, 'اكتب الكود أولاً.');
         return;
       }
-      if(!/^SNDQ-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)){
+      if(!isValidFormat(code)){
         show(err, 'صيغة الكود غير صحيحة. مثال: SNDQ-XXXX-XXXX-XXXX');
         return;
       }
 
+      const device = getDeviceKey();
+      devHint.style.display = "none";
+
       btn.disabled = true;
-      show(info, 'جارِ التحقق...');
+      ok.style.display='none';
+      err.style.display='none';
 
       try{
-        const res = await verifyWithServer(code);
+        // نطلب التحقق من الشيت
+        const res = await jsonp(API_URL, { code, device });
 
         if(res && res.ok){
-          saveActivation(code);
-          show(ok, 'تم التفعيل بنجاح');
-          setTimeout(goNext, 650);
+          localStorage.setItem(LS_ACTIVE_CODE, code);
+          localStorage.setItem(LS_ACTIVE_AT, new Date().toISOString());
+          // deviceKey محفوظ مسبقاً
+
+          show(ok, 'تم التفعيل بنجاح ✅');
+          // نرجع للصفحة المطلوبة بعد ثانية
+          setTimeout(() => location.replace(getNext()), 650);
         }else{
           const msg = (res && res.msg) ? res.msg : 'الكود غير صحيح أو مستخدم.';
           show(err, msg);
+          // تلميح اختياري للمساعدة
+          if(res && res.status === "USED"){
+            devHint.style.display = "block";
+            devHint.textContent = "ملاحظة: هذا الكود مربوط بجهاز آخر.";
+          }
         }
       }catch(e){
-        // لو فيه مشكلة شبكة
-        show(err, 'تعذر الاتصال. تأكد من النت وحاول مرة أخرى.');
+        show(err, 'تعذر الاتصال بالخادم. جرّب مرة ثانية.');
       }finally{
         btn.disabled = false;
       }
     });
-
-    /***********************
-     * تحقق تلقائي إذا سبق تفعيل الجهاز
-     ************************/
-    (async () => {
-      const saved = localStorage.getItem('SNDQ_ACTIVE_CODE');
-      if(!saved) return;
-
-      const code = normalizeCode(saved);
-      show(info, 'جارِ التحقق من التفعيل...');
-      btn.disabled = true;
-
-      try{
-        const res = await verifyWithServer(code);
-        if(res && res.ok){
-          // فعال على هذا الجهاز
-          setTimeout(goNext, 250);
-          return;
-        }else{
-          // غير صالح/انفك الربط
-          clearActivation();
-          hideAll();
-        }
-      }catch(e){
-        // لو الشبكة فصلت: نخليه يدخل بناءً على التفعيل المحلي (عشان ما يقفل اللعبة على العميل)
-        setTimeout(goNext, 250);
-        return;
-      }finally{
-        btn.disabled = false;
-      }
-    })();
   </script>
 </body>
 </html>
 
-<!-- اسم النسخة: activation.html – إصدار 2 -->
+<!-- اسم النسخة: activation.html (برا السالفة) – إصدار 2 -->
