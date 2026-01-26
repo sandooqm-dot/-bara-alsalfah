@@ -7,305 +7,359 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@600;700;800;900&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      --blue:#1f4fa3;
-      --blue2:#173e84;
-      --yellow:#f4c400;
-      --card:#ffffff;
-      --text:#0f172a;
-      --muted:#64748b;
-      --border:rgba(15, 23, 42, .12);
-      --shadow: 0 18px 50px rgba(0,0,0,.25);
-      --radius:22px;
+      --beige:#e9e1cf;
+      --olive:#6f7a52;
+      --olive-dark:#3f4e2c;
+      --cream:#f1e9d7;
+      --yellow:#f3c515;
+      --black:#111;
+
+      --ok:#16a34a;
+      --bad:#dc2626;
     }
 
     *{box-sizing:border-box}
+    html,body{height:100%}
+
     body{
       margin:0;
+      background:var(--beige);
       font-family:"Baloo Bhaijaan 2", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
-      color:#fff;
-      min-height:100svh;
       display:flex;
-      align-items:center;
       justify-content:center;
-      padding:24px 16px calc(24px + env(safe-area-inset-bottom));
-      background:
-        radial-gradient(1200px 600px at 50% 105%, rgba(244,196,0,.20), transparent 60%),
-        radial-gradient(900px 500px at 10% 10%, rgba(255,255,255,.12), transparent 55%),
-        radial-gradient(900px 500px at 90% 0%, rgba(255,255,255,.08), transparent 55%),
-        linear-gradient(180deg, var(--blue), var(--blue2));
-      overflow-x:hidden;
-    }
-    body:before{
-      content:"";
-      position:fixed; inset:0;
-      background-image: radial-gradient(rgba(255,255,255,.10) 1px, transparent 1px);
-      background-size: 22px 22px;
-      opacity:.35;
-      pointer-events:none;
-      transform: translateZ(0);
+      align-items:stretch;
+      padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom);
+      color:#111;
     }
 
-    .wrap{width:min(520px, 100%); text-align:center; position:relative;}
-    .logo{
-      width:160px; max-width:60vw; height:auto; display:block;
-      margin:0 auto 14px;
-      filter: drop-shadow(0 10px 18px rgba(0,0,0,.25));
-      user-select:none; pointer-events:none;
+    .page{
+      width:min(560px, 100%);
+      min-height:calc(100vh - (env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+      margin:auto;
+      border:6px solid var(--olive-dark);
+      border-radius:22px;
+      background:var(--beige);
+      padding:22px 18px 26px;
+      position:relative;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
     }
-    h1{
+
+    /* اللوجو: فوق بالمنتصف وكبير */
+    .topLogo{
+      width:min(180px, 55vw);
+      height:auto;
+      margin-top:10px;
+      margin-bottom:14px;
+      object-fit:contain;
+      pointer-events:none;
+      user-select:none;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.25));
+    }
+
+    .title{
+      width:100%;
+      text-align:center;
+      background:var(--cream);
+      border:4px solid var(--black);
+      border-radius:18px;
+      padding:14px 12px;
+      font-weight:900;
+      font-size:clamp(26px, 5.5vw, 40px);
       margin:0 0 14px;
-      font-size: clamp(28px, 5.2vw, 44px);
-      font-weight:800;
-      color: var(--yellow);
-      text-shadow: 0 10px 22px rgba(0,0,0,.28);
+      box-shadow:0 10px 0 rgba(0,0,0,.18);
     }
 
     .card{
-      background:rgba(255,255,255,.92);
-      color:var(--text);
-      border:1px solid rgba(255,255,255,.25);
-      box-shadow: var(--shadow);
-      border-radius: var(--radius);
-      padding: 18px 16px 14px;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      width:100%;
+      background:var(--olive);
+      border-radius:20px;
+      padding:16px 16px 18px;
+      box-shadow:0 18px 0 rgba(0,0,0,.10);
+      position:relative;
     }
 
-    .label{ text-align:right; font-size:18px; font-weight:800; margin:2px 2px 10px; }
+    .card::after{
+      content:"";
+      position:absolute;
+      left:16px;
+      right:16px;
+      bottom:-22px;
+      height:28px;
+      background:rgba(0,0,0,.18);
+      border-radius:999px;
+      opacity:.22;
+    }
+
+    .inner{
+      background:rgba(241,233,215,.96);
+      border:4px solid var(--black);
+      border-radius:18px;
+      padding:14px;
+      color:#111;
+    }
+
+    .label{
+      font-weight:900;
+      font-size:18px;
+      margin:0 0 8px;
+      text-align:right;
+    }
 
     .input{
-      width:100%; height:56px; border-radius:16px;
-      border:1px solid var(--border); background:#fff;
-      padding:0 14px; font-size:18px; outline:none;
-      text-align:left; direction:ltr;
+      width:100%;
+      height:56px;
+      border-radius:14px;
+      border:2px solid rgba(17,17,17,.25);
+      background:#fff;
+      padding:0 14px;
+      font-size:18px;
+      font-weight:800;
+      outline:none;
+      text-align:left;
+      direction:ltr;
     }
     .input:focus{
-      border-color: rgba(31,79,163,.45);
-      box-shadow: 0 0 0 4px rgba(31,79,163,.14);
+      border-color: rgba(17,17,17,.45);
+      box-shadow: 0 0 0 4px rgba(17,17,17,.12);
     }
 
     .btn{
-      width:100%; height:58px; margin-top:12px;
-      border:0; border-radius:16px;
-      background: var(--yellow);
-      color:#1b1b1b;
-      font-weight:900; font-size:22px;
+      width:100%;
+      margin-top:12px;
+      height:58px;
+      border:4px solid var(--black);
+      border-radius:18px;
+      background:var(--yellow);
+      color:#111;
+      font-weight:900;
+      font-size:24px;
       cursor:pointer;
-      box-shadow: 0 14px 30px rgba(244,196,0,.28);
-      transition: transform .08s ease, filter .12s ease;
+      box-shadow:0 12px 0 rgba(0,0,0,.22);
+      -webkit-tap-highlight-color:transparent;
+      transition:transform .05s ease;
     }
-    .btn:active{transform: scale(.99)}
-    .btn[disabled]{opacity:.7; cursor:not-allowed; filter:grayscale(.2)}
-
-    .note{ margin:10px 0 0; color:#334155; font-size:14px; font-weight:700; }
+    .btn:active{transform:translateY(1px)}
+    .btn[disabled]{opacity:.75; cursor:not-allowed}
 
     .msg{
-      margin-top:10px; padding:10px 12px; border-radius:14px;
-      font-weight:800; display:none; text-align:center;
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:900;
+      display:none;
+      text-align:center;
+      font-size:16px;
     }
-    .msg.ok{background:#e8fff0; color:#0f5132; border:1px solid rgba(15,81,50,.18)}
-    .msg.err{background:#fff1f2; color:#991b1b; border:1px solid rgba(153,27,27,.18)}
+    .msg.ok{display:block; background:rgba(22,163,74,.12); border:2px solid rgba(22,163,74,.35); color:#0b3d1d}
+    .msg.err{display:block; background:rgba(220,38,38,.10); border:2px solid rgba(220,38,38,.35); color:#7a1212}
 
-    .sub{
-      margin-top:14px;
-      color: rgba(255,255,255,.85);
-      font-size:13px; font-weight:700;
-      text-shadow: 0 8px 18px rgba(0,0,0,.22);
-    }
-
-    .small{
-      margin-top:8px;
-      color:#475569;
+    .note{
+      margin:10px 0 0;
       font-size:13px;
-      font-weight:800;
+      font-weight:900;
+      color:rgba(17,17,17,.75);
+      text-align:center;
+    }
+
+    .foot{
+      margin-top:auto;
+      padding-top:16px;
+      font-size:12px;
+      font-weight:900;
+      color:rgba(17,17,17,.55);
+      text-align:center;
     }
   </style>
 </head>
 
 <body>
-  <main class="wrap">
-    <img class="logo" src="logo.PNG" alt="صندوق المسابقات" />
-    <h1>تفعيل اللعبة</h1>
+  <main class="page">
+    <img class="topLogo" src="logo.PNG" alt="شعار صندوق المسابقات">
 
-    <section class="card" aria-label="Activation">
-      <div class="label">أدخل كود اللعبة</div>
+    <div class="title">تفعيل اللعبة</div>
 
-      <input id="code" class="input" inputmode="text" autocomplete="off" autocapitalize="characters"
-             placeholder="مثال: SNDQ-XXXX-XXXX-XXXX" />
+    <section class="card" aria-label="تفعيل اللعبة">
+      <div class="inner">
+        <div class="label">أدخل كود اللعبة</div>
+        <input id="code" class="input" inputmode="text" autocomplete="off" autocapitalize="characters"
+               placeholder="مثال: SNDQ-XXXX-XXXX-XXXX" />
 
-      <button id="btn" class="btn">تفعيل</button>
+        <button id="btn" class="btn" type="button">تفعيل</button>
 
-      <div id="msgOk" class="msg ok">تم التفعيل بنجاح ✅</div>
-      <div id="msgErr" class="msg err">الكود غير صحيح أو مستخدم.</div>
+        <div id="msg" class="msg"></div>
 
-      <p class="note">بعد التفعيل سيتم ربط الكود بهذا الجهاز.</p>
-      <div class="small" id="devHint" style="display:none;"></div>
+        <div class="note">بعد التفعيل سيتم ربط الكود بهذا الجهاز.</div>
+      </div>
     </section>
 
-    <div class="sub">© صندوق المسابقات</div>
+    <div class="foot">© صندوق المسابقات</div>
   </main>
 
   <script>
-    // ✅ رابط Apps Script (اللي أرسلته)
-    const API_URL = "https://script.google.com/macros/s/AKfycbwDxN4zps9dwADEcjCNw-RbnlYnGYvoNbwQh1R-6MHXFx8AVA1EVEuA6m4miuyctQm3Eg/exec";
+    /***********************
+     * إعدادات التفعيل
+     ***********************/
+    const ACTIVATION_API = "https://script.google.com/macros/s/AKfycbwDxN4zps9dwADEcjCNw-RbnlYnGYvoNbwQh1R-6MHXFx8AVA1EVEuA6m4miuyctQm3Eg/exec";
 
-    // مفاتيح التخزين
-    const LS_ACTIVE_CODE = "SNDQ_ACTIVE_CODE";
-    const LS_DEVICE_KEY  = "SNDQ_DEVICE_KEY";
-    const LS_ACTIVE_AT   = "SNDQ_ACTIVE_AT";
+    // معرف خاص لهذه اللعبة
+    const GAME_KEY = "bara_alsalfah";
 
-    const codeEl = document.getElementById('code');
-    const btn = document.getElementById('btn');
-    const ok = document.getElementById('msgOk');
-    const err = document.getElementById('msgErr');
-    const devHint = document.getElementById('devHint');
+    const LS_ACTIVE = `SNDQ_ACTIVE_${GAME_KEY}`;
+    const LS_CODE   = `SNDQ_CODE_${GAME_KEY}`;
+    const LS_DEVICE = `SNDQ_DEVICEKEY`;
 
-    function show(el, text){
-      ok.style.display = 'none';
-      err.style.display = 'none';
-      if(text) el.textContent = text;
-      el.style.display = 'block';
+    const codeEl = document.getElementById("code");
+    const btn = document.getElementById("btn");
+    const msg = document.getElementById("msg");
+
+    function showMsg(text, type){
+      msg.className = "msg " + (type === "ok" ? "ok" : "err");
+      msg.textContent = text;
+      msg.style.display = "block";
     }
 
     function normalizeCode(v){
-      return (v || '')
+      return (v || "")
         .trim()
         .toUpperCase()
-        .replace(/\s+/g,'')
-        .replace(/—/g,'-');
+        .replace(/\s+/g, "")
+        .replace(/[—–]/g, "-");
     }
 
-    function isValidFormat(code){
+    function isValidCodeFormat(code){
       return /^SNDQ-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code);
     }
 
-    function genDeviceKey(){
-      // UUID-ish
-      try{
-        const a = new Uint8Array(16);
-        crypto.getRandomValues(a);
-        const hex = [...a].map(b => b.toString(16).padStart(2,'0')).join('');
-        return "DEV-" + hex;
-      }catch(e){
-        return "DEV-" + Math.random().toString(16).slice(2) + Date.now().toString(16);
-      }
-    }
-
     function getDeviceKey(){
-      let k = localStorage.getItem(LS_DEVICE_KEY);
-      if(!k){
-        k = genDeviceKey();
-        localStorage.setItem(LS_DEVICE_KEY, k);
-      }
+      let k = localStorage.getItem(LS_DEVICE);
+      if(k && k.length >= 16) return k;
+
+      const bytes = new Uint8Array(16);
+      (crypto && crypto.getRandomValues) ? crypto.getRandomValues(bytes) : bytes.forEach((_,i)=>bytes[i]=Math.floor(Math.random()*256));
+      k = Array.from(bytes).map(b => b.toString(16).padStart(2,'0')).join('');
+      localStorage.setItem(LS_DEVICE, k);
       return k;
     }
 
-    // JSONP helper (بدون مشاكل CORS)
-    function jsonp(url, params){
+    function isActivated(){
+      return localStorage.getItem(LS_ACTIVE) === "1" && !!localStorage.getItem(LS_CODE);
+    }
+
+    function setActivated(code){
+      localStorage.setItem(LS_ACTIVE, "1");
+      localStorage.setItem(LS_CODE, code);
+    }
+
+    // لو مفعل من قبل: رجّعه للصفحة الرئيسية مباشرة
+    function getNext(){
+      const u = new URL(location.href);
+      return u.searchParams.get("next") || "index.html";
+    }
+    if(isActivated()){
+      location.replace(getNext());
+    }
+
+    /***********************
+     * JSONP (لتفادي CORS)
+     ***********************/
+    function jsonp(url){
       return new Promise((resolve, reject) => {
-        const cb = "cb_" + Date.now() + "_" + Math.random().toString(16).slice(2);
+        const cbName = "cb_" + Math.random().toString(36).slice(2);
         const script = document.createElement("script");
+        const sep = url.includes("?") ? "&" : "?";
+        const full = url + sep + "cb=" + encodeURIComponent(cbName);
 
-        const qs = new URLSearchParams(params);
-        qs.set("cb", cb);
-
-        const cleanup = () => {
-          try{ delete window[cb]; }catch(_){}
-          if(script && script.parentNode) script.parentNode.removeChild(script);
-        };
-
+        let done = false;
         const timer = setTimeout(() => {
+          if(done) return;
+          done = true;
           cleanup();
-          reject(new Error("TIMEOUT"));
+          reject(new Error("timeout"));
         }, 12000);
 
-        window[cb] = (data) => {
+        function cleanup(){
           clearTimeout(timer);
+          try{ delete window[cbName]; }catch(e){}
+          if(script && script.parentNode) script.parentNode.removeChild(script);
+        }
+
+        window[cbName] = (data) => {
+          if(done) return;
+          done = true;
           cleanup();
           resolve(data);
         };
 
         script.onerror = () => {
-          clearTimeout(timer);
+          if(done) return;
+          done = true;
           cleanup();
-          reject(new Error("NETWORK"));
+          reject(new Error("network"));
         };
 
-        script.src = url + (url.includes("?") ? "&" : "?") + qs.toString();
+        script.src = full;
         document.body.appendChild(script);
       });
     }
 
-    function getNext(){
-      const u = new URL(location.href);
-      return u.searchParams.get("next") || "index.html";
-    }
-
-    // إذا الجهاز مفعل من قبل → ودّه مباشرة
-    (function autoGoIfActive(){
-      const c = localStorage.getItem(LS_ACTIVE_CODE);
-      const d = localStorage.getItem(LS_DEVICE_KEY);
-      if(c && d){
-        // ما نعيد تحقق هنا عشان السرعة (نقدر نسويه لاحقاً بصمت)
-        // نوديه للصفحة المطلوبة
-        // ملاحظة: نخليها Replace عشان ما يرجع لصفحة التفعيل بالباك
-        location.replace(getNext());
-      }
-    })();
-
-    btn.addEventListener('click', async () => {
+    async function activateNow(){
       const code = normalizeCode(codeEl.value);
       codeEl.value = code;
 
       if(!code){
-        show(err, 'اكتب الكود أولاً.');
+        showMsg("اكتب الكود أولاً.", "err");
         return;
       }
-      if(!isValidFormat(code)){
-        show(err, 'صيغة الكود غير صحيحة. مثال: SNDQ-XXXX-XXXX-XXXX');
+      if(!isValidCodeFormat(code)){
+        showMsg("صيغة الكود غير صحيحة. مثال: SNDQ-XXXX-XXXX-XXXX", "err");
         return;
       }
-
-      const device = getDeviceKey();
-      devHint.style.display = "none";
 
       btn.disabled = true;
-      ok.style.display='none';
-      err.style.display='none';
+      showMsg("جاري التحقق من الكود…", "ok");
+
+      const deviceKey = getDeviceKey();
 
       try{
-        // نطلب التحقق من الشيت
-        const res = await jsonp(API_URL, { code, device });
+        const url = `${ACTIVATION_API}?code=${encodeURIComponent(code)}&device=${encodeURIComponent(deviceKey)}`;
+        const res = await jsonp(url);
 
         if(res && res.ok){
-          localStorage.setItem(LS_ACTIVE_CODE, code);
-          localStorage.setItem(LS_ACTIVE_AT, new Date().toISOString());
-          // deviceKey محفوظ مسبقاً
-
-          show(ok, 'تم التفعيل بنجاح ✅');
-          // نرجع للصفحة المطلوبة بعد ثانية
-          setTimeout(() => location.replace(getNext()), 650);
-        }else{
-          const msg = (res && res.msg) ? res.msg : 'الكود غير صحيح أو مستخدم.';
-          show(err, msg);
-          // تلميح اختياري للمساعدة
-          if(res && res.status === "USED"){
-            devHint.style.display = "block";
-            devHint.textContent = "ملاحظة: هذا الكود مربوط بجهاز آخر.";
-          }
+          setActivated(code);
+          showMsg("تم التفعيل بنجاح ✅ سيتم فتح اللعبة الآن…", "ok");
+          setTimeout(() => {
+            location.replace(getNext());
+          }, 650);
+          return;
         }
+
+        const m = (res && res.msg) ? String(res.msg) : "الكود غير صحيح أو مستخدم.";
+        showMsg(m, "err");
+        btn.disabled = false;
+
       }catch(e){
-        show(err, 'تعذر الاتصال بالخادم. جرّب مرة ثانية.');
-      }finally{
+        showMsg("صار خطأ بالاتصال. جرّب مرة ثانية.", "err");
         btn.disabled = false;
       }
+    }
+
+    btn.addEventListener("click", activateNow);
+    codeEl.addEventListener("keydown", (e) => {
+      if(e.key === "Enter") activateNow();
+    });
+
+    window.addEventListener("load", () => {
+      setTimeout(() => codeEl.focus(), 80);
     });
   </script>
 </body>
 </html>
 
-<!-- اسم النسخة: activation.html (برا السالفة) – إصدار 2 -->
+<!-- اسم النسخة: activation.html برا السالفة – صفحة تفعيل مستقلة – إصدار 2 -->
